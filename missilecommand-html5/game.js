@@ -305,6 +305,11 @@
       tx: targetX, ty: targetY,
       vx: (dx / len) * PLAYER_SPEED,
       vy: (dy / len) * PLAYER_SPEED,
+      // Exact time-to-target. A radius check alone is unsafe: at typical speeds
+      // a slow frame (dt up to 100 ms) can step >70 px, well past the detonation
+      // radius, and the missile flies on forever. Counting down to zero
+      // guarantees the explosion fires on the very frame the target is reached.
+      ttl: len / PLAYER_SPEED,
       exploded: false,
       trail: [],
     });
@@ -392,15 +397,14 @@
     for (const p of state.players) {
       for (const t of p.trail) t.life -= dt; // always decay
       if (p.exploded) continue;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.trail.push({ x: p.x, y: p.y, life: 0.6 });
-      if (p.trail.length > 24) p.trail.shift();
-      // Reached target
-      const d = dist2(p.x, p.y, p.tx, p.ty);
-      if (d < 200) {
+      p.ttl -= dt;
+      if (p.ttl <= 0) {
+        // Snap exactly onto the target so the explosion is centered correctly
+        // even when this frame would have stepped past the aim point.
+        p.x = p.tx;
+        p.y = p.ty;
         p.exploded = true;
-        p.trail = []; // clear trail immediately on explosion
+        p.trail = [];
         state.explosions.push({
           x: p.tx, y: p.ty,
           r: 0, maxR: PLAYER_MAX_RADIUS * TWEAKS.blastRadius,
@@ -410,7 +414,12 @@
           primary: true, // marks the initial player blast for perfect-hit bonus
         });
         window.MathArcadeAudio?.playerBlast?.();
+        continue;
       }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.trail.push({ x: p.x, y: p.y, life: 0.6 });
+      if (p.trail.length > 24) p.trail.shift();
     }
     state.players = state.players.filter(p => !p.exploded || p.trail.some(t => t.life > 0));
 
