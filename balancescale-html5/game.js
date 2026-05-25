@@ -30,17 +30,6 @@
   };
   const SYMBOL_ORDER = ['circle', 'square', 'triangle', 'diamond', 'star'];
   const displayName = (sym) => (SYMBOLS[sym] && SYMBOLS[sym].display) || sym;
-  const BALANCE_SCENES = [
-    'waitress',
-    'funambule',
-    'shark',
-    'bus',
-    'detonator',
-    'rocket',
-    'ufo',
-    'cannon',
-    'dragon',
-  ];
 
   // ---------- Levels (from balancescale.py) ----------
   const LEVELS = [
@@ -311,20 +300,8 @@
       symbols: base.symbols.slice(),
       values,
       clues,
-      scenes: shuffledScenes(clues.length),
       hints: buildHints(base, values),
     };
-  }
-
-  function shuffledScenes(count) {
-    const pool = BALANCE_SCENES.slice();
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
-    const out = [];
-    for (let i = 0; i < count; i++) out.push(pool[i % pool.length]);
-    return out;
   }
 
   function addGeneratedClues(clues, symbols, values, targetCount) {
@@ -548,19 +525,19 @@
       updateHUD();
       showMsg(`Level ${state.levelIdx + 1} solved! 🎉`, 'success');
       // Confetti
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 90; i++) {
         state.particles.push({
-          x: W / 2 + rand(-30, 30),
+          x: W / 2 + rand(-60, 60),
           y: H * 0.4,
-          vx: rand(-260, 260),
-          vy: rand(-360, -120),
+          vx: rand(-420, 420),
+          vy: rand(-520, -160),
           rot: rand(0, Math.PI * 2),
-          rotV: rand(-6, 6),
-          size: rand(6, 12),
+          rotV: rand(-8, 8),
+          size: rand(16, 28),
           color: ['#e84545', '#ff9933', '#ee6f88', '#f4c93b', '#9156c4', '#62b14a'][Math.floor(Math.random() * 6)],
-          life: rand(1.0, 1.6),
-          maxLife: 1.6,
-          gravity: 600,
+          life: rand(1.6, 2.4),
+          maxLife: 2.4,
+          gravity: 720,
         });
       }
       // Flash all slots
@@ -642,10 +619,16 @@
       for (let i = 0; i < L.clues.length; i++) {
         const c = L.clues[i];
         const s = clueLeftSum(c);
-        let target = 0;
+        let target;
         if (s != null) {
           const diff = s - c[1];
           target = clamp(diff / 30, -0.32, 0.32);
+        } else {
+          // No values yet — show the scale visibly unbalanced, alternating
+          // direction per row with a gentle sway so it feels alive.
+          const dir = (i % 2 === 0) ? 1 : -1;
+          const sway = Math.sin(state.elapsed * 1.4 + i * 0.7) * 0.04;
+          target = dir * 0.24 + sway;
         }
         state.perClueAnim[i] = lerp(state.perClueAnim[i], target, 0.08);
       }
@@ -722,18 +705,18 @@
     for (let i = 0; i < n; i++) {
       const cy = top + slotH * (i + 0.5);
       const tilt = state.perClueAnim[i] || 0;
-      drawClueScale(L.clues[i], cy, slotH, tilt, i, L.scenes?.[i] || BALANCE_SCENES[i % BALANCE_SCENES.length]);
+      drawClueScale(L.clues[i], cy, slotH, tilt, i);
     }
   }
 
-  function drawClueScale(clue, cy, height, tilt, idx, scene) {
+  function drawClueScale(clue, cy, height, tilt, idx) {
     const [items, rightVal] = clue;
-    const beamLen = Math.min(W * 0.68, 720);
+    const beamLen = Math.min(W * 0.55, 600);
     const beamCx = W / 2;
     const beamY = cy;
-    const beamThick = clamp(height * 0.08, 8, 16);
-    const cardW = Math.min(W - 40, 860);
-    const cardH = Math.max(72, height * 0.82);
+    const cardW = Math.min(W - 40, 880);
+    const cardH = Math.max(140, height * 0.88);
+    // Cream card
     ctx.fillStyle = 'rgba(255, 248, 223, 0.96)';
     ctx.strokeStyle = '#2b2418';
     ctx.lineWidth = 3;
@@ -744,14 +727,14 @@
     roundRect(beamCx - cardW / 2 + 7, beamY - cardH / 2 + 7, cardW - 14, cardH - 14, 10);
     ctx.fill();
 
-    drawScenarioBalance(scene, beamCx, beamY, height, beamLen, beamThick, tilt, items, rightVal);
+    drawBalance(beamCx, beamY, cardH, beamLen, tilt, items, rightVal);
 
     // Clue label
-    ctx.fillStyle = 'rgba(43, 36, 24, 0.5)';
+    ctx.fillStyle = 'rgba(43, 36, 24, 0.55)';
     ctx.font = 'bold 12px "Fredoka", sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(`Clue ${idx + 1} · ${sceneLabel(scene)}`, 20, beamY - height * 0.4);
+    ctx.fillText(`Clue ${idx + 1}`, 20, beamY - cardH * 0.4);
 
     // Balance indicator on right side
     const sum = clueLeftSum(clue);
@@ -765,453 +748,180 @@
     }
   }
 
-  function sceneLabel(scene) {
-    return {
-      waitress: 'café tray',
-      funambule: 'tightrope',
-      shark: 'surf escape',
-      bus: 'cliff bus',
-      detonator: 'detonator',
-      rocket: 'rocket seesaw',
-      ufo: 'UFO beam',
-      cannon: 'circus cannon',
-      dragon: 'dragon bridge',
-    }[scene] || 'surprise';
-  }
+  function drawBalance(cx, cy, h, beamLen, tilt, items, rightVal) {
+    const fulcrumY = cy - h * 0.20;
+    const baseY = cy + h * 0.40;
+    const postW = clamp(h * 0.05, 9, 14);
+    const postH = baseY - fulcrumY;
 
-  function drawScenarioBalance(scene, cx, cy, h, len, thick, tilt, items, rightVal) {
-    const leftX = -len / 2;
-    const rightX = len / 2;
-    drawScenarioBackdrop(scene, cx, cy, h, len);
+    // Base
+    const baseW = clamp(h * 0.22, 56, 96);
+    ctx.fillStyle = '#8b5a2b';
+    ctx.strokeStyle = '#2b2418';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - baseW, baseY + h * 0.05);
+    ctx.lineTo(cx + baseW, baseY + h * 0.05);
+    ctx.lineTo(cx + baseW * 0.55, baseY - h * 0.02);
+    ctx.lineTo(cx - baseW * 0.55, baseY - h * 0.02);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Post
+    ctx.fillStyle = '#a87143';
+    roundRect(cx - postW / 2, fulcrumY, postW, postH, postW * 0.3);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    roundRect(cx - postW * 0.3, fulcrumY + postW, postW * 0.22, postH - postW * 1.8, postW * 0.1);
+    ctx.fill();
+
+    // Fulcrum cap
+    ctx.fillStyle = '#c98a4b';
+    ctx.beginPath();
+    ctx.arc(cx, fulcrumY, postW * 0.85, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Beam (rotated around fulcrum)
     ctx.save();
-    ctx.translate(cx, cy);
+    ctx.translate(cx, fulcrumY);
     ctx.rotate(tilt);
-    drawScenarioBeam(scene, leftX, rightX, thick);
-    drawScenarioLoad(scene, leftX, -h * 0.18, items, true, h);
-    drawScenarioLoad(scene, rightX, -h * 0.18, rightVal, false, h);
+
+    const beamThick = clamp(h * 0.05, 11, 18);
+    ctx.fillStyle = '#d97a3a';
+    ctx.strokeStyle = '#2b2418';
+    ctx.lineWidth = 3;
+    roundRect(-beamLen / 2, -beamThick / 2, beamLen, beamThick, beamThick / 2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    roundRect(-beamLen / 2 + 10, -beamThick / 2 + 3, beamLen - 20, beamThick * 0.3, beamThick / 4);
+    ctx.fill();
+    // Center bolt
+    ctx.fillStyle = '#3a2a18';
+    ctx.beginPath();
+    ctx.arc(0, 0, beamThick * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+
+    const chainLen = h * 0.30;
+    const leftEnd = -beamLen / 2 + beamThick;
+    const rightEnd = beamLen / 2 - beamThick;
+    drawPanWithChain(leftEnd, chainLen, tilt, items, true, h);
+    drawPanWithChain(rightEnd, chainLen, tilt, rightVal, false, h);
+
     ctx.restore();
   }
 
-  function drawScenarioBackdrop(scene, cx, cy, h, len) {
+  // Hangs a horizontal pan straight down from a rotated beam end (gravity-correct).
+  function drawPanWithChain(beamEndX, chainLen, tilt, content, isShapes, h) {
+    const sin = Math.sin(tilt);
+    const cos = Math.cos(tilt);
+    // World "down" expressed in the rotated frame is (sin, cos).
+    const endX = beamEndX + sin * chainLen;
+    const endY = cos * chainLen;
+    drawChain(beamEndX, 0, endX, endY);
     ctx.save();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#2b2418';
-    if (scene === 'waitress') {
-      drawCartoonPerson(cx, cy + h * 0.28, h, '#4db8d8');
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${clamp(h * 0.16, 11, 15)}px "Fredoka", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('CAFE PANIC', cx, cy - h * 0.32);
-    } else if (scene === 'funambule') {
-      drawBuilding(cx - len * 0.42, cy + h * 0.38, h * 0.42, h * 0.5);
-      drawBuilding(cx + len * 0.42, cy + h * 0.38, h * 0.42, h * 0.5);
-      drawCartoonPerson(cx, cy + h * 0.08, h * 0.7, '#ffd24d');
-      drawPigeon(cx + len * 0.26, cy - h * 0.25, h * 0.14);
-      drawPigeon(cx + len * 0.32, cy - h * 0.18, h * 0.12);
-    } else if (scene === 'shark') {
-      ctx.fillStyle = '#73d2ff';
-      roundRect(cx - len * 0.45, cy + h * 0.24, len * 0.9, h * 0.23, 12);
-      ctx.fill(); ctx.stroke();
-      drawShark(cx + len * 0.18, cy + h * 0.28, h * 0.28);
-    } else if (scene === 'bus') {
-      ctx.fillStyle = '#8ad86b';
-      roundRect(cx - len * 0.47, cy + h * 0.28, len * 0.43, h * 0.18, 8);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#2b2418';
-      ctx.beginPath();
-      ctx.moveTo(cx + len * 0.02, cy + h * 0.47);
-      ctx.lineTo(cx + len * 0.24, cy + h * 0.47);
-      ctx.lineTo(cx + len * 0.02, cy + h * 0.27);
-      ctx.closePath();
-      ctx.fill();
-    } else if (scene === 'detonator') {
-      ctx.fillStyle = '#c84c5f';
-      roundRect(cx - h * 0.36, cy + h * 0.16, h * 0.72, h * 0.25, 8);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#ffd24d';
-      ctx.beginPath();
-      ctx.arc(cx, cy + h * 0.16, h * 0.08, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-    } else if (scene === 'rocket') {
-      drawRocket(cx - len * 0.35, cy + h * 0.22, h * 0.26);
-      drawRocket(cx + len * 0.34, cy + h * 0.18, h * 0.22);
-    } else if (scene === 'ufo') {
-      drawUfo(cx, cy - h * 0.25, h * 0.34);
-      ctx.fillStyle = 'rgba(120, 220, 255, 0.18)';
-      ctx.beginPath();
-      ctx.moveTo(cx - h * 0.22, cy - h * 0.15);
-      ctx.lineTo(cx + h * 0.22, cy - h * 0.15);
-      ctx.lineTo(cx + h * 0.44, cy + h * 0.42);
-      ctx.lineTo(cx - h * 0.44, cy + h * 0.42);
-      ctx.closePath();
-      ctx.fill();
-    } else if (scene === 'cannon') {
-      drawCannon(cx - len * 0.2, cy + h * 0.25, h * 0.28);
-      drawStarburst(cx + len * 0.28, cy - h * 0.18, h * 0.18);
-    } else {
-      drawDragon(cx + len * 0.28, cy + h * 0.08, h * 0.42);
-      ctx.fillStyle = '#8ad86b';
-      roundRect(cx - len * 0.44, cy + h * 0.24, len * 0.88, h * 0.12, 10);
-      ctx.fill(); ctx.stroke();
-    }
+    ctx.translate(endX, endY);
+    ctx.rotate(-tilt);
+    drawPan(0, 0, content, isShapes, h);
     ctx.restore();
-  }
-
-  function drawScenarioBeam(scene, leftX, rightX, thick) {
-    const colors = {
-      waitress: '#f05f77',
-      funambule: '#2b2418',
-      shark: '#ffcf4d',
-      bus: '#ff8a3d',
-      detonator: '#c84c5f',
-      rocket: '#4db8d8',
-      ufo: '#8b63c7',
-      cannon: '#ff8a3d',
-      dragon: '#5dba72',
-    };
-    ctx.fillStyle = colors[scene] || '#ff8a3d';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    roundRect(leftX, -thick / 2, rightX - leftX, thick, thick / 2);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    roundRect(leftX + 8, -thick / 2 + 3, rightX - leftX - 16, thick * 0.32, thick / 4);
-    ctx.fill();
-  }
-
-  function drawScenarioLoad(scene, x, y, content, isShapes, h) {
-    const trayW = clamp(h * 1.15, 74, 112);
-    const trayH = clamp(h * 0.18, 12, 20);
-    ctx.fillStyle = scene === 'shark' && isShapes ? '#fff' : '#fff7e0';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    if (scene === 'bus' && isShapes) {
-      drawBus(x, y, trayW, trayH * 2.2);
-    } else if (scene === 'shark' && isShapes) {
-      drawSurfboard(x, y + trayH * 0.35, trayW, trayH);
-    } else {
-      roundRect(x - trayW / 2, y - trayH / 2, trayW, trayH, trayH / 2);
-      ctx.fill(); ctx.stroke();
-    }
-    if (scene === 'waitress' && isShapes) drawDrinkCups(x, y - trayH * 1.18, h);
-    if (isShapes) drawLoadShapes(content, x, y - trayH * 0.95, h);
-    else drawLoadNumber(content, x, y - trayH * 0.95, h);
-  }
-
-  function drawDrinkCups(cx, cy, h) {
-    const cupW = clamp(h * 0.13, 8, 13);
-    const cupH = clamp(h * 0.22, 14, 21);
-    for (let i = -1; i <= 1; i++) {
-      const x = cx + i * cupW * 1.35;
-      ctx.fillStyle = i === 0 ? '#88d8ff' : '#ff8a3d';
-      ctx.strokeStyle = '#2b2418';
-      ctx.lineWidth = 2;
-      roundRect(x - cupW / 2, cy - cupH / 2, cupW, cupH, 3);
-      ctx.fill(); ctx.stroke();
-      ctx.strokeStyle = '#2b2418';
-      ctx.beginPath();
-      ctx.moveTo(x + cupW * 0.12, cy - cupH * 0.48);
-      ctx.lineTo(x + cupW * 0.36, cy - cupH * 0.85);
-      ctx.stroke();
-    }
-  }
-
-  function drawLoadShapes(content, cx, cy, h) {
-    const flat = [];
-    for (const [sym, n] of content) for (let i = 0; i < n; i++) flat.push(sym);
-    const size = clamp(24 - Math.max(0, flat.length - 3) * 3, 13, 22);
-    const totalW = flat.length * (size + 4) - 4;
-    const startX = cx - totalW / 2;
-    for (let i = 0; i < flat.length; i++) {
-      drawCanvasSymbol(flat[i], startX + i * (size + 4) + size / 2, cy, size);
-    }
-  }
-
-  function drawLoadNumber(value, cx, cy, h) {
-    const numW = clamp(h * 0.78, 46, 62);
-    const numH = clamp(h * 0.34, 22, 30);
-    ctx.fillStyle = '#fff7e0';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    roundRect(cx - numW / 2, cy - numH / 2, numW, numH, 8);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#2b2418';
-    ctx.font = `bold ${Math.round(numH * 0.8)}px "Lilita One", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(value), cx, cy + 1);
-  }
-
-  function drawCartoonPerson(cx, cy, h, color) {
-    const s = clamp(h * 0.18, 12, 20);
-    ctx.save();
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    ctx.fillStyle = color;
-    roundRect(cx - s * 0.55, cy - s * 0.25, s * 1.1, s * 1.35, s * 0.35);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#ffd7a8';
-    ctx.beginPath();
-    ctx.arc(cx, cy - s * 0.75, s * 0.48, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#2b2418';
-    ctx.beginPath();
-    ctx.arc(cx - s * 0.15, cy - s * 0.82, 1.4, 0, Math.PI * 2);
-    ctx.arc(cx + s * 0.15, cy - s * 0.82, 1.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx, cy - s * 0.68, s * 0.18, 0, Math.PI);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawBuilding(x, y, w, h) {
-    ctx.fillStyle = '#6cc1df';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    roundRect(x - w / 2, y - h, w, h, 7);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#fff4d6';
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 2; j++) {
-        ctx.fillRect(x - w * 0.28 + j * w * 0.32, y - h * 0.78 + i * h * 0.22, w * 0.14, h * 0.1);
-      }
-    }
-  }
-
-  function drawPigeon(x, y, s) {
-    ctx.fillStyle = '#c9d2da';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(x, y, s, s * 0.62, 0, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(x + s * 0.75, y - s * 0.25, s * 0.42, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#ffcf4d';
-    ctx.beginPath();
-    ctx.moveTo(x + s * 1.12, y - s * 0.25);
-    ctx.lineTo(x + s * 1.48, y - s * 0.12);
-    ctx.lineTo(x + s * 1.12, y);
-    ctx.closePath();
-    ctx.fill(); ctx.stroke();
-  }
-
-  function drawShark(x, y, s) {
-    ctx.fillStyle = '#5c7f99';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(x, y, s * 1.3, s * 0.55, 0, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.moveTo(x + s * 0.1, y - s * 0.55);
-    ctx.lineTo(x + s * 0.42, y - s * 1.12);
-    ctx.lineTo(x + s * 0.58, y - s * 0.36);
-    ctx.closePath();
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#2b2418';
-    ctx.beginPath();
-    ctx.arc(x + s * 0.65, y - s * 0.15, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function drawSurfboard(x, y, w, h) {
-    ctx.fillStyle = '#ffcf4d';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(x, y, w / 2, h * 0.55, 0, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = '#ff8a3d';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x - w * 0.35, y);
-    ctx.lineTo(x + w * 0.35, y);
-    ctx.stroke();
-  }
-
-  function drawBus(x, y, w, h) {
-    ctx.fillStyle = '#ffd24d';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    roundRect(x - w / 2, y - h / 2, w, h, 8);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#88d8ff';
-    for (let i = 0; i < 3; i++) {
-      roundRect(x - w * 0.34 + i * w * 0.24, y - h * 0.27, w * 0.16, h * 0.24, 3);
-      ctx.fill(); ctx.stroke();
-    }
-    ctx.fillStyle = '#2b2418';
-    ctx.beginPath();
-    ctx.arc(x - w * 0.3, y + h * 0.45, h * 0.14, 0, Math.PI * 2);
-    ctx.arc(x + w * 0.3, y + h * 0.45, h * 0.14, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function drawRocket(x, y, s) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(-0.45);
-    ctx.fillStyle = '#fff7e0';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    roundRect(-s * 0.35, -s, s * 0.7, s * 1.6, s * 0.35);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#c84c5f';
-    ctx.beginPath();
-    ctx.moveTo(0, -s * 1.38);
-    ctx.lineTo(s * 0.38, -s * 0.82);
-    ctx.lineTo(-s * 0.38, -s * 0.82);
-    ctx.closePath();
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#4db8d8';
-    ctx.beginPath();
-    ctx.arc(0, -s * 0.35, s * 0.18, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawUfo(x, y, s) {
-    ctx.fillStyle = '#8b63c7';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(x, y, s, s * 0.32, 0, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#88d8ff';
-    ctx.beginPath();
-    ctx.arc(x, y - s * 0.18, s * 0.42, Math.PI, 0);
-    ctx.fill(); ctx.stroke();
-  }
-
-  function drawCannon(x, y, s) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(-0.2);
-    ctx.fillStyle = '#4db8d8';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    roundRect(-s * 0.75, -s * 0.25, s * 1.5, s * 0.5, s * 0.2);
-    ctx.fill(); ctx.stroke();
-    ctx.restore();
-    ctx.fillStyle = '#2b2418';
-    ctx.beginPath();
-    ctx.arc(x - s * 0.35, y + s * 0.32, s * 0.18, 0, Math.PI * 2);
-    ctx.arc(x + s * 0.25, y + s * 0.32, s * 0.18, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function drawStarburst(x, y, s) {
-    ctx.fillStyle = '#ffd24d';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let i = 0; i < 12; i++) {
-      const r = i % 2 ? s * 0.45 : s;
-      const a = -Math.PI / 2 + i / 12 * Math.PI * 2;
-      const px = x + Math.cos(a) * r;
-      const py = y + Math.sin(a) * r;
-      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-    }
-    ctx.closePath();
-    ctx.fill(); ctx.stroke();
-  }
-
-  function drawDragon(x, y, s) {
-    ctx.fillStyle = '#5dba72';
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(x, y, s * 1.1, s * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(x - s * 0.9, y - s * 0.25, s * 0.42, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#ffd24d';
-    ctx.beginPath();
-    ctx.moveTo(x - s * 1.1, y - s * 0.62);
-    ctx.lineTo(x - s * 0.92, y - s * 1.0);
-    ctx.lineTo(x - s * 0.76, y - s * 0.58);
-    ctx.closePath();
-    ctx.fill(); ctx.stroke();
   }
 
   function drawChain(x1, y1, x2, y2) {
     ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     ctx.stroke();
-    const n = 4;
+    const ang = Math.atan2(y2 - y1, x2 - x1);
+    const n = 5;
     for (let i = 1; i < n; i++) {
       const t = i / n;
       const x = lerp(x1, x2, t);
       const y = lerp(y1, y2, t);
-      ctx.fillStyle = '#ffd24d';
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(ang);
+      ctx.fillStyle = '#ffcf4d';
       ctx.strokeStyle = '#2b2418';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.ellipse(x, y, 4, 3, Math.PI / 2, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, 5, 3, 0, 0, Math.PI * 2);
       ctx.fill(); ctx.stroke();
+      ctx.restore();
     }
   }
 
-  function drawPan(cx, cy, content, isShapes) {
-    const panW = 116;
-    const panH = 18;
-    // Cartoon bowl pan
+  function drawPan(cx, cy, content, isShapes, h) {
+    const panW = clamp(h * 0.48, 150, 220);
+    const panH = clamp(h * 0.09, 20, 32);
+    // Chain attachment knobs
+    ctx.fillStyle = '#b9862a';
+    ctx.strokeStyle = '#2b2418';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx - panW / 2, cy, 3.5, 0, Math.PI * 2);
+    ctx.arc(cx + panW / 2, cy, 3.5, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Bowl
     ctx.fillStyle = '#ffd24d';
     ctx.strokeStyle = '#2b2418';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(cx - panW / 2, cy);
-    ctx.quadraticCurveTo(cx, cy + panH * 1.65, cx + panW / 2, cy);
-    ctx.quadraticCurveTo(cx, cy + panH * 0.42, cx - panW / 2, cy);
+    ctx.quadraticCurveTo(cx, cy + panH * 2.0, cx + panW / 2, cy);
+    ctx.quadraticCurveTo(cx, cy + panH * 0.45, cx - panW / 2, cy);
     ctx.closePath();
     ctx.fill(); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(cx - panW * 0.18, cy + panH * 0.28, panW * 0.22, panH * 0.26, -0.1, 0, Math.PI * 2);
-    ctx.fill();
+    // Rim under-curve
     ctx.strokeStyle = '#b9862a';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.ellipse(cx, cy, panW / 2, panH * 0.36, 0, 0, Math.PI);
+    ctx.ellipse(cx, cy, panW / 2, panH * 0.38, 0, 0, Math.PI);
     ctx.stroke();
+    // Interior highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.32)';
+    ctx.beginPath();
+    ctx.ellipse(cx - panW * 0.2, cy + panH * 0.45, panW * 0.2, panH * 0.32, -0.1, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Contents
-    if (isShapes) {
-      // Lay out shapes on top
-      const flatItems = [];
-      for (const [sym, n] of content) {
-        for (let i = 0; i < n; i++) flatItems.push(sym);
-      }
-      const itemSize = clamp(24 - Math.max(0, flatItems.length - 3) * 3, 13, 22);
-      const totalW = flatItems.length * (itemSize + 4) - 4;
-      let startX = cx - totalW / 2;
-      for (let i = 0; i < flatItems.length; i++) {
-        const x = startX + i * (itemSize + 4) + itemSize / 2;
-        drawCanvasSymbol(flatItems[i], x, cy - itemSize / 2 - 5, itemSize);
-      }
-    } else {
-      // Number
-      ctx.fillStyle = '#fff7e0';
-      ctx.strokeStyle = '#2b2418';
-      ctx.lineWidth = 3;
-      const numW = 60, numH = 30;
-      roundRect(cx - numW / 2, cy - numH - 6, numW, numH, 8);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#2b2418';
-      ctx.font = 'bold 24px "Lilita One", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(String(content), cx, cy - numH / 2 - 6);
+    if (isShapes) drawLoadShapes(content, cx, cy - 8, h);
+    else drawLoadNumber(content, cx, cy - 8, h);
+  }
+
+  function drawLoadShapes(content, cx, cy, h) {
+    const flat = [];
+    for (const [sym, n] of content) for (let i = 0; i < n; i++) flat.push(sym);
+    const baseSize = clamp(h * 0.16, 36, 56);
+    const size = clamp(baseSize - Math.max(0, flat.length - 2) * 4, 26, baseSize);
+    const gap = size * 0.18;
+    const totalW = flat.length * (size + gap) - gap;
+    const startX = cx - totalW / 2;
+    const baseY = cy - size * 0.55;
+    for (let i = 0; i < flat.length; i++) {
+      const x = startX + i * (size + gap) + size / 2;
+      drawCanvasSymbol(flat[i], x, baseY, size);
     }
   }
+
+  function drawLoadNumber(value, cx, cy, h) {
+    const numW = clamp(h * 0.18, 60, 86);
+    const numH = clamp(h * 0.16, 40, 58);
+    const ny = cy - numH * 0.55;
+    ctx.fillStyle = '#fff7e0';
+    ctx.strokeStyle = '#2b2418';
+    ctx.lineWidth = 3;
+    roundRect(cx - numW / 2, ny - numH / 2, numW, numH, 10);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255, 210, 77, 0.3)';
+    roundRect(cx - numW / 2 + 4, ny - numH / 2 + 4, numW - 8, numH - 8, 7);
+    ctx.fill();
+    ctx.fillStyle = '#2b2418';
+    ctx.font = `bold ${Math.round(numH * 0.7)}px "Lilita One", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(value), cx, ny + 2);
+  }
+
 
   function drawCanvasSymbol(sym, cx, cy, size) {
     // Soft drop shadow on the canvas (the dock-icon path skips this to keep PNGs tight).
