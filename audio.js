@@ -6,6 +6,7 @@
   let master = null;
   let muted = localStorage.getItem('mathArcadeMuted') === '1';
   let lastUi = 0;
+  let unlocked = false;
 
   function ensure() {
     if (!ctx) {
@@ -15,6 +16,7 @@
       master.connect(ctx.destination);
     }
     if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
   }
 
   function now() {
@@ -85,6 +87,20 @@
   function click() {
     const t = now();
     tone(520, t, 0.045, { type: 'square', to: 780, gain: 0.055, cutoff: 1800 });
+  }
+
+  function unlockAudio() {
+    const audio = ensure();
+    const confirm = () => {
+      if (unlocked) return;
+      unlocked = true;
+      click();
+    };
+    if (audio.state === 'running') {
+      confirm();
+    } else {
+      audio.resume().then(confirm).catch(() => {});
+    }
   }
 
   function start() {
@@ -229,8 +245,8 @@
     get muted() { return muted; }
   };
 
-  document.addEventListener('pointerdown', () => ensure(), { once: true, passive: true });
-  document.addEventListener('keydown', () => ensure(), { once: true });
+  document.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+  document.addEventListener('keydown', unlockAudio, { once: true });
   document.addEventListener('click', (e) => maybeUiSound(e.target), true);
   document.addEventListener('DOMContentLoaded', addButton);
 })();
