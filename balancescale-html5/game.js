@@ -20,15 +20,16 @@
   window.addEventListener('resize', resize);
   resize();
 
-  // ---------- Symbols ----------
+  // ---------- Symbols (cute-fruit theme — keys kept for level-data compatibility) ----------
   const SYMBOLS = {
-    circle:   { color: '#dc5a5a', dark: '#8a2c2c' },
-    square:   { color: '#468cdc', dark: '#23568a' },
-    triangle: { color: '#5ab464', dark: '#2d6233' },
-    diamond:  { color: '#c8a040', dark: '#7a5d1d' },
-    star:     { color: '#b070d0', dark: '#5a3275' },
+    circle:   { display: 'Apple',      fruit: 'apple',      color: '#e84545', dark: '#8a2c2c' },
+    square:   { display: 'Orange',     fruit: 'orange',     color: '#ff9933', dark: '#a8540f' },
+    triangle: { display: 'Watermelon', fruit: 'watermelon', color: '#ee6f88', dark: '#7d2638' },
+    diamond:  { display: 'Banana',     fruit: 'banana',     color: '#f4c93b', dark: '#a8841c' },
+    star:     { display: 'Grapes',     fruit: 'grapes',     color: '#9156c4', dark: '#5a3275' },
   };
   const SYMBOL_ORDER = ['circle', 'square', 'triangle', 'diamond', 'star'];
+  const displayName = (sym) => (SYMBOLS[sym] && SYMBOLS[sym].display) || sym;
   const BALANCE_SCENES = [
     'waitress',
     'funambule',
@@ -350,13 +351,13 @@
 
   function buildHints(base, values) {
     const single = base.clues.find(([items]) => items.length === 1);
-    const first = single ? single[0][0][0] : base.symbols[0];
+    const first = single ? displayName(single[0][0][0]) : displayName(base.symbols[0]);
     return [
       single
-        ? `Start with the clue that uses only ${first}. Divide the total by the number of ${first}s.`
-        : 'Compare clues that share symbols. Subtract one clue from another to remove repeated pieces.',
-      'After one shape is known, substitute it into every clue that contains it.',
-      `This puzzle's values are: ${base.symbols.map(s => `${s} = ${values[s]}`).join(', ')}.`,
+        ? `Start with the clue that uses only ${first}. Divide the total by the number of ${first} pieces.`
+        : 'Compare clues that share a fruit. Subtract one clue from another to remove repeated pieces.',
+      'Once one fruit is known, substitute its value into every clue that contains it.',
+      `This puzzle's values are: ${base.symbols.map(s => `${displayName(s)} = ${values[s]}`).join(', ')}.`,
     ];
   }
 
@@ -464,32 +465,22 @@
     el._timer = setTimeout(() => el.classList.remove('show'), 2800);
   }
 
-  // ---------- Symbol SVG (for HTML dock icons) ----------
+  // ---------- Dock icons (rasterized via offscreen canvas so they match the in-game fruit art exactly) ----------
+  const _iconCache = {};
   function symbolSVG(sym, size) {
-    const s = SYMBOLS[sym];
-    const c = size / 2;
-    if (sym === 'circle') {
-      return `<svg viewBox="0 0 ${size} ${size}"><circle cx="${c}" cy="${c}" r="${c - 2}" fill="${s.color}" stroke="#2b2418" stroke-width="2"/></svg>`;
-    }
-    if (sym === 'square') {
-      return `<svg viewBox="0 0 ${size} ${size}"><rect x="2" y="2" width="${size - 4}" height="${size - 4}" fill="${s.color}" stroke="#2b2418" stroke-width="2" rx="3"/></svg>`;
-    }
-    if (sym === 'triangle') {
-      return `<svg viewBox="0 0 ${size} ${size}"><polygon points="${c},2 ${size - 2},${size - 2} 2,${size - 2}" fill="${s.color}" stroke="#2b2418" stroke-width="2" stroke-linejoin="round"/></svg>`;
-    }
-    if (sym === 'diamond') {
-      return `<svg viewBox="0 0 ${size} ${size}"><polygon points="${c},2 ${size - 2},${c} ${c},${size - 2} 2,${c}" fill="${s.color}" stroke="#2b2418" stroke-width="2" stroke-linejoin="round"/></svg>`;
-    }
-    if (sym === 'star') {
-      const pts = [];
-      for (let i = 0; i < 10; i++) {
-        const r = i % 2 === 0 ? (c - 2) : (c - 2) * 0.45;
-        const a = -Math.PI / 2 + (i / 10) * Math.PI * 2;
-        pts.push(`${c + Math.cos(a) * r},${c + Math.sin(a) * r}`);
-      }
-      return `<svg viewBox="0 0 ${size} ${size}"><polygon points="${pts.join(' ')}" fill="${s.color}" stroke="#2b2418" stroke-width="2" stroke-linejoin="round"/></svg>`;
-    }
-    return '';
+    const key = `${sym}@${size}`;
+    if (_iconCache[key]) return _iconCache[key];
+    const scale = 2;
+    const off = document.createElement('canvas');
+    off.width = Math.round(size * scale);
+    off.height = Math.round(size * scale);
+    const oc = off.getContext('2d');
+    oc.scale(scale, scale);
+    // Inset a touch so stems/leaves don't get clipped.
+    drawFruit(oc, sym, size / 2, size / 2 + 1, size - 4);
+    const html = `<img src="${off.toDataURL()}" width="${size}" height="${size}" style="display:block" alt="${displayName(sym)}">`;
+    _iconCache[key] = html;
+    return html;
   }
 
   // ---------- Input ----------
@@ -566,7 +557,7 @@
           rot: rand(0, Math.PI * 2),
           rotV: rand(-6, 6),
           size: rand(6, 12),
-          color: ['#dc5a5a', '#468cdc', '#5ab464', '#c8a040', '#b070d0', '#ddb05a'][Math.floor(Math.random() * 6)],
+          color: ['#e84545', '#ff9933', '#ee6f88', '#f4c93b', '#9156c4', '#62b14a'][Math.floor(Math.random() * 6)],
           life: rand(1.0, 1.6),
           maxLife: 1.6,
           gravity: 600,
@@ -588,7 +579,7 @@
     } else {
       // Find which symbols are wrong
       const wrongs = L.symbols.filter(s => state.guesses[s] !== L.values[s]);
-      showMsg(`Not quite — check ${wrongs.map(w => w[0].toUpperCase() + w.slice(1)).join(', ')}.`, 'error');
+      showMsg(`Not quite — check ${wrongs.map(displayName).join(', ')}.`, 'error');
       for (const w of wrongs) flashSlot(w, 'incorrect');
     }
   }
@@ -1223,73 +1214,273 @@
   }
 
   function drawCanvasSymbol(sym, cx, cy, size) {
-    const s = SYMBOLS[sym];
+    // Soft drop shadow on the canvas (the dock-icon path skips this to keep PNGs tight).
     const r = size / 2;
-    // Drop shadow under the symbol — small soft ellipse.
     ctx.fillStyle = 'rgba(43, 36, 24, 0.22)';
     ctx.beginPath();
-    ctx.ellipse(cx, cy + r * 0.95, r * 0.85, r * 0.18, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy + r * 0.95, r * 0.78, r * 0.16, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Body
-    ctx.fillStyle = s.color;
-    ctx.strokeStyle = '#2b2418';
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    if (sym === 'circle') {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-    } else if (sym === 'square') {
-      roundRect(cx - r, cy - r, size, size, 3);
-      ctx.fill(); ctx.stroke();
-    } else if (sym === 'triangle') {
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - r);
-      ctx.lineTo(cx + r, cy + r * 0.85);
-      ctx.lineTo(cx - r, cy + r * 0.85);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-    } else if (sym === 'diamond') {
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - r);
-      ctx.lineTo(cx + r, cy);
-      ctx.lineTo(cx, cy + r);
-      ctx.lineTo(cx - r, cy);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-    } else if (sym === 'star') {
-      const pts = [];
-      for (let i = 0; i < 10; i++) {
-        const rr = i % 2 === 0 ? r : r * 0.45;
-        const a = -Math.PI / 2 + (i / 10) * Math.PI * 2;
-        pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]);
-      }
-      ctx.beginPath();
-      for (let i = 0; i < pts.length; i++) {
-        if (i === 0) ctx.moveTo(pts[i][0], pts[i][1]);
-        else ctx.lineTo(pts[i][0], pts[i][1]);
-      }
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-    }
-    // Eyes (cute personality)
-    const ey = sym === 'triangle' ? cy + r * 0.1 : cy - r * 0.1;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(cx - r * 0.25, ey, r * 0.18, 0, Math.PI * 2);
-    ctx.arc(cx + r * 0.25, ey, r * 0.18, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#2b2418';
-    ctx.beginPath();
-    ctx.arc(cx - r * 0.22, ey + 1, r * 0.09, 0, Math.PI * 2);
-    ctx.arc(cx + r * 0.28, ey + 1, r * 0.09, 0, Math.PI * 2);
-    ctx.fill();
-    // Glossy highlight on the upper-left — sells the cartoon vibe.
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
-    ctx.beginPath();
-    ctx.ellipse(cx - r * 0.35, cy - r * 0.55, r * 0.32, r * 0.16, -0.5, 0, Math.PI * 2);
-    ctx.fill();
+    drawFruit(ctx, sym, cx, cy, size);
   }
+
+  // ---------- Cartoon fruit renderer (shared by canvas and dock icons) ----------
+  const INK = '#2b2418';
+  function drawFruit(c, sym, cx, cy, size) {
+    c.save();
+    c.lineJoin = 'round';
+    c.lineCap = 'round';
+    const fruit = SYMBOLS[sym] && SYMBOLS[sym].fruit;
+    const fn = FRUIT_DRAW[fruit];
+    if (fn) fn(c, cx, cy, size);
+    c.restore();
+  }
+
+  function fruitFace(c, cx, cy, scale) {
+    // Eye whites
+    c.fillStyle = '#fff';
+    c.beginPath();
+    c.arc(cx - scale * 0.32, cy - scale * 0.04, scale * 0.18, 0, Math.PI * 2);
+    c.arc(cx + scale * 0.32, cy - scale * 0.04, scale * 0.18, 0, Math.PI * 2);
+    c.fill();
+    // Pupils
+    c.fillStyle = INK;
+    c.beginPath();
+    c.arc(cx - scale * 0.3, cy - scale * 0.02, scale * 0.09, 0, Math.PI * 2);
+    c.arc(cx + scale * 0.34, cy - scale * 0.02, scale * 0.09, 0, Math.PI * 2);
+    c.fill();
+    // Cheeks
+    c.fillStyle = 'rgba(255, 120, 130, 0.55)';
+    c.beginPath();
+    c.arc(cx - scale * 0.42, cy + scale * 0.2, scale * 0.12, 0, Math.PI * 2);
+    c.arc(cx + scale * 0.42, cy + scale * 0.2, scale * 0.12, 0, Math.PI * 2);
+    c.fill();
+    // Smile
+    c.strokeStyle = INK;
+    c.lineWidth = Math.max(1.1, scale * 0.06);
+    c.beginPath();
+    c.arc(cx, cy + scale * 0.12, scale * 0.22, 0.15 * Math.PI, 0.85 * Math.PI);
+    c.stroke();
+  }
+
+  const FRUIT_DRAW = {
+    apple(c, cx, cy, size) {
+      const r = size / 2;
+      // Stem
+      c.fillStyle = '#6b3a1a';
+      c.strokeStyle = INK;
+      c.lineWidth = Math.max(1.1, r * 0.1);
+      c.beginPath();
+      c.moveTo(cx - r * 0.08, cy - r * 0.85);
+      c.lineTo(cx - r * 0.04, cy - r * 1.08);
+      c.lineTo(cx + r * 0.06, cy - r * 1.08);
+      c.lineTo(cx + r * 0.04, cy - r * 0.85);
+      c.closePath();
+      c.fill(); c.stroke();
+      // Leaf
+      c.save();
+      c.translate(cx + r * 0.05, cy - r * 1.02);
+      c.rotate(-0.55);
+      c.fillStyle = '#62b14a';
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.bezierCurveTo(r * 0.55, -r * 0.18, r * 0.55, r * 0.18, 0, 0);
+      c.closePath();
+      c.fill(); c.stroke();
+      c.strokeStyle = '#3d6e23';
+      c.lineWidth = Math.max(0.9, r * 0.05);
+      c.beginPath();
+      c.moveTo(0, 0); c.lineTo(r * 0.42, 0);
+      c.stroke();
+      c.restore();
+      // Body — apple silhouette with the classic top dimple
+      c.fillStyle = '#e84545';
+      c.strokeStyle = INK;
+      c.lineWidth = Math.max(1.2, r * 0.12);
+      c.beginPath();
+      c.moveTo(cx, cy - r * 0.78);
+      c.bezierCurveTo(cx - r * 0.45, cy - r * 0.95, cx - r * 1.05, cy - r * 0.4, cx - r * 1.0, cy + r * 0.15);
+      c.bezierCurveTo(cx - r * 0.95, cy + r * 0.85, cx - r * 0.4, cy + r * 1.05, cx, cy + r * 0.92);
+      c.bezierCurveTo(cx + r * 0.4, cy + r * 1.05, cx + r * 0.95, cy + r * 0.85, cx + r * 1.0, cy + r * 0.15);
+      c.bezierCurveTo(cx + r * 1.05, cy - r * 0.4, cx + r * 0.45, cy - r * 0.95, cx, cy - r * 0.78);
+      c.closePath();
+      c.fill(); c.stroke();
+      // Highlight
+      c.fillStyle = 'rgba(255,255,255,0.42)';
+      c.beginPath();
+      c.ellipse(cx - r * 0.45, cy - r * 0.25, r * 0.28, r * 0.14, -0.55, 0, Math.PI * 2);
+      c.fill();
+      fruitFace(c, cx, cy + r * 0.18, r * 0.78);
+    },
+
+    orange(c, cx, cy, size) {
+      const r = size / 2;
+      // Leaf at top
+      c.save();
+      c.translate(cx + r * 0.2, cy - r * 0.92);
+      c.rotate(-0.4);
+      c.fillStyle = '#62b14a';
+      c.strokeStyle = INK;
+      c.lineWidth = Math.max(1.1, r * 0.1);
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.bezierCurveTo(r * 0.55, -r * 0.16, r * 0.55, r * 0.16, 0, 0);
+      c.closePath();
+      c.fill(); c.stroke();
+      c.restore();
+      // Short brown stem nub
+      c.fillStyle = '#6b3a1a';
+      c.fillRect(cx - r * 0.06, cy - r * 0.98, r * 0.12, r * 0.16);
+      c.strokeRect(cx - r * 0.06, cy - r * 0.98, r * 0.12, r * 0.16);
+      // Body — round
+      c.fillStyle = '#ff9933';
+      c.strokeStyle = INK;
+      c.lineWidth = Math.max(1.2, r * 0.12);
+      c.beginPath();
+      c.arc(cx, cy + r * 0.05, r * 0.94, 0, Math.PI * 2);
+      c.fill(); c.stroke();
+      // Peel texture — scattered darker stipples
+      c.fillStyle = '#d8741a';
+      const dots = [[-0.32, -0.18], [0.25, -0.3], [0.42, 0.15], [-0.12, 0.42], [0.05, -0.42], [-0.5, 0.18]];
+      for (const [dx, dy] of dots) {
+        c.beginPath();
+        c.arc(cx + dx * r, cy + dy * r + r * 0.05, r * 0.06, 0, Math.PI * 2);
+        c.fill();
+      }
+      // Highlight
+      c.fillStyle = 'rgba(255,255,255,0.4)';
+      c.beginPath();
+      c.ellipse(cx - r * 0.4, cy - r * 0.3, r * 0.26, r * 0.12, -0.5, 0, Math.PI * 2);
+      c.fill();
+      fruitFace(c, cx, cy + r * 0.18, r * 0.78);
+    },
+
+    watermelon(c, cx, cy, size) {
+      const r = size / 2;
+      // Wedge: flat top, rounded bottom (classic cartoon slice)
+      // Green rind — outermost arc
+      c.fillStyle = '#62b14a';
+      c.strokeStyle = INK;
+      c.lineWidth = Math.max(1.2, r * 0.12);
+      c.beginPath();
+      c.moveTo(cx - r * 0.98, cy - r * 0.45);
+      c.lineTo(cx + r * 0.98, cy - r * 0.45);
+      c.arc(cx, cy - r * 0.45, r * 0.98, 0, Math.PI);
+      c.closePath();
+      c.fill(); c.stroke();
+      // Inner white-rind ring
+      c.fillStyle = '#f4f7d4';
+      c.beginPath();
+      c.moveTo(cx - r * 0.82, cy - r * 0.45);
+      c.lineTo(cx + r * 0.82, cy - r * 0.45);
+      c.arc(cx, cy - r * 0.45, r * 0.82, 0, Math.PI);
+      c.closePath();
+      c.fill();
+      // Pink flesh
+      c.fillStyle = '#ee6f88';
+      c.beginPath();
+      c.moveTo(cx - r * 0.7, cy - r * 0.45);
+      c.lineTo(cx + r * 0.7, cy - r * 0.45);
+      c.arc(cx, cy - r * 0.45, r * 0.7, 0, Math.PI);
+      c.closePath();
+      c.fill();
+      // Highlight on flesh
+      c.fillStyle = 'rgba(255,255,255,0.32)';
+      c.beginPath();
+      c.ellipse(cx - r * 0.35, cy - r * 0.2, r * 0.24, r * 0.08, -0.1, 0, Math.PI * 2);
+      c.fill();
+      // Seeds
+      c.fillStyle = '#2b1a0a';
+      const seeds = [[-0.4, 0.05], [-0.15, 0.0], [0.15, 0.05], [0.4, 0.0], [-0.28, 0.32], [0.0, 0.35], [0.28, 0.32]];
+      for (const [dx, dy] of seeds) {
+        c.beginPath();
+        c.ellipse(cx + dx * r, cy + dy * r, r * 0.06, r * 0.1, 0, 0, Math.PI * 2);
+        c.fill();
+      }
+      fruitFace(c, cx, cy + r * 0.5, r * 0.55);
+    },
+
+    banana(c, cx, cy, size) {
+      const r = size / 2;
+      // Crescent body — outer arc then inner arc back
+      c.fillStyle = '#f4c93b';
+      c.strokeStyle = INK;
+      c.lineWidth = Math.max(1.2, r * 0.12);
+      c.beginPath();
+      c.moveTo(cx - r * 0.78, cy + r * 0.5);
+      c.bezierCurveTo(cx - r * 0.95, cy - r * 0.2, cx - r * 0.1, cy - r * 0.95, cx + r * 0.85, cy - r * 0.55);
+      c.bezierCurveTo(cx + r * 0.95, cy - r * 0.5, cx + r * 0.95, cy - r * 0.35, cx + r * 0.85, cy - r * 0.3);
+      c.bezierCurveTo(cx + r * 0.15, cy - r * 0.55, cx - r * 0.4, cy + r * 0.05, cx - r * 0.55, cy + r * 0.55);
+      c.bezierCurveTo(cx - r * 0.6, cy + r * 0.62, cx - r * 0.75, cy + r * 0.6, cx - r * 0.78, cy + r * 0.5);
+      c.closePath();
+      c.fill(); c.stroke();
+      // Brown tips
+      c.fillStyle = '#6b3a1a';
+      c.beginPath();
+      c.arc(cx - r * 0.74, cy + r * 0.52, r * 0.1, 0, Math.PI * 2);
+      c.arc(cx + r * 0.88, cy - r * 0.45, r * 0.09, 0, Math.PI * 2);
+      c.fill(); c.stroke();
+      // Inner ridge highlight
+      c.strokeStyle = 'rgba(255,255,255,0.55)';
+      c.lineWidth = Math.max(1.0, r * 0.07);
+      c.beginPath();
+      c.moveTo(cx - r * 0.55, cy + r * 0.32);
+      c.bezierCurveTo(cx - r * 0.3, cy - r * 0.25, cx + r * 0.3, cy - r * 0.55, cx + r * 0.7, cy - r * 0.45);
+      c.stroke();
+      fruitFace(c, cx + r * 0.05, cy - r * 0.05, r * 0.5);
+    },
+
+    grapes(c, cx, cy, size) {
+      const r = size / 2;
+      const grapeR = r * 0.3;
+      // Stem
+      c.strokeStyle = '#5a3818';
+      c.lineWidth = Math.max(1.2, r * 0.1);
+      c.beginPath();
+      c.moveTo(cx, cy - r * 0.55);
+      c.lineTo(cx, cy - r * 0.95);
+      c.stroke();
+      // Leaf
+      c.save();
+      c.translate(cx + r * 0.1, cy - r * 0.92);
+      c.rotate(-0.45);
+      c.fillStyle = '#62b14a';
+      c.strokeStyle = INK;
+      c.lineWidth = Math.max(1.0, r * 0.08);
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.bezierCurveTo(r * 0.45, -r * 0.18, r * 0.55, r * 0.12, 0, 0);
+      c.closePath();
+      c.fill(); c.stroke();
+      c.restore();
+      // Cluster layout — five-row inverted triangle, light at smallest size
+      const layout = [
+        [0, -0.35],
+        [-0.42, -0.05], [0.42, -0.05],
+        [-0.22, 0.32], [0.22, 0.32],
+        [0, 0.62],
+      ];
+      // Back shadow blob for cohesion
+      c.fillStyle = 'rgba(90, 50, 117, 0.6)';
+      c.beginPath();
+      c.ellipse(cx, cy + r * 0.18, r * 0.85, r * 0.7, 0, 0, Math.PI * 2);
+      c.fill();
+      // Individual grapes
+      c.strokeStyle = INK;
+      c.lineWidth = Math.max(1.1, r * 0.09);
+      for (const [dx, dy] of layout) {
+        c.fillStyle = '#9156c4';
+        c.beginPath();
+        c.arc(cx + dx * r, cy + dy * r, grapeR, 0, Math.PI * 2);
+        c.fill(); c.stroke();
+        c.fillStyle = 'rgba(255,255,255,0.4)';
+        c.beginPath();
+        c.ellipse(cx + dx * r - grapeR * 0.32, cy + dy * r - grapeR * 0.36, grapeR * 0.3, grapeR * 0.14, -0.5, 0, Math.PI * 2);
+        c.fill();
+      }
+      // Face on the middle grape so identity reads at small sizes
+      fruitFace(c, cx, cy + r * 0.32, grapeR * 0.95);
+    },
+  };
 
   function drawParticles() {
     for (const p of state.particles) {
