@@ -518,12 +518,14 @@
       if (mole.state === 'up' || mole.state === 'rising') {
         ctx.fillStyle = '#fff7e0';
         ctx.strokeStyle = '#2a1a10';
-        ctx.lineWidth = 2;
-        const sw = rad * 0.75, sh = rad * 0.45;
+        ctx.lineWidth = Math.max(2, rad * 0.08);
+        const valueText = String(mole.value);
+        const sw = rad * 1.35;
+        const sh = rad * 0.72;
         ctx.beginPath();
         const sx = cx - sw / 2;
-        const sy = cy + rad * 0.18;
-        const rr = 4;
+        const sy = cy + rad * 0.1;
+        const rr = Math.max(5, rad * 0.14);
         ctx.moveTo(sx + rr, sy);
         ctx.lineTo(sx + sw - rr, sy);
         ctx.quadraticCurveTo(sx + sw, sy, sx + sw, sy + rr);
@@ -536,10 +538,17 @@
         ctx.closePath();
         ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#2a1a10';
-        ctx.font = `bold ${Math.round(sh * 0.85)}px "Lilita One", sans-serif`;
+        const maxTextWidth = sw * 0.86;
+        let fontSize = sh * 0.95;
+        if (valueText.length >= 3) fontSize = sh * 0.78;
+        ctx.font = `bold ${Math.round(fontSize)}px "Lilita One", sans-serif`;
+        while (ctx.measureText(valueText).width > maxTextWidth && fontSize > rad * 0.34) {
+          fontSize -= 1;
+          ctx.font = `bold ${Math.round(fontSize)}px "Lilita One", sans-serif`;
+        }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(String(mole.value), cx, cy + rad * 0.18 + sh / 2);
+        ctx.fillText(valueText, cx, sy + sh / 2 + rad * 0.02);
       }
       ctx.restore();
     }
