@@ -718,9 +718,11 @@
     }
   }
   function showFloater(x, y, text, color) {
+    window.MathArcadeAudio?.event(text);
     state.floaters.push({ x, y, text, color, t: 0, dur: 1.1, big: false });
   }
   function showFloaterCenter(text, color) {
+    window.MathArcadeAudio?.event(text);
     state.floaters.push({ x: W / 2, y: H * 0.4, text, color, t: 0, dur: 1.2, big: true });
   }
 

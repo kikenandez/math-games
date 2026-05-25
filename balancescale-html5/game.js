@@ -433,6 +433,7 @@
   }
 
   function showMsg(text, type = '') {
+    window.MathArcadeAudio?.event(type === 'success' ? 'LEVEL CLEAR' : text);
     const el = document.getElementById('msg');
     el.textContent = text;
     el.className = '';

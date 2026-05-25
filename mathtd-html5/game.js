@@ -537,6 +537,7 @@
   }
 
   function showFloater(c, r, text, color) {
+    window.MathArcadeAudio?.event(text);
     const p = cellCenter(c, r);
     showFloaterAt(p.x, p.y, text, color);
   }
@@ -544,6 +545,7 @@
     state.floaters.push({ x, y, text, color, t: 0, dur: 0.9, big: false });
   }
   function showFloaterCenter(text, color) {
+    window.MathArcadeAudio?.event(text);
     state.floaters.push({ x: W / 2, y: H * 0.42, text, color, t: 0, dur: 1.4, big: true });
   }
   function showStackedBanner(title, chips, color) {

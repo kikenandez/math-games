@@ -589,10 +589,12 @@
     }
   }
   function showFloater(tile, text, color) {
+    window.MathArcadeAudio?.event(text);
     const p = tilePos(tile.r, tile.c);
     state.floaters.push({ x: p.x, y: p.y - 24, text, color, t: 0, dur: 1.0, big: false });
   }
   function showFloaterCenter(text, color) {
+    window.MathArcadeAudio?.event(text);
     state.floaters.push({ x: W / 2, y: H * 0.4, text, color, t: 0, dur: 1.4, big: true });
   }
 

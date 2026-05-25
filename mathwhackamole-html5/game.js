@@ -332,12 +332,14 @@
     }
   }
   function showFloater(col, row, text, color) {
+    window.MathArcadeAudio?.event(text);
     const m = getMetrics();
     const x = m.x0 + (col + 0.5) * m.cell;
     const y = m.y0 + (row + 0.3) * m.cell;
     state.floaters.push({ x, y, text, color, t: 0, dur: 1.0, big: false });
   }
   function showFloaterCenter(text, color) {
+    window.MathArcadeAudio?.event(text);
     state.floaters.push({ x: W / 2, y: H * 0.42, text, color, t: 0, dur: 1.4, big: true });
   }
 
