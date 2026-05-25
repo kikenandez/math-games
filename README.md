@@ -25,6 +25,10 @@ If you enjoy these games, please consider [supporting on Patreon ❤](https://ww
 
 Open `index.html` in a browser. Everything runs client-side — no server needed.
 
+## Languages
+
+The arcade supports English, French, and Spanish. Use the language switcher in the bottom-right corner, or open the site with `?lang=fr` or `?lang=es`.
+
 ## Publishing
 
 This project is plain HTML, CSS, and JavaScript. No build step is required.
