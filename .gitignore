@@ -45,3 +45,9 @@ yarn-error.log*
 .tmp/
 tmp/
 .local/
+
+# Playwright (MCP browser artifacts, traces, screenshots)
+.playwright/
+.playwright-mcp/
+playwright-report/
+test-results/
