@@ -25,28 +25,12 @@ If you enjoy these games, please consider [supporting on Patreon ❤](https://ww
 
 Open `index.html` in a browser. Everything runs client-side — no server needed.
 
-## Building for production
+## Publishing
 
-Install the build dependencies once:
+This project is plain HTML, CSS, and JavaScript. No build step is required.
 
-```bash
-npm install
-```
-
-Then build the minified distribution into `dist/`:
-
-```bash
-npm run build
-```
-
-Deploy the contents of `dist/` to any static host:
+Deploy the repository root to any static host:
 GitHub Pages, Netlify, Vercel, Cloudflare Pages, S3 + CloudFront, or a plain VPS.
-
-Preview the built site locally:
-
-```bash
-npm run preview
-```
 
 ## License
 
