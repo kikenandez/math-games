@@ -597,6 +597,14 @@
     const rect = canvas.getBoundingClientRect();
     fireMissile(e.clientX - rect.left, e.clientY - rect.top, null);
   });
+  canvas.addEventListener('touchstart', (e) => {
+    if (state.phase !== 'playing') return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    fireMissile(touch.clientX - rect.left, touch.clientY - rect.top, null);
+  }, { passive: false });
   window.addEventListener('keydown', (e) => {
     if (state.phase === 'title' || state.phase === 'game_over') {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(); return; }

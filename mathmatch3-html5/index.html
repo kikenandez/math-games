@@ -30,7 +30,8 @@
     user-select: none;
   }
   #game-wrap { position: fixed; inset: 0; overflow: hidden; }
-  canvas#game { display: block; width: 100%; height: 100%; cursor: pointer; }
+  canvas#game { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+  canvas#game:active { cursor: grabbing; }
 
   #hud {
     position: absolute; top: 14px; left: 14px; right: 118px;
@@ -306,7 +307,7 @@
     <div class="card" id="title-card">
       <h1><span class="acc">MATH</span> MATCH-3</h1>
       <div class="sub">swap adjacent tiles · clear lines that match the rule</div>
-      <p>Click a tile, then click an adjacent tile to <b>swap them</b>. A line of <b>3+ tiles in a row or column</b> whose values <b>all match the active rule</b> clears and scores. <b>Right-click</b> a cell to toggle a cue mark for <b style="color:#ff5c7c">-25 points</b>. The <b>hint</b> button shows one playable swap and costs <b style="color:#5cd9ff">1 move</b>.</p>
+      <p><b>Drag</b> a tile toward a neighbor to slice it over and swap, or <b>tap</b> a tile and then tap an adjacent one. A line of <b>3+ tiles in a row or column</b> whose values <b>all match the active rule</b> clears and scores. <b>Right-click</b> a cell to toggle a cue mark for <b style="color:#ff5c7c">-25 points</b>. The <b>hint</b> button shows one playable swap and costs <b style="color:#5cd9ff">1 move</b>.</p>
       <button class="big-btn" id="start-btn">START</button>
     </div>
   </div>

@@ -79,6 +79,7 @@
     hint: null,                 // { a, b, t, dur }
     shake: 0, shakeX: 0, shakeY: 0,
     comboMul: 1,
+    drag: null,                 // { cell:{c,r}, dx, dy } while the player is swiping
   };
 
   const rand = (min, max) => Math.random() * (max - min) + min;
@@ -252,6 +253,11 @@
   }
 
   // ===== Input =====
+  // Two interaction modes coexist:
+  //   * "Slice": press a tile, drag toward a neighbor — releases as a swap as
+  //     soon as the drag passes ~35% of a cell along the dominant axis.
+  //   * Tap fallback: a press that ends near where it started is treated as a
+  //     tap (selects, then tap-neighbor to swap, same as before).
   function pickCellAt(x, y) {
     const m = getMetrics();
     const c = Math.floor((x - m.x0) / m.cell);
@@ -259,21 +265,120 @@
     if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return null;
     return { c, r };
   }
-  canvas.addEventListener('mousedown', handleClick);
-  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  canvas.addEventListener('touchstart', (e) => {
-    const t = e.touches[0];
-    handleClick({ clientX: t.clientX, clientY: t.clientY, preventDefault: () => e.preventDefault() });
-  }, { passive: false });
-  function handleClick(e) {
-    if (state.phase !== 'playing' || state.busy || state.paused) return;
-    e.preventDefault();
-    const hit = pickCellAt(e.clientX, e.clientY);
-    if (!hit) return;
+
+  const DRAG_SWAP_THRESHOLD = 0.35; // fraction of a cell before a swap commits
+  let pointerActive = false;
+  let pointerOrigin = null;  // { x, y }
+  let pointerCell = null;    // { c, r } cell the press started on
+  let pointerMoved = false;  // true once the pointer has left the press cell
+
+  canvas.addEventListener('mousedown', (e) => {
     if (e.button === 2 || e.ctrlKey) {
-      toggleCueMark(hit);
+      e.preventDefault();
+      if (state.phase !== 'playing' || state.busy || state.paused) return;
+      const hit = pickCellAt(e.clientX, e.clientY);
+      if (hit) toggleCueMark(hit);
       return;
     }
+    e.preventDefault();
+    pointerDown(e.clientX, e.clientY);
+  });
+  canvas.addEventListener('mousemove', (e) => pointerMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup', (e) => pointerUp(e.clientX, e.clientY));
+  canvas.addEventListener('mouseleave', pointerCancel);
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    if (!t) return;
+    pointerDown(t.clientX, t.clientY);
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    if (!t) return;
+    pointerMove(t.clientX, t.clientY);
+  }, { passive: false });
+  canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    if (!t) { pointerCancel(); return; }
+    pointerUp(t.clientX, t.clientY);
+  }, { passive: false });
+  canvas.addEventListener('touchcancel', (e) => { e.preventDefault(); pointerCancel(); }, { passive: false });
+
+  function pointerDown(x, y) {
+    if (state.phase !== 'playing' || state.busy || state.paused) return;
+    const hit = pickCellAt(x, y);
+    if (!hit) return;
+    pointerActive = true;
+    pointerMoved = false;
+    pointerOrigin = { x, y };
+    pointerCell = hit;
+    state.drag = { cell: hit, dx: 0, dy: 0 };
+  }
+
+  function pointerMove(x, y) {
+    if (!pointerActive || !pointerCell) return;
+    if (state.busy || state.paused) return;
+    const dx = x - pointerOrigin.x;
+    const dy = y - pointerOrigin.y;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) pointerMoved = true;
+    const m = getMetrics();
+    const threshold = m.cell * DRAG_SWAP_THRESHOLD;
+    // Pick the dominant axis and resolve to a single neighbor cell.
+    let neighbor = null;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (Math.abs(dx) > threshold) {
+        neighbor = { c: pointerCell.c + (dx > 0 ? 1 : -1), r: pointerCell.r };
+      }
+    } else {
+      if (Math.abs(dy) > threshold) {
+        neighbor = { c: pointerCell.c, r: pointerCell.r + (dy > 0 ? 1 : -1) };
+      }
+    }
+    if (neighbor && neighbor.c >= 0 && neighbor.c < COLS && neighbor.r >= 0 && neighbor.r < ROWS) {
+      // Commit the swap. Cancel any pending tap selection so behaviour is unambiguous.
+      const a = pointerCell;
+      const b = neighbor;
+      pointerActive = false;
+      pointerCell = null;
+      state.drag = null;
+      state.hint = null;
+      state.selected = null;
+      state.swapAnim = { a, b, t: 0, dur: 0.18, back: false };
+      state.busy = true;
+      return;
+    }
+    // Clamp the visual lift so it tops out at one cell in either axis.
+    state.drag.dx = clamp(dx, -m.cell, m.cell);
+    state.drag.dy = clamp(dy, -m.cell, m.cell);
+  }
+
+  function pointerUp(x, y) {
+    if (!pointerActive) return;
+    const wasMoved = pointerMoved;
+    const startCell = pointerCell;
+    pointerActive = false;
+    pointerCell = null;
+    state.drag = null;
+    if (wasMoved) return; // drag released below threshold — abort silently
+    // No real movement → treat as a tap, preserving the legacy two-tap workflow.
+    if (state.phase !== 'playing' || state.busy || state.paused) return;
+    const hit = pickCellAt(x, y) || startCell;
+    if (!hit) return;
+    handleTap(hit);
+  }
+
+  function pointerCancel() {
+    pointerActive = false;
+    pointerCell = null;
+    pointerMoved = false;
+    state.drag = null;
+  }
+
+  function handleTap(hit) {
     state.hint = null;
     if (!state.selected) {
       state.selected = hit;
@@ -281,17 +386,16 @@
     }
     const a = state.selected;
     const b = hit;
-    const adjacent = (Math.abs(a.c - b.c) + Math.abs(a.r - b.r)) === 1;
     if (a.c === b.c && a.r === b.r) {
       state.selected = null;
       return;
     }
+    const adjacent = (Math.abs(a.c - b.c) + Math.abs(a.r - b.r)) === 1;
     if (!adjacent) {
-      // Switch selection
+      // Switch selection to the new tile.
       state.selected = hit;
       return;
     }
-    // Start swap animation
     state.swapAnim = { a, b, t: 0, dur: 0.18, back: false };
     state.busy = true;
     state.selected = null;
@@ -700,11 +804,18 @@
           const e = easeOut(ft);
           cy = lerp(cy - m.cell * 1.2, cy, e);
         }
-        drawTile(cx, cy, m.cell, t, r, c);
+        // Slice drag offset: only applied to the tile under the pointer.
+        const drag = state.drag;
+        const dragLift = drag && drag.cell.r === r && drag.cell.c === c;
+        if (dragLift) {
+          cx += drag.dx;
+          cy += drag.dy;
+        }
+        drawTile(cx, cy, m.cell, t, r, c, dragLift);
       }
     }
   }
-  function drawTile(cx, cy, size, t, r, c) {
+  function drawTile(cx, cy, size, t, r, c, lifted = false) {
     const inset = size * 0.08;
     const rectS = size - inset * 2;
     let alpha = 1;
@@ -716,6 +827,11 @@
       ctx.translate(cx, cy);
       ctx.scale(scale, scale);
       ctx.globalAlpha = alpha;
+      ctx.translate(-cx, -cy);
+    } else if (lifted) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1.08, 1.08);
       ctx.translate(-cx, -cy);
     }
     // Shadow
@@ -748,7 +864,7 @@
     ctx.strokeText(String(t.value), cx, cy + 2);
     ctx.fillText(String(t.value), cx, cy + 2);
     if (t.marked) drawCueFrame(cx, cy, size);
-    if (t.removing) {
+    if (t.removing || lifted) {
       ctx.restore();
     }
   }
