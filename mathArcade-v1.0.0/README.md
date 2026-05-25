@@ -50,4 +50,4 @@ npm run preview
 
 ## License
 
-[MIT](LICENSE) — open source. Credit `kikenandez` if you redistribute or build on this work.
+[CC BY-NC-SA 4.0](LICENSE) — source-available. Non-commercial use only. Credit `kikenandez` if you redistribute or build on this work.
