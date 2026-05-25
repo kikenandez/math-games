@@ -367,6 +367,144 @@
   };
 
   const dict = map[lang] || {};
+  const dynamic = {
+    fr: {
+      rules: {
+        'EVEN NUMBERS': 'NOMBRES PAIRS',
+        'ODD NUMBERS': 'NOMBRES IMPAIRS',
+        'MULTIPLES of 3': 'MULTIPLES DE 3',
+        'MULTIPLES of 5': 'MULTIPLES DE 5',
+        'MULTIPLES OF 2': 'MULTIPLES DE 2',
+        'MULTIPLES OF 3': 'MULTIPLES DE 3',
+        'MULTIPLES OF 5': 'MULTIPLES DE 5',
+        'PRIMES': 'NOMBRES PREMIERS',
+        'PRIME NUMBERS': 'NOMBRES PREMIERS',
+        'VALUES ≥ 7': 'VALEURS ≥ 7',
+        'Eat anything': 'Mangez tout',
+        'Eat EVEN numbers': 'Mangez les nombres PAIRS',
+        'Eat ODD numbers': 'Mangez les nombres IMPAIRS',
+        'Eat MULTIPLES of 3': 'Mangez les MULTIPLES DE 3',
+        'Eat MULTIPLES of 5': 'Mangez les MULTIPLES DE 5',
+        'Eat PRIMES': 'Mangez les NOMBRES PREMIERS',
+        'Eat in ASCENDING order': 'Mangez dans l’ordre CROISSANT',
+        'Eat in DESCENDING order': 'Mangez dans l’ordre DÉCROISSANT',
+        'DESTROY IF ODD': 'DÉTRUIRE SI IMPAIR',
+        'DESTROY IF EVEN': 'DÉTRUIRE SI PAIR',
+        'DESTROY IF MULTIPLE OF 3': 'DÉTRUIRE SI MULTIPLE DE 3',
+        'DESTROY IF MULTIPLE OF 4': 'DÉTRUIRE SI MULTIPLE DE 4',
+        'DESTROY IF MULTIPLE OF 5': 'DÉTRUIRE SI MULTIPLE DE 5',
+        'DESTROY IF PRIME': 'DÉTRUIRE SI PREMIER',
+        'DESTROY IF RESULT = 0': 'DÉTRUIRE SI RÉSULTAT = 0',
+        'DESTROY IF RESULT > 10': 'DÉTRUIRE SI RÉSULTAT > 10',
+        'DESTROY IF RESULT > 20': 'DÉTRUIRE SI RÉSULTAT > 20',
+        'DESTROY IF RESULT < 5': 'DÉTRUIRE SI RÉSULTAT < 5',
+        'DESTROY IF CONTAINS −': 'DÉTRUIRE SI CONTIENT −',
+        'DESTROY IF EXACTLY 2 OPERANDS': 'DÉTRUIRE SI EXACTEMENT 2 OPÉRANDES',
+        'DESTROY IF EXACTLY 3 OPERANDS': 'DÉTRUIRE SI EXACTEMENT 3 OPÉRANDES',
+        'DESTROY IF ≥4 OPERANDS': 'DÉTRUIRE SI ≥4 OPÉRANDES',
+        '1 visit exactly — revisit resets': '1 visite exactement — revisiter réinitialise',
+        '1 visit per tile': '1 visite par tuile'
+      },
+      exact: {
+        'Best': 'Meilleur',
+        'Best Combo': 'Meilleur combo',
+        'PLAY AGAIN': 'REJOUER',
+        'out of moves!': 'plus de coups !',
+        'NEW NUMBERS!': 'NOUVEAUX NOMBRES !',
+        'SHUFFLE!': 'MÉLANGE !',
+        'HINT  -1 MOVE': 'INDICE  -1 COUP',
+        'EAT': 'MANGEZ',
+        'Cleared': 'Éliminés',
+        'Defused': 'Désamorcées',
+        'Kills': 'Victoires',
+        'NO AMMO': 'PLUS DE MUNITIONS',
+        'BONUS CITY': 'VILLE BONUS',
+        'WRONG!': 'FAUX !',
+        'ESCAPED!': 'ÉCHAPPÉE !',
+        'DEFUSED!': 'DÉSAMORCÉE !',
+        'MOTHERSHIP!': 'VAISSEAU-MÈRE !',
+        'OVERLOAD!': 'SURCHARGE !',
+        'LANDING…': 'ATTERRISSAGE…',
+        'ALL CLEAR — LEVEL COMPLETE': 'TOUT EST FAIT — NIVEAU TERMINÉ',
+        'wall!': 'mur !',
+        'self bite!': 'mordu vous-même !',
+        'shrunk away!': 'rétréci jusqu’au bout !',
+        'too many misses!': 'trop de ratés !',
+        'too many escapes!': 'trop d’échappées !',
+        'base destroyed!': 'base détruite !',
+        'Fill in all answer boxes first.': 'Remplissez d’abord toutes les cases de réponse.',
+        'No more hints! Try checking your math.': 'Plus d’indices ! Revérifiez vos calculs.'
+      }
+    },
+    es: {
+      rules: {
+        'EVEN NUMBERS': 'NÚMEROS PARES',
+        'ODD NUMBERS': 'NÚMEROS IMPARES',
+        'MULTIPLES of 3': 'MÚLTIPLOS DE 3',
+        'MULTIPLES of 5': 'MÚLTIPLOS DE 5',
+        'MULTIPLES OF 2': 'MÚLTIPLOS DE 2',
+        'MULTIPLES OF 3': 'MÚLTIPLOS DE 3',
+        'MULTIPLES OF 5': 'MÚLTIPLOS DE 5',
+        'PRIMES': 'NÚMEROS PRIMOS',
+        'PRIME NUMBERS': 'NÚMEROS PRIMOS',
+        'VALUES ≥ 7': 'VALORES ≥ 7',
+        'Eat anything': 'Come cualquier cosa',
+        'Eat EVEN numbers': 'Come números PARES',
+        'Eat ODD numbers': 'Come números IMPARES',
+        'Eat MULTIPLES of 3': 'Come MÚLTIPLOS DE 3',
+        'Eat MULTIPLES of 5': 'Come MÚLTIPLOS DE 5',
+        'Eat PRIMES': 'Come NÚMEROS PRIMOS',
+        'Eat in ASCENDING order': 'Come en orden ASCENDENTE',
+        'Eat in DESCENDING order': 'Come en orden DESCENDENTE',
+        'DESTROY IF ODD': 'DESTRUIR SI IMPAR',
+        'DESTROY IF EVEN': 'DESTRUIR SI PAR',
+        'DESTROY IF MULTIPLE OF 3': 'DESTRUIR SI MÚLTIPLO DE 3',
+        'DESTROY IF MULTIPLE OF 4': 'DESTRUIR SI MÚLTIPLO DE 4',
+        'DESTROY IF MULTIPLE OF 5': 'DESTRUIR SI MÚLTIPLO DE 5',
+        'DESTROY IF PRIME': 'DESTRUIR SI PRIMO',
+        'DESTROY IF RESULT = 0': 'DESTRUIR SI RESULTADO = 0',
+        'DESTROY IF RESULT > 10': 'DESTRUIR SI RESULTADO > 10',
+        'DESTROY IF RESULT > 20': 'DESTRUIR SI RESULTADO > 20',
+        'DESTROY IF RESULT < 5': 'DESTRUIR SI RESULTADO < 5',
+        'DESTROY IF CONTAINS −': 'DESTRUIR SI CONTIENE −',
+        'DESTROY IF EXACTLY 2 OPERANDS': 'DESTRUIR SI EXACTAMENTE 2 OPERANDOS',
+        'DESTROY IF EXACTLY 3 OPERANDS': 'DESTRUIR SI EXACTAMENTE 3 OPERANDOS',
+        'DESTROY IF ≥4 OPERANDS': 'DESTRUIR SI ≥4 OPERANDOS',
+        '1 visit exactly — revisit resets': '1 visita exacta — revisitar reinicia',
+        '1 visit per tile': '1 visita por casilla'
+      },
+      exact: {
+        'Best': 'Mejor',
+        'Best Combo': 'Mejor combo',
+        'PLAY AGAIN': 'JUGAR DE NUEVO',
+        'out of moves!': 'sin movimientos',
+        'NEW NUMBERS!': '¡NUEVOS NÚMEROS!',
+        'SHUFFLE!': '¡MEZCLA!',
+        'HINT  -1 MOVE': 'PISTA  -1 MOVIMIENTO',
+        'EAT': 'COME',
+        'Cleared': 'Eliminados',
+        'Defused': 'Desarmadas',
+        'Kills': 'Bajas',
+        'NO AMMO': 'SIN MUNICIÓN',
+        'BONUS CITY': 'CIUDAD BONUS',
+        'WRONG!': '¡INCORRECTO!',
+        'ESCAPED!': '¡ESCAPÓ!',
+        'DEFUSED!': '¡DESARMADA!',
+        'MOTHERSHIP!': '¡NAVE NODRIZA!',
+        'OVERLOAD!': '¡SOBRECARGA!',
+        'LANDING…': 'ATERRIZANDO…',
+        'ALL CLEAR — LEVEL COMPLETE': 'TODO LIMPIO — NIVEL COMPLETADO',
+        'wall!': '¡pared!',
+        'self bite!': '¡te mordiste!',
+        'shrunk away!': '¡te encogiste del todo!',
+        'too many misses!': '¡demasiados fallos!',
+        'too many escapes!': '¡demasiados escapes!',
+        'base destroyed!': '¡base destruida!',
+        'Fill in all answer boxes first.': 'Primero rellena todas las casillas de respuesta.',
+        'No more hints! Try checking your math.': '¡No quedan pistas! Revisa tus cálculos.'
+      }
+    }
+  };
   const reverse = {};
   for (const locale of Object.keys(map)) {
     for (const [key, value] of Object.entries(map[locale])) reverse[value] = key;
@@ -376,20 +514,135 @@
     return reverse[value] || value;
   }
 
+  function dynamicText(value) {
+    const pack = dynamic[lang];
+    if (!pack) return null;
+    if (pack.exact[value]) return pack.exact[value];
+    if (pack.rules[value]) return pack.rules[value];
+
+    let match = value.match(/^(\d+\+\s*)(.+)$/);
+    if (match && pack.rules[match[2]]) return match[1] + pack.rules[match[2]];
+
+    match = value.match(/^LEVEL (\d+): (.+)$/);
+    if (match) {
+      const rule = pack.rules[match[2]] || match[2];
+      return lang === 'fr' ? `NIVEAU ${match[1]} : ${rule}` : `NIVEL ${match[1]}: ${rule}`;
+    }
+
+    match = value.match(/^LEVEL (\d+) CLEAR\s+\+(\d+)$/);
+    if (match) {
+      return lang === 'fr' ? `NIVEAU ${match[1]} RÉUSSI  +${match[2]}` : `NIVEL ${match[1]} SUPERADO  +${match[2]}`;
+    }
+
+    match = value.match(/^LEVEL (\d+)$/);
+    if (match) return lang === 'fr' ? `NIVEAU ${match[1]}` : `NIVEL ${match[1]}`;
+
+    match = value.match(/^LEVEL CLEAR\s+\+(.+)$/);
+    if (match) return lang === 'fr' ? `NIVEAU RÉUSSI  +${match[1]}` : `NIVEL SUPERADO  +${match[1]}`;
+
+    match = value.match(/^WAVE (\d+)$/);
+    if (match) return lang === 'fr' ? `VAGUE ${match[1]}` : `OLEADA ${match[1]}`;
+
+    match = value.match(/^WAVE (\d+)…$/);
+    if (match) return lang === 'fr' ? `VAGUE ${match[1]}…` : `OLEADA ${match[1]}…`;
+
+    match = value.match(/^START WAVE (\d+)$/);
+    if (match) return lang === 'fr' ? `LANCER LA VAGUE ${match[1]}` : `INICIAR OLEADA ${match[1]}`;
+
+    match = value.match(/^WAVE CLEAR\s+\+(.+)$/);
+    if (match) return lang === 'fr' ? `VAGUE RÉUSSIE  +${match[1]}` : `OLEADA SUPERADA  +${match[1]}`;
+
+    match = value.match(/^WAVE (\d+) CLEAR\s+\+(.+)$/);
+    if (match) return lang === 'fr' ? `VAGUE ${match[1]} RÉUSSIE  +${match[2]}` : `OLEADA ${match[1]} SUPERADA  +${match[2]}`;
+
+    match = value.match(/^COMBO ×(\d+)!$/);
+    if (match) return lang === 'fr' ? `COMBO ×${match[1]} !` : `¡COMBO ×${match[1]}!`;
+
+    match = value.match(/^MISS −(.+)$/);
+    if (match) return lang === 'fr' ? `RATÉ −${match[1]}` : `FALLO −${match[1]}`;
+
+    match = value.match(/^SPEED UP! (.+)$/);
+    if (match) return lang === 'fr' ? `VITESSE + ! ${match[1]}` : `¡MÁS VELOCIDAD! ${match[1]}`;
+
+    match = value.match(/^NEW RULE: (.+)$/);
+    if (match) {
+      const rule = pack.rules[match[1]] || match[1];
+      return lang === 'fr' ? `NOUVELLE RÈGLE : ${rule}` : `NUEVA REGLA: ${rule}`;
+    }
+
+    match = value.match(/^EAT (\d+) MORE!$/);
+    if (match) return lang === 'fr' ? `ENCORE ${match[1]} !` : `¡COME ${match[1]} MÁS!`;
+
+    match = value.match(/^EAT (.+)$/);
+    if (match) {
+      const rule = pack.rules[match[1]] || match[1];
+      return lang === 'fr' ? `MANGEZ ${rule}` : `COME ${rule}`;
+    }
+
+    match = value.match(/^food (\d+)\/(\d+)\s+·\s+combo ×(\d+)$/);
+    if (match) {
+      return lang === 'fr'
+        ? `repas ${match[1]}/${match[2]}  ·  combo ×${match[3]}`
+        : `comida ${match[1]}/${match[2]}  ·  combo ×${match[3]}`;
+    }
+
+    match = value.match(/^combo ×(\d+)\s+·\s+best ×(\d+)$/);
+    if (match) {
+      return lang === 'fr'
+        ? `combo ×${match[1]}  ·  meilleur ×${match[2]}`
+        : `combo ×${match[1]}  ·  mejor ×${match[2]}`;
+    }
+
+    match = value.match(/^L(\d+): (.+)$/);
+    if (match) {
+      const rule = pack.rules[match[2]] || match[2];
+      return lang === 'fr' ? `N${match[1]} : ${rule}` : `N${match[1]}: ${rule}`;
+    }
+
+    match = value.match(/^(\d+) visits exactly — revisit resets$/);
+    if (match) {
+      return lang === 'fr'
+        ? `${match[1]} visites exactement — revisiter réinitialise`
+        : `${match[1]} visitas exactas — revisitar reinicia`;
+    }
+
+    match = value.match(/^(\d+) visits per tile$/);
+    if (match) {
+      return lang === 'fr' ? `${match[1]} visites par tuile` : `${match[1]} visitas por casilla`;
+    }
+
+    match = value.match(/^(\d+)\/(\d+) eaten$/);
+    if (match) return lang === 'fr' ? `${match[1]}/${match[2]} mangés` : `${match[1]}/${match[2]} comidos`;
+
+    match = value.match(/^level (\d+) clear$/);
+    if (match) return lang === 'fr' ? `niveau ${match[1]} réussi` : `nivel ${match[1]} superado`;
+
+    match = value.match(/^Not quite — check (.+)\.$/);
+    if (match) return lang === 'fr' ? `Pas tout à fait — vérifiez ${match[1]}.` : `Casi — revisa ${match[1]}.`;
+
+    return null;
+  }
+
   function tr(value) {
     if (!value || lang === 'en') return baseText(value);
     const key = baseText(value);
-    return dict[key] || key;
+    return dict[key] || dynamicText(key) || key;
   }
 
   window.MathArcadeI18n = { lang, t: tr };
 
   if (window.CanvasRenderingContext2D) {
     const originalFillText = CanvasRenderingContext2D.prototype.fillText;
+    const originalStrokeText = CanvasRenderingContext2D.prototype.strokeText;
     CanvasRenderingContext2D.prototype.fillText = function (text, x, y, maxWidth) {
       const translated = typeof text === 'string' ? tr(text) : text;
       if (arguments.length >= 4) return originalFillText.call(this, translated, x, y, maxWidth);
       return originalFillText.call(this, translated, x, y);
+    };
+    CanvasRenderingContext2D.prototype.strokeText = function (text, x, y, maxWidth) {
+      const translated = typeof text === 'string' ? tr(text) : text;
+      if (arguments.length >= 4) return originalStrokeText.call(this, translated, x, y, maxWidth);
+      return originalStrokeText.call(this, translated, x, y);
     };
   }
 
