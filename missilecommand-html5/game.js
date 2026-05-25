@@ -85,7 +85,12 @@
     explosions: [],
     particles: [],
     floaters: [],
-    mouseX: 0, mouseY: 0,
+    // Start off-screen so the crosshair doesn't sit at (0,0) before any input.
+    mouseX: -1000, mouseY: -1000,
+    // Touch-mode players don't have a hovering cursor — fade the drawn crosshair
+    // out shortly after each tap so it doesn't look like a "stuck" target marker.
+    touchMode: false,
+    lastInputAt: 0,
     spawnTimer: 1.5,
     waveBudget: 0, // enemies remaining to spawn this wave
     waveActive: false,
@@ -590,24 +595,46 @@
     }
   }
 
-  // ---------- Mouse / keys ----------
+  // ---------- Mouse / touch / keys ----------
+  function setPointer(x, y) {
+    state.mouseX = x;
+    state.mouseY = y;
+    state.lastInputAt = state.elapsed;
+  }
   canvas.addEventListener('mousemove', (e) => {
+    state.touchMode = false;
     const rect = canvas.getBoundingClientRect();
-    state.mouseX = e.clientX - rect.left;
-    state.mouseY = e.clientY - rect.top;
+    setPointer(e.clientX - rect.left, e.clientY - rect.top);
   });
   canvas.addEventListener('mousedown', (e) => {
     if (state.phase !== 'playing') return;
+    state.touchMode = false;
     const rect = canvas.getBoundingClientRect();
     fireMissile(e.clientX - rect.left, e.clientY - rect.top, null);
   });
+  // changedTouches[0] is the touch that *just* fired this event — using
+  // touches[0] grabs the oldest still-held finger instead, which was causing
+  // missiles to fire toward a previous touch position on multi-touch devices.
   canvas.addEventListener('touchstart', (e) => {
     if (state.phase !== 'playing') return;
-    const touch = e.touches[0];
+    const touch = e.changedTouches[0];
     if (!touch) return;
     e.preventDefault();
+    state.touchMode = true;
     const rect = canvas.getBoundingClientRect();
-    fireMissile(touch.clientX - rect.left, touch.clientY - rect.top, null);
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    setPointer(x, y);
+    fireMissile(x, y, null);
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    if (state.phase !== 'playing') return;
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    state.touchMode = true;
+    const rect = canvas.getBoundingClientRect();
+    setPointer(touch.clientX - rect.left, touch.clientY - rect.top);
   }, { passive: false });
   window.addEventListener('keydown', (e) => {
     if (state.phase === 'title' || state.phase === 'game_over') {
@@ -1107,6 +1134,19 @@
   function drawCrosshair() {
     if (state.phase !== 'playing') return;
     const x = state.mouseX, y = state.mouseY;
+    // Don't draw before the player has moved the pointer at all (avoids a ghost
+    // crosshair sitting at the corner on touch devices that never fire mousemove).
+    if (x < 0 || y < 0) return;
+    // On touch devices the crosshair has no "hover" — fade it out shortly after
+    // each tap so the previous target marker doesn't look stuck on screen.
+    let crosshairAlpha = 1;
+    if (state.touchMode) {
+      const since = state.elapsed - state.lastInputAt;
+      const FADE_START = 0.45;
+      const FADE_DUR = 0.35;
+      if (since > FADE_START + FADE_DUR) return;
+      if (since > FADE_START) crosshairAlpha = 1 - (since - FADE_START) / FADE_DUR;
+    }
     // Pick the silo that would fire (nearest with ammo)
     let bestS = null, bestD = Infinity;
     for (const s of state.silos) {
@@ -1118,6 +1158,8 @@
     let aimY = y;
     let clamped = false;
     if (bestS && y > bestS.y - 22 - 40) { aimY = bestS.y - 22 - 40; clamped = true; }
+    ctx.save();
+    ctx.globalAlpha = crosshairAlpha;
     // Crosshair (at actual cursor)
     ctx.strokeStyle = bestS ? (clamped ? '#ffba6b' : '#7ad1ff') : '#ff5c7c';
     ctx.lineWidth = 2;
@@ -1152,6 +1194,7 @@
         ctx.stroke();
       }
     }
+    ctx.restore();
   }
 
   // =====================================================================
