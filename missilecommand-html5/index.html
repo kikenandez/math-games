@@ -169,12 +169,13 @@
   }
   .card h1 {
     font-family: 'Lilita One', sans-serif;
-    font-size: clamp(40px, 7.5vw, 60px);
+    font-size: clamp(32px, 8vw, 56px);
     line-height: 1.05;
     margin: 0 0 6px;
     color: var(--paper);
     letter-spacing: 0.02em;
-    white-space: nowrap;
+    overflow-wrap: break-word;
+    text-wrap: balance;
   }
   .card h1 .acc { color: var(--accent); }
   .card h1 .acc2 { color: var(--cool); }
