@@ -132,6 +132,26 @@
     noise(t, 0.06, { gain: 0.035, freq: 1600, q: 7 });
   }
 
+  function missileLaunch() {
+    const t = now();
+    tone(420, t, 0.12, { type: 'square', to: 1280, gain: 0.08, cutoff: 2200, wobble: 1.35 });
+    tone(900, t + 0.035, 0.08, { type: 'triangle', to: 1480, gain: 0.045, cutoff: 2600 });
+    noise(t, 0.07, { gain: 0.025, freq: 1200, q: 5 });
+  }
+
+  function playerBlast() {
+    const t = now();
+    tone(300, t, 0.12, { type: 'sine', to: 820, gain: 0.09, wobble: 1.55 });
+    noise(t, 0.12, { gain: 0.055, freq: 720, q: 2.5 });
+  }
+
+  function chainBlast() {
+    const t = now();
+    tone(740, t, 0.08, { type: 'square', to: 1180, gain: 0.065, cutoff: 2400 });
+    tone(1080, t + 0.04, 0.08, { type: 'triangle', to: 520, gain: 0.05, cutoff: 2000 });
+    noise(t, 0.055, { gain: 0.025, freq: 1500, q: 6 });
+  }
+
   function pop() {
     const t = now();
     tone(380, t, 0.06, { type: 'sine', to: 980, gain: 0.1, wobble: 1.6 });
@@ -202,7 +222,8 @@
   }
 
   window.MathArcadeAudio = {
-    click, start, correct, wrong, levelClear, gameOver, boing, zap, pop, explosion, hint, event,
+    click, start, correct, wrong, levelClear, gameOver, boing, zap, pop, explosion, hint,
+    missileLaunch, playerBlast, chainBlast, event,
     mute: () => setMuted(true),
     unmute: () => setMuted(false),
     get muted() { return muted; }

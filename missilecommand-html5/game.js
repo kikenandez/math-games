@@ -303,6 +303,7 @@
       exploded: false,
       trail: [],
     });
+    window.MathArcadeAudio?.missileLaunch?.();
     return true;
   }
 
@@ -372,6 +373,7 @@
           color: '#ff5c7c',
           enemy: true,
         });
+        window.MathArcadeAudio?.explosion?.();
         state.shake = Math.min(0.8, state.shake + 0.3);
         if (target) {
           target.alive = false;
@@ -402,6 +404,7 @@
           enemy: false,
           primary: true, // marks the initial player blast for perfect-hit bonus
         });
+        window.MathArcadeAudio?.playerBlast?.();
       }
     }
     state.players = state.players.filter(p => !p.exploded || p.trail.some(t => t.life > 0));
@@ -445,6 +448,7 @@
                 spawnAngledBlast(e.x, e.y, approachAng - Math.PI / 4, depth + 1);
               }
             }
+            window.MathArcadeAudio?.chainBlast?.();
             // Feedback
             if (isPerfect) {
               state.shake = Math.min(0.6, state.shake + 0.3);
