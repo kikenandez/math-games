@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Math Asteroids</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #050614;
+    --paper: #e8ecff;
+    --cyan: #5cd9ff;
+    --hot: #ff5c7c;
+    --good: #5cd97a;
+    --accent: #ffd24d;
+    --rock: #b6a98a;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #030410;
+    font-family: 'Fredoka', sans-serif;
+    color: var(--paper);
+    user-select: none;
+  }
+  #game-wrap { position: fixed; inset: 0; overflow: hidden; }
+  canvas#game { display: block; width: 100%; height: 100%; }
+
+  #hud {
+    position: absolute; top: 14px; left: 14px; right: 70px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px;
+    pointer-events: none;
+    font-family: 'Lilita One', sans-serif;
+    z-index: 5;
+  }
+  .hud-group { display: flex; gap: 10px; }
+  .badge {
+    background: rgba(10, 12, 30, 0.85);
+    border: 3px solid var(--paper);
+    border-radius: 10px;
+    padding: 7px 12px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 18px;
+    color: var(--paper);
+    line-height: 1;
+  }
+  .badge .label {
+    font-size: 10px;
+    color: rgba(232, 236, 255, 0.55);
+    letter-spacing: 0.2em;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge .val { font-size: 20px; min-width: 1ch; }
+  .badge.score .val { color: var(--accent); }
+  .badge.lives .val { color: var(--hot); }
+  .badge.level .val { color: var(--cyan); }
+  .badge.shield .val { color: var(--good); letter-spacing: 0.05em; }
+
+  /* Target chip — big, centered top */
+  #target {
+    position: absolute;
+    top: 14px; left: 50%; transform: translateX(-50%);
+    background: rgba(10, 12, 30, 0.92);
+    border: 3px solid var(--cyan);
+    border-radius: 14px;
+    padding: 8px 26px 10px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 0 6px rgba(92, 217, 255, 0.12);
+    z-index: 6;
+    pointer-events: none;
+    text-align: center;
+    font-family: 'Lilita One', sans-serif;
+    min-width: 200px;
+  }
+  #target .label {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    color: rgba(232, 236, 255, 0.55);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  #target .eq {
+    font-size: 36px;
+    letter-spacing: 0.04em;
+    color: var(--paper);
+  }
+  #target .eq .val { color: var(--accent); }
+  #target .match-line {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: rgba(232, 236, 255, 0.65);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  #target .match-line span { color: var(--good); font-family: 'Lilita One', sans-serif; font-size: 14px; }
+  #target #target-timer {
+    margin-top: 6px;
+    height: 6px;
+    background: rgba(0,0,0,0.55);
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid rgba(232, 236, 255, 0.35);
+  }
+  #target #target-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: var(--good);
+    transition: width 0.15s linear, background-color 0.2s;
+  }
+  #target.warn #target-timer-fill {
+    background: var(--hot);
+  }
+  #target.warn { animation: warnPulse 0.6s ease-in-out infinite alternate; }
+  @keyframes warnPulse {
+    to { box-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 0 6px rgba(255, 92, 124, 0.6); border-color: var(--hot); }
+  }
+
+  /* Progress bar under target */
+  #progress {
+    position: absolute;
+    top: 88px; left: 50%; transform: translateX(-50%);
+    width: 240px; height: 8px;
+    background: rgba(10, 12, 30, 0.7);
+    border: 2px solid var(--paper);
+    border-radius: 4px;
+    z-index: 5;
+    overflow: hidden;
+  }
+  #progress .fill {
+    height: 100%;
+    width: 0%;
+    background: var(--good);
+    transition: width 0.25s;
+  }
+
+  /* Bottom hint banner */
+  #hint {
+    position: absolute;
+    bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: rgba(10, 12, 30, 0.85);
+    border: 2px solid rgba(232, 236, 255, 0.3);
+    border-radius: 10px;
+    padding: 6px 16px;
+    z-index: 5;
+    pointer-events: none;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: rgba(232, 236, 255, 0.7);
+    text-align: center;
+  }
+  #hint b { color: var(--cyan); }
+  #hint .kbd {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(232, 236, 255, 0.4);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 11px;
+    color: var(--paper);
+    margin: 0 2px;
+  }
+
+  #gear-btn {
+    position: absolute; top: 14px; right: 14px;
+    width: 42px; height: 42px;
+    background: rgba(10, 12, 30, 0.85);
+    border: 3px solid var(--paper);
+    border-radius: 10px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 25;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 20px;
+    color: var(--paper);
+    padding: 0;
+  }
+
+  #tweaks {
+    position: absolute; top: 68px; right: 14px;
+    width: 260px;
+    background: rgba(10, 12, 30, 0.96);
+    border: 3px solid var(--paper);
+    border-radius: 12px;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.6);
+    padding: 12px 14px 14px;
+    z-index: 30;
+    display: none;
+    color: var(--paper);
+  }
+  #tweaks.open { display: block; }
+  #tweaks h3 {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 17px;
+    margin: 0 0 10px;
+    letter-spacing: 0.06em;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #tweaks .close {
+    background: none; border: none; cursor: pointer;
+    color: rgba(232,236,255,0.7); font-size: 20px;
+    font-family: 'Lilita One', sans-serif;
+  }
+  .tweak-row { margin: 0 0 10px; }
+  .tweak-row .lbl {
+    display: flex; justify-content: space-between;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: rgba(232, 236, 255, 0.6);
+    margin-bottom: 3px;
+  }
+  .tweak-row input[type=range] { width: 100%; accent-color: var(--cyan); }
+  .tweak-row .opts { display: flex; gap: 5px; }
+  .tweak-row .opt {
+    padding: 5px 9px;
+    border: 2px solid var(--paper);
+    border-radius: 8px;
+    background: rgba(0,0,0,0.4);
+    color: var(--paper);
+    font-family: 'Lilita One', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.6);
+  }
+  .tweak-row .opt.active { background: var(--cyan); color: var(--ink); border-color: var(--cyan); }
+
+  /* Mobile thumb-pad — 5 buttons: rotate L/R, thrust, fire, hyperspace */
+  #mobile-controls {
+    position: absolute;
+    bottom: 8px; left: 0; right: 0;
+    display: none;
+    justify-content: space-between;
+    padding: 0 12px;
+    z-index: 6;
+  }
+  #mobile-controls.show { display: flex; }
+  .mc-cluster { display: grid; grid-template-columns: 56px 56px; gap: 6px; }
+  .mc-cluster.right { grid-template-columns: 76px; }
+  .mc-btn {
+    border: 3px solid var(--paper);
+    background: rgba(10, 12, 30, 0.85);
+    color: var(--paper);
+    border-radius: 12px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
+    height: 56px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .mc-btn.big { height: 76px; }
+  .mc-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.55); }
+  .mc-btn.fire { background: var(--hot); color: var(--ink); border-color: var(--hot); }
+
+  /* Overlay */
+  .overlay {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(10, 12, 30, 0.55), rgba(0,0,0,0.88));
+    display: flex; align-items: center; justify-content: center;
+    z-index: 20;
+    opacity: 1;
+    transition: opacity 0.25s;
+  }
+  .overlay.hidden { opacity: 0; pointer-events: none; }
+  .card {
+    background: rgba(10, 12, 30, 0.96);
+    border: 4px solid var(--paper);
+    border-radius: 20px;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.6);
+    padding: 32px 38px;
+    text-align: center;
+    max-width: 560px;
+  }
+  .card h1 {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(40px, 7.5vw, 60px);
+    line-height: 1.05;
+    margin: 0 0 6px;
+    color: var(--paper);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .card h1 .acc { color: var(--cyan); }
+  .card .sub {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    color: rgba(232, 236, 255, 0.7);
+    font-size: 15px;
+    margin: 4px 0 18px;
+  }
+  .card p {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgba(232, 236, 255, 0.85);
+    margin: 0 0 18px;
+  }
+  .card p b { color: var(--paper); }
+  .card .keys {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 5px 14px;
+    text-align: left;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 13px;
+    margin: 0 auto 20px;
+    width: max-content;
+  }
+  .key {
+    background: rgba(0,0,0,0.4);
+    border: 2px solid var(--paper);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 12px;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.7);
+    text-align: center;
+    min-width: 1.5em;
+    color: var(--paper);
+  }
+  .key-desc { align-self: center; color: rgba(232, 236, 255, 0.75); }
+  .big-btn {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.05em;
+    background: var(--cyan);
+    color: var(--ink);
+    border: 3px solid var(--paper);
+    border-radius: 12px;
+    padding: 10px 30px;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.6);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .big-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 0 rgba(0,0,0,0.6); }
+  .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.6); }
+  .stats-row {
+    display: flex; gap: 8px; justify-content: center; margin: 0 0 16px;
+    flex-wrap: wrap;
+  }
+  .stat-chip {
+    background: rgba(0,0,0,0.4);
+    border: 2px solid var(--paper);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-family: 'Lilita One', sans-serif;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.7);
+    min-width: 70px;
+  }
+  .stat-chip .stat-label {
+    font-size: 9px; color: rgba(232, 236, 255, 0.6);
+    letter-spacing: 0.16em;
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    text-transform: uppercase;
+  }
+  .stat-chip .stat-val { font-size: 22px; color: var(--paper); }
+  .stat-chip.hi .stat-val { color: var(--accent); }
+</style>
+</head>
+<body>
+<div id="game-wrap">
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="hud-group">
+      <div class="badge score">
+        <span class="label">Score</span>
+        <span class="val" id="score">0</span>
+      </div>
+      <div class="badge level">
+        <span class="label">Level</span>
+        <span class="val" id="level">1</span>
+      </div>
+      <div class="badge shield">
+        <span class="label">Shield</span>
+        <span class="val" id="shield">▮▮▮</span>
+      </div>
+    </div>
+    <div class="hud-group">
+      <div class="badge lives">
+        <span class="label">Lives</span>
+        <span class="val" id="lives">3</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="target">
+    <div class="label">Target Answer</div>
+    <div class="eq"><span class="op">=</span> <span class="val" id="target-val">12</span></div>
+    <div class="match-line"><span id="match-count">0</span> in field</div>
+    <div id="target-timer"><div id="target-timer-fill"></div></div>
+  </div>
+  <div id="progress"><div class="fill" id="progress-fill"></div></div>
+
+  <button id="gear-btn" title="Tweaks">⚙</button>
+
+  <div id="hint">
+    <span class="kbd">↑</span> thrust &nbsp;
+    <span class="kbd">←</span><span class="kbd">→</span> rotate &nbsp;
+    <span class="kbd">SPACE</span> fire &nbsp;
+    <span class="kbd">↓</span> hyperspace
+  </div>
+
+  <div id="mobile-controls">
+    <div class="mc-cluster">
+      <button class="mc-btn" id="mc-left">↺</button>
+      <button class="mc-btn" id="mc-right">↻</button>
+    </div>
+    <div class="mc-cluster">
+      <button class="mc-btn" id="mc-thrust">▲</button>
+      <button class="mc-btn" id="mc-hyper">⤳</button>
+    </div>
+    <div class="mc-cluster right">
+      <button class="mc-btn fire big" id="mc-fire">FIRE</button>
+    </div>
+  </div>
+
+  <div id="tweaks">
+    <h3>Tweaks <button class="close" id="tweaks-close">×</button></h3>
+    <div class="tweak-row">
+      <div class="lbl"><span>Difficulty</span></div>
+      <div class="opts" id="diff-row">
+        <div class="opt" data-value="easy">EASY</div>
+        <div class="opt active" data-value="normal">NORMAL</div>
+        <div class="opt" data-value="hard">HARD</div>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <div class="lbl"><span>Aim</span></div>
+      <div class="opts" id="aim-row">
+        <div class="opt active" data-value="rotate">ROTATE</div>
+        <div class="opt" data-value="mouse">MOUSE</div>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <div class="lbl"><span>Asteroid speed</span><span id="speed-val">1.0×</span></div>
+      <input type="range" min="0.4" max="2.4" step="0.1" value="1" id="speed">
+    </div>
+    <div class="tweak-row">
+      <div class="lbl"><span>Ops pool</span></div>
+      <div class="opts" id="ops-row">
+        <div class="opt" data-value="add">+ −</div>
+        <div class="opt active" data-value="all">+ − × ÷</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="card" id="title-card">
+      <h1><span class="acc">MATH</span> ASTEROIDS</h1>
+      <div class="sub">shoot only the rocks that match the target answer</div>
+      <p>Drift through space and gun down asteroids stamped with arithmetic expressions. The HUD shows a <b style="color:#ffd24d">target answer</b>. Shoot only the rocks whose expression evaluates to that number. Each correct hit rolls a new target. Wrong shots cost <b style="color:#5cd97a">shield</b> — lose all shield and you lose a <b style="color:#ff5c7c">life</b>. Survive long enough to clear the level.</p>
+      <div class="keys">
+        <span class="key">↑ / W</span><span class="key-desc">thrust forward</span>
+        <span class="key">← →</span><span class="key-desc">rotate ship</span>
+        <span class="key">SPACE</span><span class="key-desc">fire bullet</span>
+        <span class="key">↓ / S</span><span class="key-desc">hyperspace jump</span>
+        <span class="key">P</span><span class="key-desc">pause</span>
+      </div>
+      <button class="big-btn" id="start-btn">LAUNCH</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

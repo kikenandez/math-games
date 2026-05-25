@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Math Arcade · Hub</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Fredoka:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0e1e;
+    --paper: #fff4dc;
+    --accent: #ff8a3d;
+    --accent-2: #ffd24d;
+    --good: #5cd97a;
+    --cool: #7ad1ff;
+    --hot: #ff6b9d;
+    --magenta: #e36ce0;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    min-height: 100%;
+    background: #050614;
+    font-family: 'Fredoka', sans-serif;
+    color: var(--paper);
+    overflow-x: hidden;
+  }
+
+  /* Animated star background */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::before {
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(122, 209, 255, 0.15), transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(255, 107, 157, 0.13), transparent 50%),
+      radial-gradient(ellipse at 50% 100%, rgba(255, 210, 77, 0.1), transparent 60%),
+      linear-gradient(180deg, #050614 0%, #0a0e26 50%, #050614 100%);
+  }
+  body::after {
+    background-image:
+      radial-gradient(1.5px 1.5px at 20% 30%, #fff 50%, transparent),
+      radial-gradient(1px 1px at 60% 70%, #fff 50%, transparent),
+      radial-gradient(1.5px 1.5px at 80% 20%, #cfe0ff 50%, transparent),
+      radial-gradient(1px 1px at 35% 80%, #ffd8c8 50%, transparent),
+      radial-gradient(1.5px 1.5px at 90% 60%, #fff 50%, transparent),
+      radial-gradient(1px 1px at 10% 60%, #d8ffe8 50%, transparent),
+      radial-gradient(1.5px 1.5px at 50% 40%, #fff 50%, transparent),
+      radial-gradient(1px 1px at 75% 90%, #fff4dc 50%, transparent),
+      radial-gradient(1px 1px at 25% 50%, #fff 50%, transparent),
+      radial-gradient(1.5px 1.5px at 5% 90%, #cfe0ff 50%, transparent);
+    background-size: 480px 320px, 360px 240px, 420px 280px, 320px 200px, 480px 360px, 380px 260px, 420px 320px, 300px 220px, 340px 280px, 460px 380px;
+    background-position: 0 0;
+    animation: starDrift 90s linear infinite;
+    opacity: 0.85;
+  }
+  @keyframes starDrift {
+    to { background-position: -480px -320px, -360px -240px, -420px -280px, -320px -200px, -480px -360px, -380px -260px, -420px -320px, -300px -220px, -340px -280px, -460px -380px; }
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 56px 32px 80px;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    margin: 0 0 56px;
+  }
+  .hero .eyebrow {
+    display: inline-block;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.4em;
+    color: var(--accent-2);
+    background: rgba(255, 210, 77, 0.12);
+    border: 2px solid var(--accent-2);
+    border-radius: 999px;
+    padding: 6px 16px;
+    margin: 0 0 18px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+  }
+  .hero h1 {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(56px, 9vw, 96px);
+    line-height: 1;
+    margin: 0 0 14px;
+    letter-spacing: 0.01em;
+    color: var(--paper);
+    text-shadow: 0 6px 0 rgba(0,0,0,0.45);
+  }
+  .hero h1 .accent-1 { color: var(--accent); }
+  .hero h1 .accent-2 { color: var(--cool); }
+  .hero .lead {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 1.6;
+    color: rgba(255, 244, 220, 0.78);
+    max-width: 640px;
+    margin: 0 auto 12px;
+  }
+  .hero .meta {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 13px;
+    color: rgba(255, 244, 220, 0.42);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin: 16px 0 0;
+  }
+  .hero .meta span { color: var(--accent-2); font-weight: 700; }
+
+  /* Game grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 22px;
+  }
+
+  /* Card */
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: rgba(20, 24, 46, 0.85);
+    border: 3px solid var(--paper);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.55);
+    transition: transform 0.12s, box-shadow 0.12s;
+    text-decoration: none;
+    color: inherit;
+    min-height: 380px;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 11px 0 rgba(0,0,0,0.55);
+  }
+  .card:active {
+    transform: translateY(2px);
+    box-shadow: 0 6px 0 rgba(0,0,0,0.55);
+  }
+
+  /* Card art header */
+  .card .art {
+    height: 180px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 3px solid var(--paper);
+  }
+
+  .card .art svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Card meta */
+  .card .body {
+    padding: 18px 20px 22px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .card h2 {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 28px;
+    margin: 0 0 4px;
+    letter-spacing: 0.02em;
+    color: var(--paper);
+    line-height: 1;
+  }
+  .card .tagline {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: rgba(255, 244, 220, 0.55);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 0 0 10px;
+  }
+  .card .desc {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255, 244, 220, 0.78);
+    margin: 0 0 16px;
+    flex: 1;
+  }
+  .card .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card .chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.07);
+    color: rgba(255, 244, 220, 0.7);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .play-cta {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    background: var(--accent);
+    color: var(--ink);
+    border: 2px solid var(--paper);
+    border-radius: 10px;
+    padding: 6px 14px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+  }
+  .card:hover .play-cta {
+    background: var(--accent-2);
+  }
+
+  /* Per-card accent backgrounds */
+  .card.numberfall .art    { background: linear-gradient(160deg, #ffd29a 0%, #ffb89e 50%, #a9d8e8 100%); }
+  .card.mathinvaders .art  { background: linear-gradient(180deg, #040414 0%, #14182e 50%, #2a1838 100%); }
+  .card.mathris .art       { background: linear-gradient(180deg, #161b29 0%, #232a3d 100%); }
+  .card.balancescale .art { background: linear-gradient(180deg, #f8eed0 0%, #ead5a8 100%); }
+  .card.mathfrogger .art   { background: linear-gradient(180deg, #a8e0f5 0%, #cff0d8 100%); }
+  .card.missilecommand .art{ background: linear-gradient(170deg, #1a0a3a 0%, #5a2a6a 60%, #ff7a8a 100%); }
+  .card.mathbert .art      { background: linear-gradient(180deg, #1a1530 0%, #2a1d4a 50%, #1a1530 100%); }
+  .card.mathasteroids .art { background: radial-gradient(ellipse at center, #0c1230 0%, #070a1c 60%, #03040e 100%); }
+  .card.mathsnake .art     { background: linear-gradient(180deg, #0e1a14 0%, #1b2c20 100%); }
+  .card.mathwhack .art     { background: linear-gradient(180deg, #3a7a3a 0%, #5cb85c 70%, #2e8a3e 100%); }
+  .card.mathmatch3 .art    { background: radial-gradient(ellipse at center, #26204a 0%, #1a1428 60%, #0f0820 100%); }
+  .card.mathtd .art        { background: linear-gradient(180deg, #3a7a3a 0%, #5cb85c 70%, #2e8a3e 100%); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    margin: 56px 0 0;
+    padding: 28px 0 8px;
+    border-top: 1px solid rgba(255, 244, 220, 0.08);
+    color: rgba(255, 244, 220, 0.4);
+    font-family: 'Fredoka', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+  }
+  footer a { color: var(--accent-2); text-decoration: none; font-weight: 600; }
+  footer a:hover { text-decoration: underline; }
+  .credit-line {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    color: var(--paper);
+    margin: 0 0 12px;
+  }
+  .credit-line .by { color: rgba(255, 244, 220, 0.45); font-family: 'Fredoka', sans-serif; font-weight: 600; }
+  .patreon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--hot);
+    border: 2px solid var(--paper);
+    border-radius: 999px;
+    padding: 7px 18px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
+    margin: 4px 0 14px;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .patreon-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.55);
+    text-decoration: none;
+  }
+  .patreon-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.55);
+  }
+  .patreon-btn .heart { color: var(--ink); font-size: 16px; line-height: 1; }
+  .footer-fine {
+    color: rgba(255, 244, 220, 0.35);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Small */
+  @media (max-width: 640px) {
+    main { padding: 36px 18px 60px; }
+    .hero { margin-bottom: 36px; }
+    .card { min-height: 320px; }
+    .card .art { height: 140px; }
+    .card h2 { font-size: 24px; }
+  }
+</style>
+<script type='text/javascript' nonce='YZr4++0hW+sqrr9FEOZEVw==' src='https://claude.ai/bKR0BMWXJGlbl-TApg6RtFVcRQ3k3zvJmfWDflhoMCkXp_4_r8MWmKSMCk59lJe5Yy1iJRitIJl8ydcUYAKF8bOt-Rr95St3d2PSexZeFE31DnJYNuLmIV7lmuVnQY3gHJq7_bRmk89oKk5bUjlxH112ZPXmB7EOeNRKEy8F8bLvihXskxr61RsLcTVJ2j1ZrrgMvBRDSXHLo3DDyrjyf6a7Ccr2yEc_kzO9-B7gw9jXTk7LkNk4v34oRS-TMppbECS7jfsQBU3_OIFsuQxSLEz0yUjpLs5ulCf0sivzJO39gKfPYUQOua5FF9PlwQlXDzu4Rh5O2FTO9SCvxsrdSSCrp_VjJHCmHPKzc4ZfsCwQo7z18Wz8i3otG0jArTtON0az0R8mo3T4Gph6LtDsorQz5pYHJjoXxhuXwGDnKJjtZJlmy2E9VffhVLtFcr8SitHbn7FNW_O7ffIaL05EzQySIo1LLI9U8xSFcwSyB_A6dKWjbaOvblWX3JUGAP20F07ZnIGDhHUsLtXx2Ds3LJlQ5LNBzyRwc0CgXo2W9Zv939k'></script></head>
+<body>
+<main>
+  <section class="hero">
+    <div class="eyebrow">MATH ARCADE</div>
+    <h1><span class="accent-1">PLAY</span>·<span class="accent-2">SOLVE</span>·<span>SURVIVE</span></h1>
+    <p class="lead">A handcrafted collection of browser-native math arcade games. Cartoon aliens, friendly defenders, falling cargo, and a meteor swarm — all keyboard &amp; mouse, no installs.</p>
+    <div class="meta">click a card to <span>PLAY</span> · everything runs in your browser · zero installs · high scores save locally</div>
+  </section>
+
+  <div class="grid">
+    <!-- Numberfall -->
+    <a class="card numberfall" href="numberfall-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- Sky -->
+          <defs>
+            <lineargradient id="nf-sky" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stop-color="#ffd29a"/>
+              <stop offset="0.55" stop-color="#ffb89e"/>
+              <stop offset="1" stop-color="#a9d8e8"/>
+            </linearGradient>
+          </defs>
+          <rect width="200" height="120" fill="url(#nf-sky)"/>
+          <!-- Sun -->
+          <circle cx="40" cy="40" r="22" fill="#ffeaa3" stroke="#1d2939" stroke-width="2"/>
+          <!-- Mountains -->
+          <path d="M0 88 L40 60 L70 80 L110 50 L150 78 L200 60 L200 90 L0 90 Z" fill="#7c6fa8" stroke="#1d2939" stroke-width="2"/>
+          <!-- Hills -->
+          <path d="M0 100 Q40 80 80 95 T160 92 T200 96 L200 110 L0 110 Z" fill="#5fa05a" stroke="#1d2939" stroke-width="2"/>
+          <!-- Road -->
+          <rect y="105" width="200" height="15" fill="#d4a574"/>
+          <line x1="0" y1="105" x2="200" y2="105" stroke="#1d2939" stroke-width="2"/>
+          <!-- Truck (simplified, side view) -->
+          <g transform="translate(125, 70)">
+            <rect x="0" y="0" width="55" height="32" fill="#e74c3c" stroke="#1d2939" stroke-width="2" rx="3"/>
+            <rect x="3" y="3" width="49" height="6" fill="#b1331f"/>
+            <rect x="20" y="12" width="20" height="14" fill="#fff4dc" stroke="#1d2939" stroke-width="1.5"/>
+            <text x="30" y="22" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#1d2939">CARGO</text>
+            <circle cx="12" cy="34" r="6" fill="#1d2939"/>
+            <circle cx="12" cy="34" r="2" fill="#cfcfcf"/>
+            <circle cx="42" cy="34" r="6" fill="#1d2939"/>
+            <circle cx="42" cy="34" r="2" fill="#cfcfcf"/>
+          </g>
+          <!-- Flying box -->
+          <g transform="translate(85 50) rotate(-12)">
+            <rect x="-12" y="-12" width="24" height="24" fill="#c89865" stroke="#1d2939" stroke-width="2"/>
+            <rect x="-3" y="-12" width="6" height="24" fill="#e8d4a0"/>
+            <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#1d2939">7+4</text>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Cargo edition</div>
+        <h2>Numberfall</h2>
+        <p class="desc">A cargo truck bumps along a sunset road, tossing math-stickered boxes into the air. Type the answer before they hit the ground.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">type</span><span class="chip">arcade</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Math Invaders -->
+    <a class="card mathinvaders" href="mathinvaders-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialgradient id="mi-planet" cx="0.4" cy="0.4">
+              <stop offset="0" stop-color="#a5cdf2"/>
+              <stop offset="0.6" stop-color="#5a8acf"/>
+              <stop offset="1" stop-color="#2a4a8a"/>
+            </radialGradient>
+          </defs>
+          <rect width="200" height="120" fill="#0a0e26"/>
+          <!-- Stars -->
+          <g fill="#fff">
+            <circle cx="20" cy="20" r="1"/>
+            <circle cx="55" cy="35" r="1.2"/>
+            <circle cx="130" cy="15" r="1"/>
+            <circle cx="170" cy="40" r="1.5"/>
+            <circle cx="40" cy="60" r="1"/>
+            <circle cx="100" cy="25" r="1.2"/>
+            <circle cx="180" cy="80" r="1"/>
+          </g>
+          <!-- Distant planet -->
+          <circle cx="170" cy="30" r="14" fill="url(#mi-planet)"/>
+          <ellipse cx="170" cy="30" rx="20" ry="5" fill="none" stroke="rgba(200,220,255,0.5)" stroke-width="1.5" transform="rotate(-18 170 30)"/>
+          <!-- Alien formation (3 aliens) -->
+          <g>
+            <!-- Alien 1 (green +) -->
+            <g transform="translate(50, 75)">
+              <ellipse cx="0" cy="2" rx="14" ry="6" fill="#2b8a45" stroke="#0a0e1e" stroke-width="1.5"/>
+              <path d="M-10 -1 Q-10 -8 0 -8 Q10 -8 10 -1" fill="#5cd97a" stroke="#0a0e1e" stroke-width="1.5"/>
+              <circle cx="-3" cy="-4" r="2" fill="#fff"/>
+              <circle cx="3" cy="-4" r="2" fill="#fff"/>
+              <circle cx="-3" cy="-4" r="1" fill="#0a0e1e"/>
+              <circle cx="3" cy="-4" r="1" fill="#0a0e1e"/>
+              <rect x="-10" y="6" width="20" height="6" fill="#fff4dc" stroke="#0a0e1e" stroke-width="1" rx="1"/>
+              <text x="0" y="11" text-anchor="middle" font-family="Lilita One" font-size="6" fill="#0a0e1e">3+5</text>
+            </g>
+            <!-- Alien 2 (amber x) -->
+            <g transform="translate(100, 65)">
+              <ellipse cx="0" cy="2" rx="14" ry="6" fill="#a5851f" stroke="#0a0e1e" stroke-width="1.5"/>
+              <path d="M-10 -1 Q-10 -8 0 -8 Q10 -8 10 -1" fill="#f4c84c" stroke="#0a0e1e" stroke-width="1.5"/>
+              <circle cx="-3" cy="-4" r="2" fill="#fff"/>
+              <circle cx="3" cy="-4" r="2" fill="#fff"/>
+              <circle cx="-3" cy="-4" r="1" fill="#0a0e1e"/>
+              <circle cx="3" cy="-4" r="1" fill="#0a0e1e"/>
+              <rect x="-10" y="6" width="20" height="6" fill="#fff4dc" stroke="#0a0e1e" stroke-width="1" rx="1"/>
+              <text x="0" y="11" text-anchor="middle" font-family="Lilita One" font-size="6" fill="#0a0e1e">6×4</text>
+            </g>
+            <!-- Alien 3 (cyan -) -->
+            <g transform="translate(150, 75)">
+              <ellipse cx="0" cy="2" rx="14" ry="6" fill="#2b7a8a" stroke="#0a0e1e" stroke-width="1.5"/>
+              <path d="M-10 -1 Q-10 -8 0 -8 Q10 -8 10 -1" fill="#5ccfe6" stroke="#0a0e1e" stroke-width="1.5"/>
+              <circle cx="-3" cy="-4" r="2" fill="#fff"/>
+              <circle cx="3" cy="-4" r="2" fill="#fff"/>
+              <circle cx="-3" cy="-4" r="1" fill="#0a0e1e"/>
+              <circle cx="3" cy="-4" r="1" fill="#0a0e1e"/>
+              <rect x="-10" y="6" width="20" height="6" fill="#fff4dc" stroke="#0a0e1e" stroke-width="1" rx="1"/>
+              <text x="0" y="11" text-anchor="middle" font-family="Lilita One" font-size="6" fill="#0a0e1e">9-2</text>
+            </g>
+          </g>
+          <!-- Player base -->
+          <g transform="translate(100, 105)">
+            <ellipse cx="0" cy="0" rx="14" ry="3" fill="#3a4470"/>
+            <rect x="-6" y="-6" width="12" height="6" fill="#5a6494"/>
+            <circle cx="0" cy="-10" r="7" fill="#5cd97a" stroke="#f4f0e4" stroke-width="1.5"/>
+            <circle cx="0" cy="-10" r="3" fill="#fff"/>
+            <circle cx="0" cy="-10" r="1.5" fill="#0a0e1e"/>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Defend Planet Numero</div>
+        <h2>Math Invaders</h2>
+        <p class="desc">A formation of math-expression aliens drifts down. Type the answer to vaporize every ship with that value before they breach the line.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">type</span><span class="chip">arcade</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Mathris -->
+    <a class="card mathris" href="mathris-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="200" height="120" fill="#1c2235"/>
+          <!-- Grid background -->
+          <g stroke="rgba(255,255,255,0.05)" stroke-width="0.5">
+            <line x1="0" y1="20" x2="200" y2="20"/>
+            <line x1="0" y1="40" x2="200" y2="40"/>
+            <line x1="0" y1="60" x2="200" y2="60"/>
+            <line x1="0" y1="80" x2="200" y2="80"/>
+            <line x1="40" y1="0" x2="40" y2="120"/>
+            <line x1="80" y1="0" x2="80" y2="120"/>
+            <line x1="120" y1="0" x2="120" y2="120"/>
+            <line x1="160" y1="0" x2="160" y2="120"/>
+          </g>
+          <!-- Conveyor top -->
+          <rect x="0" y="6" width="200" height="6" fill="#3a4660" stroke="#0e1118" stroke-width="1"/>
+          <!-- Floor -->
+          <rect y="105" width="200" height="15" fill="#0e1118"/>
+          <line x1="0" y1="105" x2="200" y2="105" stroke="#3a4660" stroke-width="1.5"/>
+          <!-- Cargo boxes falling -->
+          <g transform="translate(45, 30)">
+            <rect x="0" y="0" width="36" height="22" fill="#d6a868" stroke="#1a1f2e" stroke-width="1.5" rx="2"/>
+            <rect x="0" y="0" width="36" height="5" fill="#b3895a"/>
+            <circle cx="6" cy="8" r="1.5" fill="#1a1f2e"/>
+            <circle cx="30" cy="8" r="1.5" fill="#1a1f2e"/>
+            <text x="18" y="18" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#1a1f2e">5+3</text>
+          </g>
+          <g transform="translate(95, 55)">
+            <rect x="0" y="0" width="36" height="22" fill="#d6a868" stroke="#1a1f2e" stroke-width="1.5" rx="2"/>
+            <rect x="0" y="0" width="36" height="5" fill="#b3895a"/>
+            <circle cx="6" cy="8" r="1.5" fill="#1a1f2e"/>
+            <circle cx="30" cy="8" r="1.5" fill="#1a1f2e"/>
+            <text x="18" y="18" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#1a1f2e">12÷3</text>
+          </g>
+          <!-- Armed box (red) -->
+          <g transform="translate(140, 80)">
+            <rect x="0" y="0" width="42" height="22" fill="#ff3a4a" stroke="#1a1f2e" stroke-width="2" rx="2"/>
+            <text x="21" y="14" text-anchor="middle" font-family="Lilita One" font-size="9" fill="#fff">8+5−2</text>
+          </g>
+          <!-- Defuser character -->
+          <g transform="translate(15, 95)">
+            <ellipse cx="0" cy="11" rx="8" ry="2" fill="rgba(0,0,0,0.4)"/>
+            <rect x="-5" y="-2" width="10" height="9" fill="#ffd24d" stroke="#0e1118" stroke-width="1" rx="2"/>
+            <circle cx="0" cy="-7" r="4" fill="#ff8a3d" stroke="#0e1118" stroke-width="1"/>
+            <rect x="-4" y="-9" width="8" height="2" fill="#fff4dc"/>
+            <circle cx="-1" cy="-7" r="0.7" fill="#0e1118"/>
+            <circle cx="1" cy="-7" r="0.7" fill="#0e1118"/>
+          </g>
+          <!-- Rule banner -->
+          <rect x="60" y="10" width="80" height="12" fill="#232a3d" stroke="#f4ecd8" stroke-width="1.5" rx="2"/>
+          <text x="100" y="19" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#ffd24d">DESTROY IF ODD</text>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Clear the clutter</div>
+        <h2>Mathris</h2>
+        <p class="desc">Math boxes fall in a factory. Click ones matching the active rule. Touching boxes merge — 6-operand chains arm a 5-second typed defuse.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">click</span><span class="chip">type</span><span class="chip">puzzle</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Balance Scale -->
+    <a class="card balancescale" href="balancescale-html5/index.html" style="--accent-card:#c87543">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <lineargradient id="bs-sky" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stop-color="#f8eed0"/>
+              <stop offset="1" stop-color="#ead5a8"/>
+            </linearGradient>
+          </defs>
+          <rect width="200" height="120" fill="url(#bs-sky)"/>
+          <!-- Base + stem -->
+          <rect x="86" y="95" width="28" height="8" fill="#6b4e2a" stroke="#2b2418" stroke-width="2"/>
+          <rect x="96" y="60" width="8" height="38" fill="#6b4e2a" stroke="#2b2418" stroke-width="2"/>
+          <!-- Beam (tilted slightly left = heavy) -->
+          <g transform="rotate(-8 100 60)">
+            <rect x="35" y="57" width="130" height="7" fill="#8b6334" stroke="#2b2418" stroke-width="2" rx="2"/>
+            <!-- Chains -->
+            <line x1="45" y1="64" x2="45" y2="82" stroke="#2b2418" stroke-width="1.5"/>
+            <line x1="155" y1="64" x2="155" y2="82" stroke="#2b2418" stroke-width="1.5"/>
+            <!-- Left pan -->
+            <polygon points="30,82 38,90 52,90 60,82" fill="#cfa867" stroke="#2b2418" stroke-width="2"/>
+            <!-- Right pan -->
+            <polygon points="140,82 148,90 162,90 170,82" fill="#cfa867" stroke="#2b2418" stroke-width="2"/>
+            <!-- Shapes on left pan -->
+            <circle cx="40" cy="77" r="6" fill="#dc5a5a" stroke="#2b2418" stroke-width="1.5"/>
+            <rect x="47" y="71" width="10" height="10" fill="#468cdc" stroke="#2b2418" stroke-width="1.5" rx="1"/>
+            <!-- Number on right pan -->
+            <rect x="143" y="71" width="24" height="11" fill="#fff7e0" stroke="#2b2418" stroke-width="1.5" rx="2"/>
+            <text x="155" y="80" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#2b2418">11</text>
+          </g>
+          <!-- Pivot -->
+          <circle cx="100" cy="60" r="4" fill="#ddb05a" stroke="#2b2418" stroke-width="1.5"/>
+          <!-- Header shapes -->
+          <g transform="translate(20, 20)">
+            <polygon points="6,2 10,10 2,10" fill="#5ab464" stroke="#2b2418" stroke-width="1.5"/>
+            <polygon points="24,2 30,6 24,10 18,6" fill="#c8a040" stroke="#2b2418" stroke-width="1.5"/>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Algebra deduction</div>
+        <h2>Balance Scale</h2>
+        <p class="desc">Each clue is a balance: shapes on the left weigh as much as the number on the right. Deduce every shape's hidden value across 8 levels of clever puzzles.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">type</span><span class="chip">logic</span><span class="chip">puzzle</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Math Frogger -->
+    <a class="card mathfrogger" href="mathfrogger-html5/index.html" style="--accent-card:#6cc26b">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- Sky -->
+          <rect width="200" height="120" fill="#a8e0f5"/>
+          <!-- Top grass + homes -->
+          <rect y="0" width="200" height="22" fill="#3a7a3a"/>
+          <!-- Lily pad homes -->
+          <g>
+            <circle cx="30" cy="11" r="8" fill="#3aa45a" stroke="#1c5a2a" stroke-width="1.5"/>
+            <text x="30" y="14" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#1c2a18">8</text>
+            <circle cx="70" cy="11" r="8" fill="#3aa45a" stroke="#1c5a2a" stroke-width="1.5"/>
+            <text x="70" y="14" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#1c2a18">12</text>
+            <circle cx="110" cy="11" r="9" fill="#7ae89a" stroke="#1c5a2a" stroke-width="1.5"/>
+            <text x="110" y="14" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#1c2a18">15</text>
+            <circle cx="150" cy="11" r="8" fill="#3aa45a" stroke="#1c5a2a" stroke-width="1.5"/>
+            <text x="150" y="14" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#1c2a18">7</text>
+            <circle cx="180" cy="11" r="8" fill="#3aa45a" stroke="#1c5a2a" stroke-width="1.5"/>
+            <text x="180" y="14" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#1c2a18">3</text>
+          </g>
+          <!-- River -->
+          <rect y="24" width="200" height="30" fill="#4a8acf"/>
+          <!-- Log -->
+          <rect x="40" y="30" width="60" height="10" rx="5" fill="#8b5a2b" stroke="#3a2418" stroke-width="1.5"/>
+          <rect x="130" y="44" width="50" height="8" rx="4" fill="#8b5a2b" stroke="#3a2418" stroke-width="1.5"/>
+          <!-- Median -->
+          <rect y="54" width="200" height="12" fill="#6cc26b"/>
+          <!-- Road -->
+          <rect y="66" width="200" height="36" fill="#3a3a3e"/>
+          <!-- Lane lines -->
+          <line x1="0" y1="78" x2="200" y2="78" stroke="#ffd24d" stroke-width="1" stroke-dasharray="4 3"/>
+          <line x1="0" y1="90" x2="200" y2="90" stroke="#ffd24d" stroke-width="1" stroke-dasharray="4 3"/>
+          <!-- Cars -->
+          <rect x="30" y="68" width="36" height="10" rx="2" fill="#e85a5a" stroke="#1c2a18" stroke-width="1.5"/>
+          <rect x="40" y="68" width="18" height="5" fill="#1c2a18"/>
+          <rect x="120" y="80" width="36" height="10" rx="2" fill="#5aa8e8" stroke="#1c2a18" stroke-width="1.5"/>
+          <rect x="130" y="80" width="18" height="5" fill="#1c2a18"/>
+          <!-- Bottom grass -->
+          <rect y="102" width="200" height="18" fill="#6cc26b"/>
+          <!-- Frog -->
+          <g transform="translate(100, 110)">
+            <ellipse cx="-5" cy="-1" rx="5" ry="3" fill="#3a7a3a" stroke="#1c2a18" stroke-width="1.2"/>
+            <ellipse cx="5" cy="-1" rx="5" ry="3" fill="#3a7a3a" stroke="#1c2a18" stroke-width="1.2"/>
+            <ellipse cx="0" cy="-3" rx="7" ry="6" fill="#6cc26b" stroke="#1c2a18" stroke-width="1.5"/>
+            <circle cx="-3" cy="-7" r="3" fill="#6cc26b" stroke="#1c2a18" stroke-width="1"/>
+            <circle cx="3" cy="-7" r="3" fill="#6cc26b" stroke="#1c2a18" stroke-width="1"/>
+            <circle cx="-3" cy="-7" r="1.8" fill="#fff"/>
+            <circle cx="3" cy="-7" r="1.8" fill="#fff"/>
+            <circle cx="-3" cy="-7" r="1" fill="#1c2a18"/>
+            <circle cx="3" cy="-7" r="1" fill="#1c2a18"/>
+          </g>
+          <!-- Equation chip top right -->
+          <rect x="4" y="4" width="50" height="14" rx="3" fill="#1c2a18" stroke="#f4f0d8" stroke-width="1.5"/>
+          <text x="29" y="14" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#f4f0d8">7+8=?</text>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Hop to the answer</div>
+        <h2>Math Frogger</h2>
+        <p class="desc">A cute frog dodges cars and rides logs across the river. The catch: only the lily pad with the right answer to the target equation is safe. Wrong pad costs a life.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">arrows</span><span class="chip">action</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Math*bert -->
+    <a class="card mathbert" href="mathbert-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- Background already set via CSS gradient -->
+          <!-- Stars -->
+          <g fill="#fff">
+            <circle cx="18" cy="14" r="1"/>
+            <circle cx="45" cy="22" r="1.2"/>
+            <circle cx="170" cy="18" r="1"/>
+            <circle cx="185" cy="38" r="1.3"/>
+            <circle cx="30" cy="40" r="0.9"/>
+            <circle cx="155" cy="30" r="1"/>
+            <circle cx="95" cy="12" r="1.1"/>
+          </g>
+          <!-- Iso pyramid: 4 rows of tiles. Each tile = diamond top + 2 side faces. -->
+          <g>
+            <!-- Row 0 (apex) -->
+            <g transform="translate(100, 30)">
+              <!-- left face -->
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#5a5478" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#3e3858" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#8a83b0" stroke="#0a0e1e" stroke-width="1.2"/>
+            </g>
+            <!-- Row 1 -->
+            <g transform="translate(88, 48)">
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#5a5478" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#3e3858" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#8a83b0" stroke="#0a0e1e" stroke-width="1.2"/>
+            </g>
+            <g transform="translate(112, 48)">
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#5a5478" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#3e3858" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#8a83b0" stroke="#0a0e1e" stroke-width="1.2"/>
+            </g>
+            <!-- Row 2 -->
+            <g transform="translate(76, 66)">
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#5a5478" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#3e3858" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#8a83b0" stroke="#0a0e1e" stroke-width="1.2"/>
+            </g>
+            <!-- Center of row 2: math tile (orange with value) -->
+            <g transform="translate(100, 66)">
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#c25618" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#8a3812" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#ff8a3d" stroke="#0a0e1e" stroke-width="1.2"/>
+              <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="9" fill="#fff" stroke="#0a0e1e" stroke-width="0.5" paint-order="stroke fill">+2</text>
+            </g>
+            <g transform="translate(124, 66)">
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#5a5478" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#3e3858" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#8a83b0" stroke="#0a0e1e" stroke-width="1.2"/>
+            </g>
+            <!-- Row 3 (bottom) -->
+            <g transform="translate(64, 84)">
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#2e7780" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#1c4a55" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#5cc7d4" stroke="#0a0e1e" stroke-width="1.2"/>
+            </g>
+            <g transform="translate(88, 84)">
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#5a5478" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#3e3858" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#8a83b0" stroke="#0a0e1e" stroke-width="1.2"/>
+            </g>
+            <g transform="translate(112, 84)">
+              <!-- Balanced math tile (green, value 0) -->
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#2e8a3e" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#1c5a2a" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#5cd97a" stroke="#0a0e1e" stroke-width="1.2"/>
+              <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="9" fill="#fff" stroke="#0a0e1e" stroke-width="0.5" paint-order="stroke fill">0</text>
+            </g>
+            <g transform="translate(136, 84)">
+              <polygon points="-12,0 0,6 0,18 -12,12" fill="#5a5478" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,6 12,0 12,12 0,18" fill="#3e3858" stroke="#0a0e1e" stroke-width="1.2"/>
+              <polygon points="0,-6 12,0 0,6 -12,0" fill="#8a83b0" stroke="#0a0e1e" stroke-width="1.2"/>
+            </g>
+          </g>
+          <!-- Player on apex -->
+          <g transform="translate(100, 18)">
+            <ellipse cx="0" cy="5" rx="7" ry="2" fill="rgba(0,0,0,0.4)"/>
+            <circle cx="0" cy="0" r="6" fill="#ffd24d" stroke="#0a0e1e" stroke-width="1.2"/>
+            <circle cx="-2" cy="-1" r="1.5" fill="#fff"/>
+            <circle cx="2" cy="-1" r="1.5" fill="#fff"/>
+            <circle cx="-2" cy="-1" r="0.7" fill="#0a0e1e"/>
+            <circle cx="2" cy="-1" r="0.7" fill="#0a0e1e"/>
+            <ellipse cx="0" cy="2" rx="2.5" ry="1.5" fill="#ff8a3d" stroke="#0a0e1e" stroke-width="0.8"/>
+          </g>
+          <!-- Red ball mid-hop -->
+          <g transform="translate(130, 38)">
+            <ellipse cx="0" cy="8" rx="4" ry="1.5" fill="rgba(0,0,0,0.4)"/>
+            <circle cx="0" cy="0" r="5" fill="#e2434b" stroke="#0a0e1e" stroke-width="1.2"/>
+            <circle cx="-1.5" cy="-1.5" r="1.5" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="1.8" cy="1" r="0.8" fill="#8a1f24"/>
+          </g>
+          <!-- +1 / -1 chips top corners -->
+          <g transform="translate(14, 14)">
+            <rect x="0" y="0" width="24" height="12" rx="3" fill="#1c1530" stroke="#5cd97a" stroke-width="1.2"/>
+            <text x="12" y="9" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#5cd97a">↘ +1</text>
+          </g>
+          <g transform="translate(162, 14)">
+            <rect x="0" y="0" width="24" height="12" rx="3" fill="#1c1530" stroke="#ff5c7c" stroke-width="1.2"/>
+            <text x="12" y="9" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#ff5c7c">↖ −1</text>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Hop the pyramid</div>
+        <h2>Math*bert</h2>
+        <p class="desc">An isometric pyramid puzzle. Visit every tile, then balance the orange math tiles to <b>0</b>: descending hops add <b>+1</b>, ascending hops subtract <b>−1</b>. Dodge tumbling red balls and the snake that chases you.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">arrows</span><span class="chip">puzzle</span><span class="chip">action</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Missile Command -->
+    <a class="card missilecommand" href="missilecommand-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <lineargradient id="mc-sky" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stop-color="#1a0a3a"/>
+              <stop offset="0.6" stop-color="#5a2a6a"/>
+              <stop offset="1" stop-color="#ff7a8a"/>
+            </linearGradient>
+          </defs>
+          <rect width="200" height="120" fill="url(#mc-sky)"/>
+          <!-- Stars -->
+          <g fill="#fff4dc">
+            <circle cx="20" cy="15" r="1"/>
+            <circle cx="60" cy="25" r="1.2"/>
+            <circle cx="100" cy="10" r="1"/>
+            <circle cx="140" cy="22" r="1.4"/>
+            <circle cx="175" cy="14" r="1"/>
+            <circle cx="40" cy="40" r="0.8"/>
+            <circle cx="80" cy="35" r="1"/>
+          </g>
+          <!-- Mountains -->
+          <path d="M0 90 L30 75 L60 88 L90 70 L120 85 L150 72 L180 86 L200 78 L200 100 L0 100 Z" fill="#241738"/>
+          <!-- Ground -->
+          <rect y="95" width="200" height="25" fill="#3a2a4a"/>
+          <line x1="0" y1="95" x2="200" y2="95" stroke="#fff4dc" stroke-width="1"/>
+          <!-- Cities -->
+          <g>
+            <rect x="34" y="86" width="6" height="9" fill="#ff6b9d" stroke="#1a1428" stroke-width="0.8"/>
+            <rect x="42" y="82" width="7" height="13" fill="#7ad1ff" stroke="#1a1428" stroke-width="0.8"/>
+            <rect x="51" y="87" width="6" height="8" fill="#8aea7a" stroke="#1a1428" stroke-width="0.8"/>
+            <rect x="142" y="86" width="6" height="9" fill="#ffd17a" stroke="#1a1428" stroke-width="0.8"/>
+            <rect x="150" y="82" width="7" height="13" fill="#ff9d7a" stroke="#1a1428" stroke-width="0.8"/>
+            <rect x="159" y="87" width="6" height="8" fill="#c97aff" stroke="#1a1428" stroke-width="0.8"/>
+          </g>
+          <!-- Silos -->
+          <g>
+            <polygon points="14,95 18,82 28,82 32,95" fill="#ffd17a" stroke="#1a1428" stroke-width="0.8"/>
+            <path d="M16 82 Q23 76 30 82" fill="#fff4dc" stroke="#1a1428" stroke-width="0.8"/>
+            <circle cx="21" cy="80" r="0.8" fill="#1a1428"/>
+            <circle cx="25" cy="80" r="0.8" fill="#1a1428"/>
+            <polygon points="170,95 174,82 184,82 188,95" fill="#ffd17a" stroke="#1a1428" stroke-width="0.8"/>
+            <path d="M172 82 Q179 76 186 82" fill="#fff4dc" stroke="#1a1428" stroke-width="0.8"/>
+            <circle cx="177" cy="80" r="0.8" fill="#1a1428"/>
+            <circle cx="181" cy="80" r="0.8" fill="#1a1428"/>
+          </g>
+          <!-- Enemy missile with trail -->
+          <g>
+            <path d="M120 5 Q105 30 90 60" stroke="#ff5c7c" stroke-width="2" fill="none" stroke-dasharray="2 3" opacity="0.6"/>
+            <g transform="translate(90, 60)">
+              <ellipse cx="0" cy="0" rx="3" ry="5" fill="#ff5c7c" stroke="#1a1428" stroke-width="0.8"/>
+              <polygon points="-1.5,4 0,8 1.5,4" fill="#ffd17a"/>
+            </g>
+          </g>
+          <!-- Explosion -->
+          <g>
+            <circle cx="135" cy="55" r="16" fill="#7ad1ff" opacity="0.3"/>
+            <circle cx="135" cy="55" r="10" fill="#fff4dc" opacity="0.85"/>
+            <circle cx="135" cy="55" r="16" stroke="#7ad1ff" stroke-width="1.5" fill="none"/>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Defend 6 cities</div>
+        <h2>Missile Command</h2>
+        <p class="desc">Friendly cities under siege from a meteor swarm. Click to fire from the nearest silo. Chain blasts and perfect hits multiply your score.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">aim</span><span class="chip">action</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Math Asteroids -->
+    <a class="card mathasteroids" href="mathasteroids-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- Stars -->
+          <g fill="#fff">
+            <circle cx="22" cy="18" r="1"/>
+            <circle cx="52" cy="35" r="1.2"/>
+            <circle cx="95" cy="15" r="1"/>
+            <circle cx="148" cy="28" r="1.3"/>
+            <circle cx="178" cy="45" r="1"/>
+            <circle cx="30" cy="95" r="1.2"/>
+            <circle cx="170" cy="100" r="1"/>
+            <circle cx="110" cy="95" r="1"/>
+            <circle cx="75" cy="75" r="0.8"/>
+          </g>
+          <!-- Target chip top -->
+          <g transform="translate(72, 6)">
+            <rect width="56" height="15" rx="4" fill="#0a0e1e" stroke="#5cd9ff" stroke-width="1.5"/>
+            <text x="28" y="11" text-anchor="middle" font-family="Lilita One" font-size="9" fill="#e8ecff">= <tspan fill="#ffd24d">12</tspan></text>
+          </g>
+          <!-- Asteroid 1 (matching: glowing green, 5+7) -->
+          <g transform="translate(38, 50)">
+            <circle r="22" fill="#5cd97a" opacity="0.25"/>
+            <polygon points="-14,-4 -10,-12 -2,-14 8,-12 14,-4 12,6 4,14 -8,12 -14,4" fill="#bdb094" stroke="#5cd97a" stroke-width="2"/>
+            <circle cx="-5" cy="3" r="1.5" fill="rgba(0,0,0,0.3)"/>
+            <circle cx="5" cy="-5" r="1" fill="rgba(0,0,0,0.3)"/>
+            <rect x="-13" y="-5" width="26" height="10" rx="3" fill="#5cd97a" stroke="#0a0e1e" stroke-width="1.5"/>
+            <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#0a0e1e">5+7</text>
+          </g>
+          <!-- Asteroid 2 (non-matching: 6×4) -->
+          <g transform="translate(160, 38)">
+            <polygon points="-13,-2 -8,-11 1,-13 10,-9 13,-2 11,7 2,13 -7,11 -12,4" fill="#a89c80" stroke="#1a1e30" stroke-width="2"/>
+            <circle cx="-4" cy="-2" r="1.5" fill="rgba(0,0,0,0.3)"/>
+            <circle cx="6" cy="4" r="1" fill="rgba(0,0,0,0.3)"/>
+            <rect x="-12" y="-5" width="24" height="10" rx="3" fill="#0a0e1e" stroke="#e8ecff" stroke-width="1.5"/>
+            <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#fff">6×4</text>
+          </g>
+          <!-- Asteroid 3 (non-matching: 9-2) -->
+          <g transform="translate(150, 92)">
+            <polygon points="-12,-3 -9,-10 0,-13 9,-10 12,-2 9,7 0,11 -8,8 -12,3" fill="#9c8f76" stroke="#1a1e30" stroke-width="2"/>
+            <circle cx="3" cy="-3" r="1.5" fill="rgba(0,0,0,0.3)"/>
+            <rect x="-12" y="-5" width="24" height="10" rx="3" fill="#0a0e1e" stroke="#e8ecff" stroke-width="1.5"/>
+            <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#fff">9−2</text>
+          </g>
+          <!-- Asteroid 4 (non-matching: 8+3) -->
+          <g transform="translate(58, 95)">
+            <polygon points="-11,-3 -7,-10 2,-12 9,-8 11,-1 8,7 0,10 -8,7 -11,2" fill="#b2a486" stroke="#1a1e30" stroke-width="2"/>
+            <rect x="-12" y="-5" width="24" height="10" rx="3" fill="#0a0e1e" stroke="#e8ecff" stroke-width="1.5"/>
+            <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="8" fill="#fff">8+3</text>
+          </g>
+          <!-- Ship aiming at the matching asteroid (upper-left) -->
+          <g transform="translate(100, 64) rotate(-150)">
+            <polygon points="-10,-4 -16,0 -10,4" fill="#ff8a3d"/>
+            <polygon points="-10,-3 -14,0 -10,3" fill="#ffd24d"/>
+            <polygon points="14,0 -8,-8 -5,0 -8,8" fill="#5cd9ff" stroke="#0a0e1e" stroke-width="1.5"/>
+            <circle cx="2" cy="0" r="2.5" fill="#0a0e1e"/>
+          </g>
+          <!-- Bullet trail from ship toward matching asteroid -->
+          <g stroke="#ffd24d" stroke-width="2" stroke-linecap="round" fill="none">
+            <line x1="82" y1="58" x2="68" y2="56" opacity="0.85"/>
+            <line x1="60" y1="54" x2="50" y2="52" opacity="0.55"/>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Target the right rock</div>
+        <h2>Math Asteroids</h2>
+        <p class="desc">Drift in space and gun down asteroids stamped with arithmetic expressions. Only shoot the rocks that match the <b>target answer</b>. Wrong shots cost shield. Hyperspace if you get cornered.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">aim</span><span class="chip">shoot</span><span class="chip">arcade</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Math Snake -->
+    <a class="card mathsnake" href="mathsnake-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="200" height="120" fill="#1b2c20"/>
+          <g opacity="0.4">
+            <rect x="0" y="15" width="200" height="15" fill="#16241b"/>
+            <rect x="0" y="45" width="200" height="15" fill="#16241b"/>
+            <rect x="0" y="75" width="200" height="15" fill="#16241b"/>
+            <rect x="0" y="105" width="200" height="15" fill="#16241b"/>
+          </g>
+          <!-- Rule chip top -->
+          <g transform="translate(54, 7)">
+            <rect width="92" height="16" rx="4" fill="#0e1a14" stroke="#5cd97a" stroke-width="1.5"/>
+            <text x="46" y="12" text-anchor="middle" font-family="Lilita One" font-size="9" fill="#fff">EAT <tspan fill="#ffd24d">EVENS</tspan></text>
+          </g>
+          <!-- Snake body (S-curve) -->
+          <g>
+            <g fill="#3aa55a" stroke="#1c5a2a" stroke-width="1.5"><circle cx="30" cy="82" r="7"/></g>
+            <g fill="#5cd97a" stroke="#1c5a2a" stroke-width="1.5"><circle cx="44" cy="82" r="7"/></g>
+            <g fill="#3aa55a" stroke="#1c5a2a" stroke-width="1.5"><circle cx="58" cy="82" r="7"/></g>
+            <g fill="#5cd97a" stroke="#1c5a2a" stroke-width="1.5"><circle cx="58" cy="68" r="7"/></g>
+            <g fill="#3aa55a" stroke="#1c5a2a" stroke-width="1.5"><circle cx="58" cy="54" r="7"/></g>
+            <g fill="#5cd97a" stroke="#1c5a2a" stroke-width="1.5"><circle cx="72" cy="54" r="7"/></g>
+            <g fill="#3aa55a" stroke="#1c5a2a" stroke-width="1.5"><circle cx="86" cy="54" r="7"/></g>
+            <!-- Head -->
+            <g transform="translate(102, 54)">
+              <circle r="8" fill="#7ae89a" stroke="#1c5a2a" stroke-width="1.5"/>
+              <circle cx="3" cy="-3" r="2.5" fill="#fff"/>
+              <circle cx="3" cy="3" r="2.5" fill="#fff"/>
+              <circle cx="4" cy="-3" r="1" fill="#0e1a14"/>
+              <circle cx="4" cy="3" r="1" fill="#0e1a14"/>
+              <path d="M9 0 L13 0 L11 -2 M13 0 L11 2" stroke="#ff5c7c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            </g>
+          </g>
+          <!-- Apples with numbers -->
+          <g>
+            <g transform="translate(140, 35)">
+              <circle r="10" fill="#ff5c5c" stroke="#0e1a14" stroke-width="1.5"/>
+              <circle cx="-3" cy="-3" r="2.5" fill="rgba(255,255,255,0.5)"/>
+              <ellipse cx="4" cy="-9" rx="3" ry="1.5" fill="#5cd97a" stroke="#1c5a2a" stroke-width="1"/>
+              <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff" stroke="#0e1a14" stroke-width="0.6" paint-order="stroke fill">8</text>
+            </g>
+            <g transform="translate(170, 75)">
+              <circle r="10" fill="#ff5c5c" stroke="#0e1a14" stroke-width="1.5"/>
+              <circle cx="-3" cy="-3" r="2.5" fill="rgba(255,255,255,0.5)"/>
+              <ellipse cx="4" cy="-9" rx="3" ry="1.5" fill="#5cd97a" stroke="#1c5a2a" stroke-width="1"/>
+              <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff" stroke="#0e1a14" stroke-width="0.6" paint-order="stroke fill">12</text>
+            </g>
+            <g transform="translate(135, 95)">
+              <circle r="9" fill="#b5b078" stroke="#0e1a14" stroke-width="1.5"/>
+              <text x="0" y="3" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff" stroke="#0e1a14" stroke-width="0.6" paint-order="stroke fill">7</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Slither &amp; snack</div>
+        <h2>Math Snake</h2>
+        <p class="desc">Classic snake with a math hook — only eat apples that match the active rule (evens, primes, multiples, ascending order…). Wrong apple shrinks you. Walls and self bites end the run.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">arrows</span><span class="chip">arcade</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Math Whack-a-Mole -->
+    <a class="card mathwhack" href="mathwhackamole-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="200" height="120" fill="#5cb85c"/>
+          <!-- Sky line -->
+          <rect width="200" height="30" fill="#7ad17a"/>
+          <!-- Rule banner -->
+          <g transform="translate(54, 6)">
+            <rect width="92" height="16" rx="4" fill="#2a1a10" stroke="#ffd24d" stroke-width="1.5"/>
+            <text x="46" y="12" text-anchor="middle" font-family="Lilita One" font-size="9" fill="#fff">WHACK <tspan fill="#ffd24d">PRIMES</tspan></text>
+          </g>
+          <!-- 3 holes -->
+          <g>
+            <ellipse cx="40" cy="82" rx="22" ry="7" fill="#6b4421"/>
+            <ellipse cx="40" cy="80" rx="18" ry="5.5" fill="#1a0c08"/>
+            <ellipse cx="100" cy="100" rx="22" ry="7" fill="#6b4421"/>
+            <ellipse cx="100" cy="98" rx="18" ry="5.5" fill="#1a0c08"/>
+            <ellipse cx="160" cy="82" rx="22" ry="7" fill="#6b4421"/>
+            <ellipse cx="160" cy="80" rx="18" ry="5.5" fill="#1a0c08"/>
+          </g>
+          <!-- Mole 1 (correct: 7) - up -->
+          <g transform="translate(40, 60)">
+            <ellipse rx="14" ry="15" fill="#9c6638" stroke="#3a2418" stroke-width="1.5"/>
+            <ellipse cy="5" rx="7" ry="6" fill="#e8c89a"/>
+            <circle cx="-4" cy="-3" r="2" fill="#fff"/>
+            <circle cx="4" cy="-3" r="2" fill="#fff"/>
+            <circle cx="-4" cy="-3" r="1" fill="#1a1410"/>
+            <circle cx="4" cy="-3" r="1" fill="#1a1410"/>
+            <ellipse cy="1" rx="2" ry="1.5" fill="#ff5c7c" stroke="#3a2418" stroke-width="0.8"/>
+            <rect x="-7" y="6" width="14" height="7" rx="2" fill="#fff7e0" stroke="#2a1a10" stroke-width="1"/>
+            <text y="12" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#2a1a10">7</text>
+          </g>
+          <!-- Mole 2 (decoy: 4) - up but wrong -->
+          <g transform="translate(160, 60)">
+            <ellipse rx="14" ry="15" fill="#9c6638" stroke="#3a2418" stroke-width="1.5"/>
+            <ellipse cy="5" rx="7" ry="6" fill="#e8c89a"/>
+            <circle cx="-4" cy="-3" r="2" fill="#fff"/>
+            <circle cx="4" cy="-3" r="2" fill="#fff"/>
+            <circle cx="-4" cy="-3" r="1" fill="#1a1410"/>
+            <circle cx="4" cy="-3" r="1" fill="#1a1410"/>
+            <ellipse cy="1" rx="2" ry="1.5" fill="#ff5c7c" stroke="#3a2418" stroke-width="0.8"/>
+            <rect x="-7" y="6" width="14" height="7" rx="2" fill="#fff7e0" stroke="#2a1a10" stroke-width="1"/>
+            <text y="12" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#2a1a10">4</text>
+          </g>
+          <!-- Hammer -->
+          <g transform="translate(55, 40) rotate(-25)">
+            <rect x="-3" y="0" width="6" height="34" fill="#7a5a3a" stroke="#2a1a10" stroke-width="1.5"/>
+            <rect x="-15" y="-10" width="30" height="16" fill="#9c8a7a" stroke="#2a1a10" stroke-width="1.5"/>
+            <rect x="-15" y="-5" width="30" height="3" fill="#5a4a3a"/>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Bonk only the right ones</div>
+        <h2>Math Whack-a-Mole</h2>
+        <p class="desc">Moles pop up with numbers. Whack only the ones matching the rule — evens, primes, multiples. Decoys cost you a miss. Three misses or the timer ends the run.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">click</span><span class="chip">reflex</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Math Match-3 -->
+    <a class="card mathmatch3" href="mathmatch3-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="200" height="120" fill="#1a1428"/>
+          <!-- Stars -->
+          <g fill="#fff" opacity="0.7">
+            <circle cx="20" cy="15" r="1"/>
+            <circle cx="180" cy="22" r="1.2"/>
+            <circle cx="35" cy="100" r="0.8"/>
+            <circle cx="175" cy="105" r="1"/>
+          </g>
+          <!-- Rule banner -->
+          <g transform="translate(54, 6)">
+            <rect width="92" height="16" rx="4" fill="#26204a" stroke="#ffd24d" stroke-width="1.5"/>
+            <text x="46" y="12" text-anchor="middle" font-family="Lilita One" font-size="9" fill="#fff">3+ <tspan fill="#ffd24d">EVENS</tspan></text>
+          </g>
+          <!-- 4x4 grid of tiles, with a winning line of 3 -->
+          <g transform="translate(58, 30)">
+            <!-- Row 1 -->
+            <g transform="translate(0,0)"><rect width="20" height="20" rx="4" fill="#8a83b0" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">3</text></g>
+            <g transform="translate(22,0)"><rect width="20" height="20" rx="4" fill="#5cd97a" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">2</text></g>
+            <g transform="translate(44,0)"><rect width="20" height="20" rx="4" fill="#5cd97a" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">4</text></g>
+            <g transform="translate(66,0)"><rect width="20" height="20" rx="4" fill="#5cd97a" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">6</text></g>
+            <!-- Row 2 -->
+            <g transform="translate(0,22)"><rect width="20" height="20" rx="4" fill="#8a83b0" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">5</text></g>
+            <g transform="translate(22,22)"><rect width="20" height="20" rx="4" fill="#8a83b0" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">7</text></g>
+            <g transform="translate(44,22)"><rect width="20" height="20" rx="4" fill="#8a83b0" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">9</text></g>
+            <g transform="translate(66,22)"><rect width="20" height="20" rx="4" fill="#5cd97a" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">8</text></g>
+            <!-- Row 3 -->
+            <g transform="translate(0,44)"><rect width="20" height="20" rx="4" fill="#8a83b0" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">1</text></g>
+            <g transform="translate(22,44)"><rect width="20" height="20" rx="4" fill="#8a83b0" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">3</text></g>
+            <g transform="translate(44,44)"><rect width="20" height="20" rx="4" fill="#8a83b0" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">5</text></g>
+            <g transform="translate(66,44)"><rect width="20" height="20" rx="4" fill="#8a83b0" stroke="#0f0820" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff">7</text></g>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Swap to clear lines</div>
+        <h2>Math Match-3</h2>
+        <p class="desc">Swap adjacent tiles to make a line of 3+ that all satisfy the active rule. Cascading drops chain into combo multipliers. Limited moves per level.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">click</span><span class="chip">puzzle</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Math Tower Defense -->
+    <a class="card mathtd" href="mathtd-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="200" height="120" fill="#5cb85c"/>
+          <!-- Path winding from left to right -->
+          <g>
+            <path d="M0 60 L60 60 L60 30 L120 30 L120 90 L200 90" stroke="#a87a3a" stroke-width="18" fill="none"/>
+            <path d="M0 60 L60 60 L60 30 L120 30 L120 90 L200 90" stroke="rgba(255,244,220,0.4)" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+          </g>
+          <!-- Towers -->
+          <g>
+            <g transform="translate(35, 35)">
+              <rect x="-10" y="-10" width="20" height="20" fill="#3a3a4a" stroke="#1a1a14" stroke-width="1.5"/>
+              <circle r="8" fill="#5cd9ff" stroke="#1a1a14" stroke-width="1.5"/>
+              <text y="3" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff" stroke="#1a1a14" stroke-width="0.6" paint-order="stroke fill">−1</text>
+            </g>
+            <g transform="translate(90, 55)">
+              <rect x="-10" y="-10" width="20" height="20" fill="#3a3a4a" stroke="#1a1a14" stroke-width="1.5"/>
+              <circle r="8" fill="#5cd97a" stroke="#1a1a14" stroke-width="1.5"/>
+              <text y="3" text-anchor="middle" font-family="Lilita One" font-size="10" fill="#fff" stroke="#1a1a14" stroke-width="0.6" paint-order="stroke fill">−3</text>
+            </g>
+            <g transform="translate(150, 65)">
+              <rect x="-10" y="-10" width="20" height="20" fill="#3a3a4a" stroke="#1a1a14" stroke-width="1.5"/>
+              <circle r="8" fill="#ffd24d" stroke="#1a1a14" stroke-width="1.5"/>
+              <text y="3" text-anchor="middle" font-family="Lilita One" font-size="9" fill="#fff" stroke="#1a1a14" stroke-width="0.6" paint-order="stroke fill">÷2</text>
+            </g>
+          </g>
+          <!-- Enemies -->
+          <g>
+            <g transform="translate(72, 30)">
+              <ellipse cy="7" rx="7" ry="2" fill="rgba(0,0,0,0.3)"/>
+              <circle r="8" fill="#e2434b" stroke="#1a1a14" stroke-width="1.5"/>
+              <circle cx="-2" cy="-2" r="1.5" fill="#fff"/>
+              <circle cx="2" cy="-2" r="1.5" fill="#fff"/>
+              <circle cx="-2" cy="-2" r="0.7" fill="#1a1a14"/>
+              <circle cx="2" cy="-2" r="0.7" fill="#1a1a14"/>
+              <rect x="-7" y="9" width="14" height="7" rx="2" fill="#fff" stroke="#1a1a14" stroke-width="1"/>
+              <text y="15" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#1a1a14">8</text>
+            </g>
+            <g transform="translate(120, 60)">
+              <ellipse cy="7" rx="7" ry="2" fill="rgba(0,0,0,0.3)"/>
+              <circle r="8" fill="#f0a040" stroke="#1a1a14" stroke-width="1.5"/>
+              <circle cx="-2" cy="-2" r="1.5" fill="#fff"/>
+              <circle cx="2" cy="-2" r="1.5" fill="#fff"/>
+              <circle cx="-2" cy="-2" r="0.7" fill="#1a1a14"/>
+              <circle cx="2" cy="-2" r="0.7" fill="#1a1a14"/>
+              <rect x="-7" y="9" width="14" height="7" rx="2" fill="#fff" stroke="#1a1a14" stroke-width="1"/>
+              <text y="15" text-anchor="middle" font-family="Lilita One" font-size="7" fill="#1a1a14">3</text>
+            </g>
+          </g>
+          <!-- Castle on the right -->
+          <g transform="translate(192, 90)">
+            <rect x="-10" y="-12" width="20" height="20" fill="#cfa867" stroke="#1a1a14" stroke-width="1.5"/>
+            <rect x="-10" y="-16" width="4" height="4" fill="#cfa867" stroke="#1a1a14" stroke-width="1"/>
+            <rect x="-2" y="-16" width="4" height="4" fill="#cfa867" stroke="#1a1a14" stroke-width="1"/>
+            <rect x="6" y="-16" width="4" height="4" fill="#cfa867" stroke="#1a1a14" stroke-width="1"/>
+            <rect x="-2" y="-5" width="4" height="8" fill="#5a3a18"/>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Reduce enemies to 0</div>
+        <h2>Math Tower Defense</h2>
+        <p class="desc">Enemies walk a winding path carrying numbers. Place <b>operator towers</b> (−1, −3, ÷2…) next to the path to reduce them to <b>0</b> before they reach your base. Anything non-zero costs HP.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip">strategy</span><span class="chip">place</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <footer>
+    <p class="credit-line"><span class="by">A handcrafted arcade by</span> <a href="https://www.patreon.com/c/kikenandez" target="_blank" rel="noopener">kikenandez</a></p>
+    <a class="patreon-btn" href="https://www.patreon.com/c/kikenandez" target="_blank" rel="noopener">
+      <span class="heart">♥</span> SUPPORT ON PATREON
+    </a>
+    <p class="footer-fine">Built with HTML5 canvas · static files · runs entirely in your browser · no installs · no tracking · <a href="LICENSE">MIT</a></p>
+  </footer>
+</main>
+</body>
+</html>
