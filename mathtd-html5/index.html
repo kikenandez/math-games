@@ -159,6 +159,23 @@
   .stat-chip .stat-label { font-size: 9px; color: rgba(255, 244, 220, 0.6); letter-spacing: 0.16em; font-family: 'Fredoka', sans-serif; font-weight: 600; text-transform: uppercase; }
   .stat-chip .stat-val { font-size: 22px; color: var(--paper); }
   .stat-chip.hi .stat-val { color: var(--accent); }
+  #speed-btn {
+    position: absolute; top: 122px; right: 14px;
+    background: var(--cool);
+    color: var(--ink);
+    border: 3px solid var(--paper);
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
+    z-index: 7;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #speed-btn:active, #speed-btn.active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.55); background: #45c0e6; }
+  #speed-btn[disabled] { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); cursor: default; box-shadow: none; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -176,6 +193,7 @@
   </div>
 
   <button id="wave-btn">START WAVE</button>
+  <button id="speed-btn" disabled>FAST ⏩</button>
 
   <div id="picker"></div>
 

@@ -149,6 +149,7 @@
     elapsed: 0,
     mouse: { x: 0, y: 0, valid: false, col: -1, row: -1 },
     shake: 0, shakeX: 0, shakeY: 0,
+    speedMultiplier: 1.0,
   };
 
   const rand = (min, max) => Math.random() * (max - min) + min;
@@ -299,6 +300,26 @@
   }
   document.getElementById('start-btn').addEventListener('click', startGame);
   document.getElementById('wave-btn').addEventListener('click', startWave);
+  const speedBtn = document.getElementById('speed-btn');
+  if (speedBtn) {
+    const startFast = (e) => {
+      if (e) e.preventDefault();
+      if (!state.inWave) return;
+      state.speedMultiplier = 3.0;
+      speedBtn.classList.add('active');
+    };
+    const stopFast = (e) => {
+      if (e) e.preventDefault();
+      state.speedMultiplier = 1.0;
+      speedBtn.classList.remove('active');
+    };
+    speedBtn.addEventListener('mousedown', startFast);
+    speedBtn.addEventListener('mouseup', stopFast);
+    speedBtn.addEventListener('mouseleave', stopFast);
+    speedBtn.addEventListener('touchstart', startFast, { passive: false });
+    speedBtn.addEventListener('touchend', stopFast, { passive: false });
+    speedBtn.addEventListener('touchcancel', stopFast, { passive: false });
+  }
 
   // ===== Input =====
   canvas.addEventListener('mousemove', (e) => updateMouse(e.clientX, e.clientY));
@@ -370,6 +391,13 @@
     if (e.key === '2') state.selectedTower = 'sub3';
     if (e.key === '3') state.selectedTower = 'half';
     if (e.key === '4') state.selectedTower = 'sub5';
+    if (e.key === 'f' || e.key === 'F') {
+      if (state.inWave) {
+        state.speedMultiplier = 3.0;
+        const btn = document.getElementById('speed-btn');
+        if (btn) btn.classList.add('active');
+      }
+    }
     // Keyboard branch select: Q/W/E for gate 1, A/S/D for gate 2, Z/X/C for gate 3.
     const k = e.key.toLowerCase();
     if (k === 'q') state.selectedBranches[0] = 0;
@@ -383,6 +411,13 @@
     else if (k === 'c') state.selectedBranches[2] = 2;
     renderPicker();
   });
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'f' || e.key === 'F') {
+      state.speedMultiplier = 1.0;
+      const btn = document.getElementById('speed-btn');
+      if (btn) btn.classList.remove('active');
+    }
+  });
 
   // ===== Loop =====
   let lastTime = performance.now();
@@ -390,7 +425,7 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing' && !state.paused) update(dt);
+    if (state.phase === 'playing' && !state.paused) update(dt * state.speedMultiplier);
     else updateIdle(dt);
     draw();
     requestAnimationFrame(loop);
@@ -587,6 +622,17 @@
     const ruleEl = document.getElementById('rule');
     if (ruleEl) ruleEl.textContent = currentRule().label;
   }
+  function updateSpeedBtn() {
+    const btn = document.getElementById('speed-btn');
+    if (!btn) return;
+    if (state.inWave) {
+      btn.disabled = false;
+    } else {
+      btn.disabled = true;
+      state.speedMultiplier = 1.0;
+      btn.classList.remove('active');
+    }
+  }
   function updateWaveBtn() {
     const btn = document.getElementById('wave-btn');
     if (state.inWave) {
@@ -596,6 +642,7 @@
       btn.textContent = `START WAVE ${state.wave}`;
       btn.disabled = false;
     }
+    updateSpeedBtn();
   }
   function renderPicker() {
     const wrap = document.getElementById('picker');
