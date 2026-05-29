@@ -623,13 +623,13 @@
         let target;
         if (s != null) {
           const diff = s - c[1];
-          target = clamp(diff / 30, -0.32, 0.32);
+          target = clamp(diff / 30, -0.20, 0.20);
         } else {
           // No values yet — show the scale visibly unbalanced, alternating
           // direction per row with a gentle sway so it feels alive.
           const dir = (i % 2 === 0) ? 1 : -1;
-          const sway = Math.sin(state.elapsed * 1.4 + i * 0.7) * 0.04;
-          target = dir * 0.24 + sway;
+          const sway = Math.sin(state.elapsed * 1.4 + i * 0.7) * 0.03;
+          target = dir * 0.15 + sway;
         }
         state.perClueAnim[i] = lerp(state.perClueAnim[i], target, 0.08);
       }
@@ -716,7 +716,7 @@
     const beamCx = W / 2;
     const beamY = cy;
     const cardW = Math.min(W - 40, 880);
-    const cardH = Math.max(140, height * 0.88);
+    const cardH = Math.max(120, height * 0.88);
     // Cream card
     ctx.fillStyle = 'rgba(255, 248, 223, 0.96)';
     ctx.strokeStyle = '#2b2418';
