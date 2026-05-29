@@ -253,10 +253,22 @@
   function checkLevelClear() {
     if (state.phase !== 'playing') return;
     
-    // Rule that checking all spawns are triggered AND no active threats on screen
-    if (state.spawners.clearedSpawns >= state.spawners.maxSpawns && 
-        state.helicopters.length === 0 && 
-        state.paratroopers.length === 0) {
+    // Check if all spawns are triggered AND no shootable threats remain in the sky
+    const activeThreats = state.helicopters.some(h => h.active) || 
+                          state.paratroopers.some(p => p.status === 'drift' || p.status === 'plunge');
+                          
+    if (state.spawners.clearedSpawns >= state.spawners.maxSpawns && !activeThreats) {
+      
+      // Auto-rescue any currently running paratroopers so the player gets their points immediately
+      for (const p of state.paratroopers) {
+        if (p.status === 'running') {
+          state.score += 20;
+          showFloaterAt(p.x, p.y - 25, `RESCUE +20!`, '#5cd97a');
+          const targetTruck = p.x < W / 2 ? state.trucks.left : state.trucks.right;
+          if (targetTruck.passengers < 4) targetTruck.passengers++;
+        }
+      }
+      state.paratroopers = []; // Clear them so they don't linger
       
       state.phase = 'level_clear';
       
@@ -645,6 +657,7 @@
     if (isBad) {
       // Bad paratrooper landed — joins stack!
       p.status = 'landed';
+      p.alive = false;
       
       // Determine side
       if (p.x < W / 2) {
