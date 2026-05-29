@@ -23,12 +23,12 @@
 
   // ===== Game Configuration & State =====
   const LEVEL_DATA = [
-    { type: 'para', shoot: 'p', save: 'q', desc: 'Shoot ONLY "p" paratroopers! Save "q".' },
-    { type: 'para', shoot: 'q', save: 'p', desc: 'Shoot ONLY "q" paratroopers! Save "p".' },
-    { type: 'heli', shoot: 'b', save: 'd', desc: 'Shoot ONLY "b" helicopters! Save "d".' },
-    { type: 'heli', shoot: 'd', save: 'b', desc: 'Shoot ONLY "d" helicopters! Save "b".' },
-    { type: 'both', shootPara: 'p', shootHeli: 'b', savePara: 'q', saveHeli: 'd', desc: 'Shoot "p" paratroopers & "b" helicopters!' },
-    { type: 'both', shootPara: 'q', shootHeli: 'd', savePara: 'p', saveHeli: 'b', desc: 'Shoot "q" paratroopers & "d" helicopters!' }
+    { type: 'para', shoot: 'p', save: 'q', desc: 'Shoot ONLY "p" paratroopers! Save "q" & ALL helicopters.' },
+    { type: 'para', shoot: 'q', save: 'p', desc: 'Shoot ONLY "q" paratroopers! Save "p" & ALL helicopters.' },
+    { type: 'heli', shoot: 'b', save: 'd', desc: 'Shoot ONLY "b" helicopters! Save "d" & ALL paratroopers.' },
+    { type: 'heli', shoot: 'd', save: 'b', desc: 'Shoot ONLY "d" helicopters! Save "b" & ALL paratroopers.' },
+    { type: 'both', shootPara: 'p', shootHeli: 'b', savePara: 'q', saveHeli: 'd', desc: 'Shoot "p" paratroopers & "b" helicopters! Save "q" & "d".' },
+    { type: 'both', shootPara: 'q', shootHeli: 'd', savePara: 'p', saveHeli: 'b', desc: 'Shoot "q" paratroopers & "d" helicopters! Save "p" & "b".' }
   ];
 
   const state = {
