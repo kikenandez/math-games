@@ -192,23 +192,35 @@
       'Correct!': 'Correct !',
       'Wrong!': 'Faux !',
       'Paratroopers': 'Parachutistes',
+      'TROOPERS': 'CHUTISTES',
       'Visual differentiation': 'Différenciation visuelle',
       'Defend your turret against falling paratroopers and helicopters. Shoot down only the target letters (**p** vs **q**, **b** vs **d**) while letting the friendly ones escape in the rescue truck!': 'Défendez votre tourelle des parachutistes et hélicoptères. Abattez uniquement les lettres cibles et laissez les amies fuir dans le camion !',
       'visual action training · distinguish letter reversals': 'entraînement visuel d\'action · distinguer les inversions de lettres',
       'Aim and fire your base turret! Helicopters fly across the sky, dropping paratroopers. At each level, you must shoot down <b>only the target letters</b> while letting the friendly ones land safely so they can run into the <b>Rescue Truck</b>!': 'Visez et tirez avec votre tourelle ! Des hélicoptères traversent le ciel, lâchant des parachutistes. À chaque niveau, abattez <b>uniquement les lettres cibles</b> et laissez les amies atterrir pour courir vers le <b>camion de sauvetage</b> !',
       '⚠️ <b>SABOTAGE STACKING:</b> Landing 4 bad paratroopers on either side of the turret will blow you up!': '⚠️ <b>PILE DE SABOTAGE :</b> Si 4 parachutistes ennemis atterrissent de chaque côté de la tourelle, vous explosez !',
       'mission briefing': 'briefing de mission',
+      'LEVEL': 'NIVEAU',
       'COMMENCE': 'COMMENCER',
       'BASE DESTROYED': 'BASE DÉTRUITE',
       'Defenders overrun!': 'Défenseurs débordés !',
       'DEFEND AGAIN': 'DÉFENDRE À NOUVEAU',
+      'READY': 'PRÊT',
       'RESCUE': 'SAUVETAGE',
+      'paratroopers-briefing-help': 'Abattez les mauvaises cibles pour défendre votre base et marquer des points ! Évitez les bonnes : elles doivent atterrir puis rejoindre le <b>camion de sauvetage</b> pour vous donner un bonus.',
+      'Zap bad targets to defend your base and score points! Avoid shooting good ones — they must land safely and escape in the <b>Rescue Truck</b> to reward you bonus points.': 'Abattez les mauvaises cibles pour défendre votre base et marquer des points ! Évitez les bonnes : elles doivent atterrir puis rejoindre le <b>camion de sauvetage</b> pour vous donner un bonus.',
+      'Zap bad targets to defend your base and score points! Avoid shooting good ones — they must land safely and escape in the **Rescue Truck** to reward you bonus points.': 'Abattez les mauvaises cibles pour défendre votre base et marquer des points ! Évitez les bonnes : elles doivent atterrir puis rejoindre le <b>camion de sauvetage</b> pour vous donner un bonus.',
       'Shoot ONLY "p" paratroopers! Save "q" & ALL helicopters.': 'Tirez SEULEMENT sur les parachutistes "p" ! Sauvez "q" et TOUS les hélicoptères.',
       'Shoot ONLY "q" paratroopers! Save "p" & ALL helicopters.': 'Tirez SEULEMENT sur les parachutistes "q" ! Sauvez "p" et TOUS les hélicoptères.',
       'Shoot ONLY "b" helicopters! Save "d" & ALL paratroopers.': 'Tirez SEULEMENT sur les hélicoptères "b" ! Sauvez "d" et TOUS les parachutistes.',
       'Shoot ONLY "d" helicopters! Save "b" & ALL paratroopers.': 'Tirez SEULEMENT sur les hélicoptères "d" ! Sauvez "b" et TOUS les parachutistes.',
       'Shoot "p" paratroopers & "b" helicopters! Save "q" & "d".': 'Tirez sur les parachutistes "p" et hélicoptères "b" ! Sauvez "q" et "d".',
       'Shoot "q" paratroopers & "d" helicopters! Save "p" & "b".': 'Tirez sur les parachutistes "q" et hélicoptères "d" ! Sauvez "p" et "b".',
+      'Shoot "p" paratroopers · save "q" + helicopters': 'Tirez "p" · sauvez "q" + hélicos',
+      'Shoot "q" paratroopers · save "p" + helicopters': 'Tirez "q" · sauvez "p" + hélicos',
+      'Shoot "b" helicopters · save "d" + paratroopers': 'Tirez hélico "b" · sauvez "d" + parachutistes',
+      'Shoot "d" helicopters · save "b" + paratroopers': 'Tirez hélico "d" · sauvez "b" + parachutistes',
+      'Shoot paratrooper "p" + helicopter "b"': 'Tirez parachutiste "p" + hélico "b"',
+      'Shoot paratrooper "q" + helicopter "d"': 'Tirez parachutiste "q" + hélico "d"',
       'SHOOT p': 'TIRER p',
       'SHOOT q': 'TIRER q',
       'SHOOT HELI b': 'TIRER HÉLI b',
@@ -230,7 +242,10 @@
       'FRIENDLY FIRE! −1♥ −15': 'TIR AMI ! −1♥ −15',
       'RESCUE +20!': 'SAUVÉ +20 !',
       'POP!': 'POP !',
-      'CRASH!': 'CRASH !'
+      'CRASH!': 'CRASH !',
+      'LEVEL CLEAR': 'NIVEAU RÉUSSI',
+      'LEVEL CLEAR!': 'NIVEAU RÉUSSI !',
+      'Next briefing incoming': 'Prochaine mission'
     },
     es: {
       'Math Arcade · Hub': 'Math Arcade · Inicio',
@@ -416,23 +431,35 @@
       'Correct!': '¡Correcto!',
       'Wrong!': '¡Incorrecto!',
       'Paratroopers': 'Paracaidistas',
+      'TROOPERS': 'CAIDISTAS',
       'Visual differentiation': 'Diferenciación visual',
       'Defend your turret against falling paratroopers and helicopters. Shoot down only the target letters (**p** vs **q**, **b** vs **d**) while letting the friendly ones escape in the rescue truck!': 'Defiende tu torreta de paracaidistas y helicópteros. ¡Derriba solo las letras objetivo y deja que las aliadas escapen en el camión de rescate!',
       'visual action training · distinguish letter reversals': 'entrenamiento visual de acción · distinguir inversiones de letras',
       'Aim and fire your base turret! Helicopters fly across the sky, dropping paratroopers. At each level, you must shoot down <b>only the target letters</b> while letting the friendly ones land safely so they can run into the <b>Rescue Truck</b>!': '¡Apunta y dispara tu torreta! Helicópteros cruzan el cielo soltando paracaidistas. En cada nivel debes derribar <b>solo las letras objetivo</b>, ¡dejando que las aliadas aterricen a salvo y corran al <b>camión de rescate</b>!',
       '⚠️ <b>SABOTAGE STACKING:</b> Landing 4 bad paratroopers on either side of the turret will blow you up!': '⚠️ <b>PILAS DE SABOTAJE:</b> ¡Si 4 paracaidistas enemigos aterrizan a cualquier lado de la torreta explotarás!',
       'mission briefing': 'resumen de misión',
+      'LEVEL': 'NIVEL',
       'COMMENCE': 'COMENZAR',
       'BASE DESTROYED': 'BASE DESTRUIDA',
       'Defenders overrun!': '¡Defensores superados!',
       'DEFEND AGAIN': 'DEFENDER DE NUEVO',
+      'READY': 'LISTO',
       'RESCUE': 'RESCATE',
+      'paratroopers-briefing-help': 'Dispara a los objetivos malos para defender tu base y sumar puntos. Evita disparar a los buenos: deben aterrizar y escapar en el <b>camión de rescate</b> para darte puntos extra.',
+      'Zap bad targets to defend your base and score points! Avoid shooting good ones — they must land safely and escape in the <b>Rescue Truck</b> to reward you bonus points.': 'Dispara a los objetivos malos para defender tu base y sumar puntos. Evita disparar a los buenos: deben aterrizar y escapar en el <b>camión de rescate</b> para darte puntos extra.',
+      'Zap bad targets to defend your base and score points! Avoid shooting good ones — they must land safely and escape in the **Rescue Truck** to reward you bonus points.': 'Dispara a los objetivos malos para defender tu base y sumar puntos. Evita disparar a los buenos: deben aterrizar y escapar en el <b>camión de rescate</b> para darte puntos extra.',
       'Shoot ONLY "p" paratroopers! Save "q" & ALL helicopters.': '¡Dispara SOLO paracaidistas "p"! Salva "q" y TODOS los helicópteros.',
       'Shoot ONLY "q" paratroopers! Save "p" & ALL helicopters.': '¡Dispara SOLO paracaidistas "q"! Salva "p" y TODOS los helicópteros.',
       'Shoot ONLY "b" helicopters! Save "d" & ALL paratroopers.': '¡Dispara SOLO helicópteros "b"! Salva "d" y TODOS los paracaidistas.',
       'Shoot ONLY "d" helicopters! Save "b" & ALL paratroopers.': '¡Dispara SOLO helicópteros "d"! Salva "b" y TODOS los paracaidistas.',
       'Shoot "p" paratroopers & "b" helicopters! Save "q" & "d".': '¡Dispara paracaidistas "p" y helicópteros "b"! Salva "q" y "d".',
       'Shoot "q" paratroopers & "d" helicopters! Save "p" & "b".': '¡Dispara paracaidistas "q" y helicópteros "d"! Salva "p" y "b".',
+      'Shoot "p" paratroopers · save "q" + helicopters': 'Dispara "p" · salva "q" + helicópteros',
+      'Shoot "q" paratroopers · save "p" + helicopters': 'Dispara "q" · salva "p" + helicópteros',
+      'Shoot "b" helicopters · save "d" + paratroopers': 'Dispara heli "b" · salva "d" + paracaidistas',
+      'Shoot "d" helicopters · save "b" + paratroopers': 'Dispara heli "d" · salva "b" + paracaidistas',
+      'Shoot paratrooper "p" + helicopter "b"': 'Dispara paracaidista "p" + heli "b"',
+      'Shoot paratrooper "q" + helicopter "d"': 'Dispara paracaidista "q" + heli "d"',
       'SHOOT p': 'DISPARA p',
       'SHOOT q': 'DISPARA q',
       'SHOOT HELI b': 'DISPARA HELI b',
@@ -454,7 +481,10 @@
       'FRIENDLY FIRE! −1♥ −15': '¡FUEGO AMIGO! −1♥ −15',
       'RESCUE +20!': '¡RESCATADO +20!',
       'POP!': '¡POP!',
-      'CRASH!': '¡CRASH!'
+      'CRASH!': '¡CRASH!',
+      'LEVEL CLEAR': 'NIVEL SUPERADO',
+      'LEVEL CLEAR!': '¡NIVEL SUPERADO!',
+      'Next briefing incoming': 'Siguiente misión'
     }
   };
 
@@ -748,6 +778,12 @@
 
   function translateElement(el) {
     if (!el || el.nodeType !== 1 || el.closest('.lang-switcher')) return;
+    const key = el.getAttribute('data-i18n');
+    if (key) {
+      const translated = tr(key);
+      if (translated !== key) el.innerHTML = translated;
+      return;
+    }
     if (el.childNodes.length && Array.from(el.childNodes).some((child) => child.nodeType === 1)) {
       const html = el.innerHTML.trim().replace(/\s+/g, ' ');
       const translated = tr(html);

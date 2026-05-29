@@ -23,12 +23,12 @@
 
   // ===== Game Configuration & State =====
   const LEVEL_DATA = [
-    { type: 'para', shoot: 'p', save: 'q', desc: 'Shoot ONLY "p" paratroopers! Save "q" & ALL helicopters.' },
-    { type: 'para', shoot: 'q', save: 'p', desc: 'Shoot ONLY "q" paratroopers! Save "p" & ALL helicopters.' },
-    { type: 'heli', shoot: 'b', save: 'd', desc: 'Shoot ONLY "b" helicopters! Save "d" & ALL paratroopers.' },
-    { type: 'heli', shoot: 'd', save: 'b', desc: 'Shoot ONLY "d" helicopters! Save "b" & ALL paratroopers.' },
-    { type: 'both', shootPara: 'p', shootHeli: 'b', savePara: 'q', saveHeli: 'd', desc: 'Shoot "p" paratroopers & "b" helicopters! Save "q" & "d".' },
-    { type: 'both', shootPara: 'q', shootHeli: 'd', savePara: 'p', saveHeli: 'b', desc: 'Shoot "q" paratroopers & "d" helicopters! Save "p" & "b".' }
+    { type: 'para', shoot: 'p', save: 'q', desc: 'Shoot ONLY "p" paratroopers! Save "q" & ALL helicopters.', cue: 'Shoot "p" paratroopers · save "q" + helicopters' },
+    { type: 'para', shoot: 'q', save: 'p', desc: 'Shoot ONLY "q" paratroopers! Save "p" & ALL helicopters.', cue: 'Shoot "q" paratroopers · save "p" + helicopters' },
+    { type: 'heli', shoot: 'b', save: 'd', desc: 'Shoot ONLY "b" helicopters! Save "d" & ALL paratroopers.', cue: 'Shoot "b" helicopters · save "d" + paratroopers' },
+    { type: 'heli', shoot: 'd', save: 'b', desc: 'Shoot ONLY "d" helicopters! Save "b" & ALL paratroopers.', cue: 'Shoot "d" helicopters · save "b" + paratroopers' },
+    { type: 'both', shootPara: 'p', shootHeli: 'b', savePara: 'q', saveHeli: 'd', desc: 'Shoot "p" paratroopers & "b" helicopters! Save "q" & "d".', cue: 'Shoot paratrooper "p" + helicopter "b"' },
+    { type: 'both', shootPara: 'q', shootHeli: 'd', savePara: 'p', saveHeli: 'b', desc: 'Shoot "q" paratroopers & "d" helicopters! Save "p" & "b".', cue: 'Shoot paratrooper "q" + helicopter "d"' }
   ];
 
   const state = {
@@ -79,6 +79,7 @@
     },
     
     elapsed: 0,
+    levelClearTimer: null,
     keys: {},
     mouse: { x: 0, y: 0 }
   };
@@ -142,6 +143,7 @@
 
   // ===== Game flow triggers =====
   function startGame() {
+    clearPendingLevelTransition();
     state.score = 0;
     state.level = 1;
     state.lives = state.maxLives;
@@ -155,6 +157,7 @@
   }
 
   function setupLevelBriefing() {
+    clearPendingLevelTransition();
     state.phase = 'briefing';
     state.lasers = [];
     state.helicopters = [];
@@ -250,6 +253,7 @@
       vy: 0,
       letter,
       active: true,
+      hasDropped: false,
       rotorAngle: 0,
       dropTimer: rand(0.6, 1.4), // Quick first drop!
       size: 38
@@ -258,33 +262,34 @@
 
   function checkLevelClear() {
     if (state.phase !== 'playing') return;
+
+    const allPayloadsResolved = state.spawners.parasRemaining <= 0;
+    const noActiveParatroopers = state.paratroopers.length === 0;
+    if (!allPayloadsResolved || !noActiveParatroopers) return;
     
-    if (state.spawners.parasRemaining <= 0) {
-      // Auto-rescue any currently running paratroopers so the player gets their points immediately
-      for (const p of state.paratroopers) {
-        if (p.status === 'running') {
-          state.score += 20;
-          showFloaterAt(p.x, p.y - 25, `RESCUE +20!`, '#5cd97a');
-          const targetTruck = p.x < W / 2 ? state.trucks.left : state.trucks.right;
-          if (targetTruck.passengers < 4) targetTruck.passengers++;
-        }
-      }
-      state.paratroopers = []; // Clear them so they don't linger
-      
-      state.phase = 'level_clear';
-      
-      // Cheering sound
-      window.MathArcadeAudio?.event('LEVEL CLEAR');
-      
-      // Rescue trucks drive away
-      state.trucks.left.status = 'driving_out';
-      state.trucks.right.status = 'driving_out';
-      
-      setTimeout(() => {
-        state.level++;
-        setupLevelBriefing();
-      }, 2500);
-    }
+    state.phase = 'level_clear';
+    state.lasers = [];
+    state.helicopters = [];
+    showFloaterAt(W / 2, Math.max(110, H * 0.24), 'LEVEL CLEAR!', '#ffd24d');
+
+    // Cheering sound
+    window.MathArcadeAudio?.event('LEVEL CLEAR');
+
+    // Rescue trucks drive away
+    state.trucks.left.status = 'driving_out';
+    state.trucks.right.status = 'driving_out';
+    updateHUD();
+
+    state.levelClearTimer = setTimeout(() => {
+      state.level++;
+      setupLevelBriefing();
+    }, 1800);
+  }
+
+  function clearPendingLevelTransition() {
+    if (!state.levelClearTimer) return;
+    clearTimeout(state.levelClearTimer);
+    state.levelClearTimer = null;
   }
 
   function handleGameOver(reason) {
@@ -375,6 +380,7 @@
         h.dropTimer -= dt;
         if (h.dropTimer <= 0 && h.x > 80 && h.x < W - 80 && state.spawners.parasSpawned < state.spawners.parasTotal) {
           h.dropTimer = 9999; // Drop exactly one paratrooper per helicopter flyby
+          h.hasDropped = true;
           state.spawners.parasSpawned++;
           
           // Drop paratrooper carrying p vs q
@@ -394,7 +400,11 @@
     }
     // Filter helicopters that went offscreen
     const originalHeliCount = state.helicopters.length;
-    state.helicopters = state.helicopters.filter(h => h.vx > 0 ? h.x < W + 80 : h.x > -80);
+    state.helicopters = state.helicopters.filter(h => {
+      const onScreen = h.vx > 0 ? h.x < W + 80 : h.x > -80;
+      if (!onScreen) resolveHelicopterPayload(h);
+      return onScreen;
+    });
     if (state.phase === 'playing' && state.helicopters.length < originalHeliCount) {
       checkLevelClear();
     }
@@ -458,6 +468,7 @@
       }
     }
     state.paratroopers = state.paratroopers.filter(p => p.alive !== false);
+    checkLevelClear();
 
     // 6. Truck physics
     // Left Truck
@@ -575,6 +586,7 @@
   // ===== Entity Handlers (Interception & Scoring) =====
   function destroyHelicopter(h) {
     h.vx = 0;
+    resolveHelicopterPayload(h);
     
     // Determine if bad vs good
     let isBad = false;
@@ -608,6 +620,13 @@
     // Clear from list
     state.helicopters = state.helicopters.filter(item => item.id !== h.id);
     checkLevelClear();
+  }
+
+  function resolveHelicopterPayload(h) {
+    if (h.hasDropped) return;
+    h.hasDropped = true;
+    state.spawners.parasRemaining = Math.max(0, state.spawners.parasRemaining - 1);
+    updateHUD();
   }
 
   function destroyParatrooper(p) {
@@ -773,6 +792,10 @@
     }
     
     const ruleEl = document.getElementById('rule');
+    if (state.phase === 'level_clear') {
+      ruleEl.textContent = 'LEVEL CLEAR';
+      return;
+    }
     if (state.activeRule) {
       if (state.activeRule.type === 'para') {
         ruleEl.textContent = `SHOOT ${state.activeRule.shoot}`;
@@ -797,6 +820,7 @@
     drawParticles();
     drawFloaters();
     drawRuleBanner();
+    drawLevelClearBanner();
   }
 
   function drawBg() {
@@ -1198,19 +1222,27 @@
     if (state.phase !== 'playing') return;
     
     ctx.save();
-    ctx.font = 'bold 15px "Lilita One", sans-serif';
+    ctx.font = 'bold 14px "Lilita One", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    const text = state.activeRule.desc;
-    const paddingX = 24;
-    const paddingY = 8;
+    const text = state.activeRule.cue || state.activeRule.desc;
+    const translatedText = window.MathArcadeI18n?.t(text) || text;
+    const paddingX = 18;
     
-    const textWidth = ctx.measureText(window.MathArcadeI18n?.t(text) || text).width;
-    const bannerW = textWidth + paddingX * 2;
-    const bannerH = 34;
+    const textWidth = ctx.measureText(translatedText).width;
+    const bannerW = Math.min(textWidth + paddingX * 2, W - 32);
+    const bannerH = 30;
     const bannerX = W / 2 - bannerW / 2;
-    const bannerY = 16;
+    const hudBottom = document.getElementById('hud')?.getBoundingClientRect().bottom || 0;
+    const preferredY = H - 92;
+    const minY = hudBottom + 12;
+    let bannerY = Math.max(minY, preferredY);
+    if (bannerY + bannerH > H - 44) bannerY = minY;
+    if (bannerY + bannerH > H - 8) {
+      ctx.restore();
+      return;
+    }
     
     // Shadow
     ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
@@ -1228,8 +1260,40 @@
     
     // Banner text
     ctx.fillStyle = '#ffffd0';
-    ctx.fillText(text, W / 2, bannerY + bannerH / 2 + 1);
+    ctx.fillText(text, W / 2, bannerY + bannerH / 2 + 1, bannerW - paddingX * 2);
     
+    ctx.restore();
+  }
+
+  function drawLevelClearBanner() {
+    if (state.phase !== 'level_clear') return;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const bannerW = Math.min(420, W - 32);
+    const bannerH = 78;
+    const bannerX = W / 2 - bannerW / 2;
+    const bannerY = Math.max(92, H * 0.22);
+
+    ctx.fillStyle = 'rgba(16, 20, 38, 0.94)';
+    ctx.strokeStyle = '#fff4dc';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 14);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffd24d';
+    ctx.strokeStyle = '#1a1a14';
+    ctx.lineWidth = 4;
+    ctx.font = 'bold 32px "Lilita One", sans-serif';
+    ctx.strokeText('LEVEL CLEAR', W / 2, bannerY + 30);
+    ctx.fillText('LEVEL CLEAR', W / 2, bannerY + 30);
+
+    ctx.fillStyle = '#fff4dc';
+    ctx.font = '600 15px "Fredoka", sans-serif';
+    ctx.fillText('Next briefing incoming', W / 2, bannerY + 56);
     ctx.restore();
   }
 

@@ -37,20 +37,27 @@
   /* HUD */
   #hud {
     position: absolute; top: 16px; left: 16px; right: 16px;
-    display: flex; justify-content: space-between; align-items: flex-start;
+    display: flex; justify-content: center; align-items: flex-start;
     gap: 12px; pointer-events: none;
     font-family: 'Lilita One', sans-serif;
     z-index: 5;
   }
-  .hud-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .hud-group {
+    display: grid;
+    grid-template-columns: repeat(4, max-content) minmax(180px, 360px);
+    justify-content: center;
+    gap: 10px;
+    max-width: calc(100vw - 32px);
+  }
   .badge {
     background: rgba(16, 20, 38, 0.92);
     border: 3px solid var(--paper);
     border-radius: 10px;
-    padding: 8px 14px;
+    padding: 8px 12px;
     box-shadow: 0 4px 0 rgba(0,0,0,0.55);
     display: flex; align-items: center; gap: 10px;
     font-size: 18px; line-height: 1;
+    min-width: 0;
   }
   .badge .label {
     font-size: 10px; color: rgba(255, 244, 220, 0.55);
@@ -63,12 +70,31 @@
   .badge.level .val { color: var(--good); }
   .badge.paras .val { color: var(--accent); }
   .badge.rule .val { color: var(--cool); font-size: 16px; white-space: nowrap; text-transform: uppercase; }
+  .badge.rule { max-width: min(360px, 100%); }
+  .badge.rule .val { overflow: hidden; text-overflow: ellipsis; }
+
+  @media (max-width: 760px) {
+    #hud { top: 8px; left: 8px; right: 8px; }
+    .hud-group { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%; }
+    .badge { border-width: 2px; border-radius: 8px; padding: 6px 6px; gap: 5px; justify-content: center; }
+    .badge .label { font-size: 8px; letter-spacing: 0.12em; }
+    .badge .val { font-size: 16px; }
+    .badge.rule {
+      grid-column: 1 / -1;
+      justify-content: center;
+      justify-self: stretch;
+      max-width: none;
+    }
+    .badge.rule .val { font-size: 14px; }
+  }
 
   /* Overlays */
   .overlay {
     position: absolute; inset: 0;
     background: radial-gradient(ellipse at center, rgba(16, 20, 38, 0.55), rgba(5, 6, 20, 0.92));
     display: flex; align-items: center; justify-content: center;
+    padding: 18px;
+    overflow: hidden;
     z-index: 20; opacity: 1; transition: opacity 0.25s;
   }
   .overlay.hidden { opacity: 0; pointer-events: none; }
@@ -79,7 +105,11 @@
     box-shadow: 0 8px 0 rgba(0,0,0,0.6);
     padding: 32px 38px;
     text-align: center;
+    width: calc(100vw - 36px);
     max-width: 560px;
+    min-width: 0;
+    max-height: calc(100vh - 36px);
+    overflow: auto;
   }
   .card h1 {
     font-family: 'Lilita One', sans-serif;
@@ -140,6 +170,20 @@
     color: #fff;
     text-shadow: 2px 2px 0 #1a1a14;
     text-transform: uppercase;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 560px), (max-height: 560px) {
+    .card { padding: 22px 18px; border-radius: 14px; }
+    .card h1 { font-size: clamp(28px, 9vw, 40px); overflow-wrap: anywhere; }
+    .card p { font-size: 13px; line-height: 1.42; margin-bottom: 14px; }
+    .rule-box { font-size: 18px; padding: 12px; margin: 12px 0; }
+    .big-btn { font-size: 22px; padding: 9px 22px; }
+  }
+
+  @media (max-width: 560px) {
+    .hud-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .badge.rule { grid-column: 1 / -1; }
   }
 </style>
 </head>
@@ -174,7 +218,7 @@
       <h1>LEVEL <span id="rule-level-num">1</span></h1>
       <div class="sub">mission briefing</div>
       <div class="rule-box" id="rule-text">SHOOT ONLY "p"</div>
-      <p>Zap bad targets to defend your base and score points! Avoid shooting good ones — they must land safely and escape in the **Rescue Truck** to reward you bonus points.</p>
+      <p data-i18n="paratroopers-briefing-help">Zap bad targets to defend your base and score points! Avoid shooting good ones — they must land safely and escape in the <b>Rescue Truck</b> to reward you bonus points.</p>
       <button class="big-btn" id="rule-btn">COMMENCE</button>
     </div>
   </div>
