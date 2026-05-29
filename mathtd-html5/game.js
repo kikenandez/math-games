@@ -815,34 +815,125 @@
     }
   }
   function drawBase(cx, cy, cell) {
-    ctx.fillStyle = '#cfa867';
-    ctx.strokeStyle = '#1a1a14'; ctx.lineWidth = 2.5;
-    const w = cell * 0.7, h = cell * 0.8;
-    ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
-    ctx.strokeRect(cx - w / 2, cy - h / 2, w, h);
-    for (let i = 0; i < 4; i++) {
-      const bx = cx - w / 2 + i * (w / 4) + 2;
-      ctx.fillRect(bx, cy - h / 2 - 5, w / 4 - 4, 5);
-      ctx.strokeRect(bx, cy - h / 2 - 5, w / 4 - 4, 5);
-    }
-    ctx.fillStyle = '#5a3a18';
-    ctx.fillRect(cx - cell * 0.1, cy - h * 0.1, cell * 0.2, h * 0.5);
-    ctx.strokeRect(cx - cell * 0.1, cy - h * 0.1, cell * 0.2, h * 0.5);
+    const w = cell * 0.95, h = cell * 0.9;
+    const towerW = w * 0.24;
+    const centerW = w * 0.58;
+    const castleY = cy + h * 0.1; // lower a tiny bit to make room for flag
+
+    ctx.save();
     ctx.strokeStyle = '#1a1a14';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
+
+    // 0. Soft drop shadow under the castle
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
     ctx.beginPath();
-    ctx.moveTo(cx, cy - h / 2 - 5);
-    ctx.lineTo(cx, cy - h / 2 - 22);
+    ctx.ellipse(cx, castleY + h * 0.45, w * 0.55, h * 0.12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 1. Draw Left and Right Side Towers (grey brick color)
+    ctx.fillStyle = '#b0b8c4'; // slate blue-grey
+    // Left tower rect
+    const ltX = cx - w / 2;
+    const ltY = castleY - h * 0.4;
+    ctx.fillRect(ltX, ltY, towerW, h * 0.8);
+    ctx.strokeRect(ltX, ltY, towerW, h * 0.8);
+    // Right tower rect
+    const rtX = cx + w / 2 - towerW;
+    const rtY = castleY - h * 0.4;
+    ctx.fillRect(rtX, rtY, towerW, h * 0.8);
+    ctx.strokeRect(rtX, rtY, towerW, h * 0.8);
+
+    // Conical roofs for side towers (vibrant magenta-red)
+    ctx.fillStyle = '#ff5c7c';
+    // Left roof
+    ctx.beginPath();
+    ctx.moveTo(ltX - 3, ltY);
+    ctx.lineTo(ltX + towerW / 2, ltY - h * 0.35);
+    ctx.lineTo(ltX + towerW + 3, ltY);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Right roof
+    ctx.beginPath();
+    ctx.moveTo(rtX - 3, rtY);
+    ctx.lineTo(rtX + towerW / 2, rtY - h * 0.35);
+    ctx.lineTo(rtX + towerW + 3, rtY);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // 2. Draw Center Gatehouse connecting the towers
+    ctx.fillStyle = '#9aa4b3'; // slightly darker slate
+    const gwX = cx - centerW / 2;
+    const gwY = castleY - h * 0.2;
+    const gwH = h * 0.6;
+    ctx.fillRect(gwX, gwY, centerW, gwH);
+    ctx.strokeRect(gwX, gwY, centerW, gwH);
+
+    // Center crenellations (battlements)
+    ctx.fillStyle = '#9aa4b3';
+    const numCrenels = 3;
+    const crenelW = centerW / (numCrenels * 2 - 1);
+    const crenelH = h * 0.12;
+    for (let i = 0; i < numCrenels; i++) {
+      const bx = gwX + i * crenelW * 2;
+      ctx.fillRect(bx, gwY - crenelH, crenelW, crenelH);
+      ctx.strokeRect(bx, gwY - crenelH, crenelW, crenelH);
+    }
+
+    // 3. Draw Gate (wooden arched door)
+    ctx.fillStyle = '#5a3a18';
+    const gateW = centerW * 0.44;
+    const gateH = gwH * 0.65;
+    const gateX = cx - gateW / 2;
+    const gateY = castleY + h * 0.4 - gateH;
+    ctx.beginPath();
+    ctx.moveTo(gateX, gateY + gateH);
+    ctx.lineTo(gateX, gateY + gateH * 0.3);
+    ctx.quadraticCurveTo(cx, gateY - 4, gateX + gateW, gateY + gateH * 0.3);
+    ctx.lineTo(gateX + gateW, gateY + gateH);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Wooden plank vertical lines inside gate
+    ctx.strokeStyle = 'rgba(26, 26, 20, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - gateW * 0.16, gateY + 5);
+    ctx.lineTo(cx - gateW * 0.16, gateY + gateH);
+    ctx.moveTo(cx + gateW * 0.16, gateY + 5);
+    ctx.lineTo(cx + gateW * 0.16, gateY + gateH);
     ctx.stroke();
+
+    // 4. Draw Stone Brick Details (adds premium hand-drawn feel)
+    ctx.strokeStyle = 'rgba(26, 26, 20, 0.22)';
+    ctx.lineWidth = 2;
+    // Helper to draw random small bricks
+    const drawBrick = (bx, by, bw, bh) => {
+      ctx.strokeRect(bx, by, bw, bh);
+    };
+    drawBrick(ltX + 3, ltY + h * 0.2, towerW - 6, h * 0.12);
+    drawBrick(rtX + 3, rtY + h * 0.4, towerW - 6, h * 0.12);
+    drawBrick(gwX + 6, gwY + h * 0.1, centerW * 0.3, h * 0.1);
+    drawBrick(cx + 6, gwY + h * 0.3, centerW * 0.3, h * 0.1);
+
+    // 5. Draw Flagpole and Flag
+    ctx.strokeStyle = '#1a1a14';
+    ctx.lineWidth = 2.5;
+    const poleYTop = gwY - crenelH - h * 0.38;
+    ctx.beginPath();
+    ctx.moveTo(cx, gwY);
+    ctx.lineTo(cx, poleYTop);
+    ctx.stroke();
+
+    // Cute waving triangular flag (hot pink)
     ctx.fillStyle = '#ff5c7c';
     ctx.beginPath();
-    ctx.moveTo(cx, cy - h / 2 - 22);
-    ctx.lineTo(cx + 10, cy - h / 2 - 18);
-    ctx.lineTo(cx, cy - h / 2 - 14);
+    ctx.moveTo(cx, poleYTop);
+    ctx.lineTo(cx + w * 0.32, poleYTop + h * 0.1);
+    ctx.lineTo(cx, poleYTop + h * 0.2);
     ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#1a1a14';
-    ctx.stroke();
+    ctx.fill(); ctx.stroke();
+
+    ctx.restore();
   }
   function drawTowers() {
     const m = getMetrics();
@@ -882,31 +973,79 @@
       if (!e.alive) continue;
       const p = enemyPos(e);
       const size = m.cell * 0.42;
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+
+      // 1. Soft drop shadow under the bubble
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
       ctx.beginPath();
       ctx.ellipse(p.x, p.y + size * 0.6, size * 0.5, size * 0.15, 0, 0, Math.PI * 2);
       ctx.fill();
+
+      // 2. Glossy 3D radial gradient bubble sphere
       const lerp01 = Math.max(0, Math.min(1, 1 - Math.abs(e.value) / Math.max(1, e.maxValue)));
       const r = Math.round(226 + (92 - 226) * lerp01);
       const g = Math.round(67 + (217 - 67) * lerp01);
       const b = Math.round(75 + (122 - 75) * lerp01);
-      ctx.fillStyle = `rgb(${r},${g},${b})`;
+
+      const rg = ctx.createRadialGradient(p.x - size * 0.3, p.y - size * 0.3, size * 0.05, p.x, p.y, size);
+      rg.addColorStop(0, `rgb(${Math.min(255, r + 45)},${Math.min(255, g + 45)},${Math.min(255, b + 45)})`);
+      rg.addColorStop(0.75, `rgb(${r},${g},${b})`);
+      rg.addColorStop(1, `rgb(${Math.max(0, r - 55)},${Math.max(0, g - 55)},${Math.max(0, b - 55)})`);
+
+      ctx.fillStyle = rg;
       ctx.strokeStyle = '#1a1a14';
       ctx.lineWidth = 2.5;
       const hitScale = e.hitT > 0 ? 1 + e.hitT * 0.5 : 1;
       ctx.beginPath();
       ctx.arc(p.x, p.y, size * hitScale, 0, Math.PI * 2);
       ctx.fill(); ctx.stroke();
+
+      // 3. Pixar-style glossy highlight at top-left
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.42)';
+      ctx.beginPath();
+      ctx.ellipse(p.x - size * 0.35 * hitScale, p.y - size * 0.35 * hitScale, size * 0.25 * hitScale, size * 0.12 * hitScale, -Math.PI / 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. Cute blushing cheeks
+      ctx.fillStyle = 'rgba(255, 120, 130, 0.48)';
+      ctx.beginPath();
+      ctx.arc(p.x - size * 0.42 * hitScale, p.y + size * 0.1 * hitScale, size * 0.1 * hitScale, 0, Math.PI * 2);
+      ctx.arc(p.x + size * 0.42 * hitScale, p.y + size * 0.1 * hitScale, size * 0.1 * hitScale, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Expressive cute white eyeballs
       ctx.fillStyle = '#fff';
       ctx.beginPath();
-      ctx.arc(p.x - size * 0.28, p.y - size * 0.18, size * 0.15, 0, Math.PI * 2);
-      ctx.arc(p.x + size * 0.28, p.y - size * 0.18, size * 0.15, 0, Math.PI * 2);
+      ctx.arc(p.x - size * 0.25 * hitScale, p.y - size * 0.05 * hitScale, size * 0.18 * hitScale, 0, Math.PI * 2);
+      ctx.arc(p.x + size * 0.25 * hitScale, p.y - size * 0.05 * hitScale, size * 0.18 * hitScale, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = '#1a1a14';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(p.x - size * 0.25 * hitScale, p.y - size * 0.05 * hitScale, size * 0.18 * hitScale, 0, Math.PI * 2);
+      ctx.arc(p.x + size * 0.25 * hitScale, p.y - size * 0.05 * hitScale, size * 0.18 * hitScale, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 6. Pupils with cute shines
       ctx.fillStyle = '#1a1a14';
       ctx.beginPath();
-      ctx.arc(p.x - size * 0.28, p.y - size * 0.17, size * 0.07, 0, Math.PI * 2);
-      ctx.arc(p.x + size * 0.28, p.y - size * 0.17, size * 0.07, 0, Math.PI * 2);
+      ctx.arc(p.x - size * 0.23 * hitScale, p.y - size * 0.03 * hitScale, size * 0.08 * hitScale, 0, Math.PI * 2);
+      ctx.arc(p.x + size * 0.27 * hitScale, p.y - size * 0.03 * hitScale, size * 0.08 * hitScale, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(p.x - size * 0.26 * hitScale, p.y - size * 0.06 * hitScale, size * 0.035 * hitScale, 0, Math.PI * 2);
+      ctx.arc(p.x + size * 0.24 * hitScale, p.y - size * 0.06 * hitScale, size * 0.035 * hitScale, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 7. Sweet open smiling mouth
+      ctx.strokeStyle = '#1a1a14';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y + size * 0.14 * hitScale, size * 0.18 * hitScale, 0.08 * Math.PI, 0.92 * Math.PI);
+      ctx.stroke();
+
+      // 8. Cute hanging wooden value banner
       ctx.fillStyle = '#fff';
       ctx.strokeStyle = '#1a1a14';
       ctx.lineWidth = 2;
@@ -916,10 +1055,10 @@
       ctx.textBaseline = 'middle';
       const tw = ctx.measureText(txt).width;
       const chipW = tw + 10, chipH = size * 0.55;
-      roundRect(p.x - chipW / 2, p.y + size * 0.5, chipW, chipH, 4);
+      roundRect(p.x - chipW / 2, p.y + size * 0.52 * hitScale, chipW, chipH, 4);
       ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#1a1a14';
-      ctx.fillText(txt, p.x, p.y + size * 0.5 + chipH / 2);
+      ctx.fillText(txt, p.x, p.y + size * 0.52 * hitScale + chipH / 2 + 1);
     }
   }
   function drawBeams() {
