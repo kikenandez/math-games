@@ -72,7 +72,10 @@
       heliTimer: 0,
       heliInterval: 3.5,
       clearedSpawns: 0,
-      maxSpawns: 12
+      maxSpawns: 12,
+      parasTotal: 12,
+      parasSpawned: 0,
+      parasRemaining: 12
     },
     
     elapsed: 0,
@@ -164,6 +167,9 @@
     state.activeRule = LEVEL_DATA[ruleIdx];
     
     // Adjust spawners for difficulty
+    state.spawners.parasTotal = 8 + state.level * 4;
+    state.spawners.parasSpawned = 0;
+    state.spawners.parasRemaining = state.spawners.parasTotal;
     state.spawners.clearedSpawns = 0;
     state.spawners.maxSpawns = 8 + state.level * 4;
     state.spawners.heliInterval = Math.max(1.8, 3.8 - state.level * 0.25);
@@ -225,7 +231,7 @@
   }
 
   function spawnHelicopter() {
-    if (state.spawners.clearedSpawns >= state.spawners.maxSpawns) return;
+    if (state.spawners.parasSpawned >= state.spawners.parasTotal) return;
     state.spawners.clearedSpawns++;
 
     const side = Math.random() < 0.5 ? 'left' : 'right';
@@ -245,7 +251,7 @@
       letter,
       active: true,
       rotorAngle: 0,
-      dropTimer: rand(1.5, 3.5),
+      dropTimer: rand(0.6, 1.4), // Quick first drop!
       size: 38
     });
   }
@@ -253,12 +259,7 @@
   function checkLevelClear() {
     if (state.phase !== 'playing') return;
     
-    // Check if all spawns are triggered AND no shootable threats remain in the sky
-    const activeThreats = state.helicopters.some(h => h.active) || 
-                          state.paratroopers.some(p => p.status === 'drift' || p.status === 'plunge');
-                          
-    if (state.spawners.clearedSpawns >= state.spawners.maxSpawns && !activeThreats) {
-      
+    if (state.spawners.parasRemaining <= 0) {
       // Auto-rescue any currently running paratroopers so the player gets their points immediately
       for (const p of state.paratroopers) {
         if (p.status === 'running') {
@@ -341,7 +342,7 @@
     if (state.phase === 'playing') {
       // 1. Spawners updates
       state.spawners.heliTimer -= dt;
-      if (state.spawners.heliTimer <= 0) {
+      if (state.spawners.heliTimer <= 0 && state.spawners.parasSpawned < state.spawners.parasTotal) {
         spawnHelicopter();
         state.spawners.heliTimer = state.spawners.heliInterval;
       }
@@ -372,8 +373,9 @@
       // Spawn drops during play
       if (state.phase === 'playing') {
         h.dropTimer -= dt;
-        if (h.dropTimer <= 0 && h.x > 80 && h.x < W - 80) {
-          h.dropTimer = rand(3.0, 5.0);
+        if (h.dropTimer <= 0 && h.x > 80 && h.x < W - 80 && state.spawners.parasSpawned < state.spawners.parasTotal) {
+          h.dropTimer = 9999; // Drop exactly one paratrooper per helicopter flyby
+          state.spawners.parasSpawned++;
           
           // Drop paratrooper carrying p vs q
           const letter = Math.random() < 0.5 ? 'p' : 'q';
@@ -634,6 +636,7 @@
       }
     }
     
+    state.spawners.parasRemaining--;
     updateHUD();
     
     // Particle burst
@@ -684,6 +687,9 @@
       p.hasChute = false;
     }
     
+    state.spawners.parasRemaining--;
+    updateHUD();
+    
     checkLevelClear();
   }
 
@@ -707,6 +713,10 @@
     
     showFloaterAt(p.x, H - 55, 'CRASH!', '#ff5c7c');
     window.MathArcadeAudio?.event('DEATH');
+    
+    state.spawners.parasRemaining--;
+    updateHUD();
+    
     checkLevelClear();
   }
 
@@ -756,6 +766,11 @@
     document.getElementById('hp').textContent = '♥'.repeat(Math.max(0, state.lives));
     document.getElementById('score').textContent = state.score;
     document.getElementById('level').textContent = state.level;
+    
+    const parasLeftEl = document.getElementById('paras-left');
+    if (parasLeftEl) {
+      parasLeftEl.textContent = Math.max(0, state.spawners.parasRemaining);
+    }
     
     const ruleEl = document.getElementById('rule');
     if (state.activeRule) {
