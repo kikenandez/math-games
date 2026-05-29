@@ -175,7 +175,7 @@
     
     // Update overlays
     document.getElementById('rule-level-num').textContent = state.level;
-    document.getElementById('rule-text').innerHTML = `⚡ ${state.activeRule.desc.toUpperCase()} ⚡`;
+    document.getElementById('rule-text').innerHTML = `⚡ ${state.activeRule.desc} ⚡`;
     document.getElementById('overlay-rule').classList.remove('hidden');
     
     updateHUD();
@@ -246,7 +246,7 @@
       active: true,
       rotorAngle: 0,
       dropTimer: rand(1.5, 3.5),
-      size: 26
+      size: 38
     });
   }
 
@@ -367,13 +367,13 @@
           const letter = Math.random() < 0.5 ? 'p' : 'q';
           state.paratroopers.push({
             x: h.x,
-            y: h.y + 10,
+            y: h.y + h.size * 0.4,
             vy: 42, // slow drift speed
             letter,
             status: 'drift', // 'drift', 'plunge', 'landed', 'running'
             flailPhase: 0,
             hasChute: true,
-            size: 20
+            size: 35
           });
         }
       }
@@ -401,9 +401,10 @@
           crashParatrooper(p);
         }
       } else if (p.status === 'running') {
-        // Run towards target truck
+        // Run towards target truck back doors
         const targetTruck = p.x < W / 2 ? state.trucks.left : state.trucks.right;
-        const dx = targetTruck.x + 10 - p.x;
+        const targetX = p.x < W / 2 ? state.trucks.left.x + 62 : state.trucks.right.x;
+        const dx = targetX - p.x;
         
         // Open doors as they get close
         if (Math.abs(dx) < 60) {
@@ -493,24 +494,25 @@
         
         // Shoot parachute or body
         const dx = l.x - p.x;
-        // parachute is around y - 18
-        const dyChute = l.y - (p.y - 18);
+        // parachute is around y - (p.size * 0.9)
+        const dyChute = l.y - (p.y - p.size * 0.9);
         const distChuteSq = dx * dx + dyChute * dyChute;
+        const colChute = p.size * 0.75;
         
-        if (p.hasChute && distChuteSq < 15 * 15) {
+        if (p.hasChute && distChuteSq < colChute * colChute) {
           // Destroy parachute only!
           l.x = -9999;
           p.hasChute = false;
           p.status = 'plunge';
           p.vy = 280; // fast plunge
           
-          showFloaterAt(p.x, p.y - 20, 'POP!', '#ff8a3d');
+          showFloaterAt(p.x, p.y - p.size * 1.0, 'POP!', '#ff8a3d');
           
           // Particle shreds of parachute
           for (let i = 0; i < 8; i++) {
             state.particles.push({
-              x: p.x + rand(-10, 10),
-              y: p.y - 18,
+              x: p.x + rand(-p.size * 0.5, p.size * 0.5),
+              y: p.y - p.size * 0.9,
               vx: rand(-80, 80),
               vy: rand(-60, 40),
               color: '#ffd24d',
@@ -526,7 +528,8 @@
         // Check body hit
         const dyBody = l.y - p.y;
         const distBodySq = dx * dx + dyBody * dyBody;
-        if (distBodySq < 10 * 10) {
+        const colBody = p.size * 0.5;
+        if (distBodySq < colBody * colBody) {
           l.x = -9999;
           p.alive = false;
           
@@ -744,11 +747,11 @@
     const ruleEl = document.getElementById('rule');
     if (state.activeRule) {
       if (state.activeRule.type === 'para') {
-        ruleEl.textContent = `SHOOT ${state.activeRule.shoot.toUpperCase()}`;
+        ruleEl.textContent = `SHOOT ${state.activeRule.shoot}`;
       } else if (state.activeRule.type === 'heli') {
-        ruleEl.textContent = `SHOOT HELI ${state.activeRule.shoot.toUpperCase()}`;
+        ruleEl.textContent = `SHOOT HELI ${state.activeRule.shoot}`;
       } else {
-        ruleEl.textContent = `SHOOT ${state.activeRule.shootPara.toUpperCase()} & ${state.activeRule.shootHeli.toUpperCase()}`;
+        ruleEl.textContent = `SHOOT ${state.activeRule.shootPara} & ${state.activeRule.shootHeli}`;
       }
     }
   }
@@ -765,6 +768,7 @@
     drawParatroopers();
     drawParticles();
     drawFloaters();
+    drawRuleBanner();
   }
 
   function drawBg() {
@@ -807,7 +811,7 @@
       // 0. Drop shadow
       ctx.fillStyle = 'rgba(0,0,0,0.16)';
       ctx.beginPath();
-      ctx.ellipse(t.x + 20, H - 32, 45, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(t.x + 31, H - 32, 45, 8, 0, 0, Math.PI * 2);
       ctx.fill();
 
       // Truck base y position
@@ -815,19 +819,19 @@
 
       // 1. Cabin (orange color block)
       ctx.fillStyle = '#ff8a3d';
-      const cabX = isLeft ? t.x + 40 : t.x - 20;
+      const cabX = isLeft ? t.x : t.x + 42;
       ctx.fillRect(cabX, ty + 10, 20, 22);
       ctx.strokeRect(cabX, ty + 10, 20, 22);
 
       // Cabin window
       ctx.fillStyle = '#7ad1ff';
-      const winX = isLeft ? cabX + 4 : cabX + 2;
+      const winX = isLeft ? cabX + 4 : cabX + 4;
       ctx.fillRect(winX, ty + 14, 12, 10);
       ctx.strokeRect(winX, ty + 14, 12, 10);
 
       // 2. Trailer Body (sandy yellow ambulance/rescue box)
       ctx.fillStyle = '#fff4dc';
-      const bodyX = isLeft ? t.x : t.x + 20;
+      const bodyX = isLeft ? t.x + 20 : t.x;
       ctx.fillRect(bodyX, ty, 42, 32);
       ctx.strokeRect(bodyX, ty, 42, 32);
       
@@ -863,13 +867,13 @@
         ctx.fillStyle = '#8b5a2b';
         // Door arches out
         const doorW = 10 * t.doorsOpen;
-        const doorX = isLeft ? bodyX - doorW : bodyX + 42;
+        const doorX = isLeft ? bodyX + 42 : bodyX - doorW;
         ctx.fillRect(doorX, ty + 6, doorW, 20);
         ctx.strokeRect(doorX, ty + 6, doorW, 20);
       }
       
       // 5. Flashing siren light on top
-      const sirenX = isLeft ? bodyX + 10 : bodyX + 32;
+      const sirenX = isLeft ? cabX + 10 : cabX + 10;
       const sirenGlow = (Math.sin(state.elapsed * 12) + 1) * 0.5;
       ctx.fillStyle = sirenGlow > 0.5 ? '#ff5c7c' : '#ffd24d';
       ctx.beginPath();
@@ -944,7 +948,7 @@
     ctx.strokeRect(-recoilOffset, -state.turret.barrelWidth / 2, state.turret.barrelLength, state.turret.barrelWidth);
     
     ctx.restore();
-
+ 
     // 2. Pivot dome head (hemisphere)
     ctx.fillStyle = '#5a6494';
     ctx.beginPath();
@@ -988,10 +992,10 @@
       // 0. Drop shadow on land
       ctx.fillStyle = 'rgba(0,0,0,0.1)';
       ctx.beginPath();
-      ctx.ellipse(h.x, H - 32, 28, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(h.x, H - 32, h.size * 1.1, h.size * 0.15, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 1. Helicopter Body (bubbly oval, color matches active shoot target)
+      // 1. Helicopter Body
       let isBad = false;
       if (state.activeRule.type === 'heli') {
         isBad = h.letter === state.activeRule.shoot;
@@ -999,7 +1003,6 @@
         isBad = h.letter === state.activeRule.shootHeli;
       }
       
-      // Bad helis = cartoonish red-orange, Good helis = cool blue
       ctx.fillStyle = isBad ? '#ff5c7c' : '#7ad1ff';
       ctx.beginPath();
       ctx.ellipse(h.x, hy, h.size * 0.75, h.size * 0.5, 0, 0, Math.PI * 2);
@@ -1007,63 +1010,70 @@
 
       // Cockpit bubble window
       ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      const winX = facingLeft ? h.x - 12 : h.x + 2;
+      const winX = facingLeft ? h.x - h.size * 0.45 : h.x + h.size * 0.1;
+      const winY = hy - h.size * 0.08;
+      const winR = h.size * 0.23;
       ctx.beginPath();
-      ctx.arc(winX, hy - 2, 6, 0, Math.PI * 2);
+      ctx.arc(winX, winY, winR, 0, Math.PI * 2);
       ctx.fill(); ctx.stroke();
 
       // Tail arm
-      const tailX = facingLeft ? h.x + 14 : h.x - 18;
+      const tailX = facingLeft ? h.x + h.size * 0.5 : h.x - h.size * 1.1;
+      const tailY = hy - h.size * 0.1;
+      const tailW = h.size * 0.6;
+      const tailH = h.size * 0.18;
       ctx.fillStyle = isBad ? '#d9405c' : '#4fa9d9';
-      ctx.fillRect(facingLeft ? tailX : tailX, hy - 3, 16, 5);
-      ctx.strokeRect(facingLeft ? tailX : tailX, hy - 3, 16, 5);
+      ctx.fillRect(tailX, tailY, tailW, tailH);
+      ctx.strokeRect(tailX, tailY, tailW, tailH);
 
-      // Tail rotor rotor blades
-      const trX = facingLeft ? tailX + 16 : tailX;
+      // Tail rotor blades
+      const trX = facingLeft ? tailX + tailW : tailX;
+      const trY = hy - h.size * 0.05;
+      const trR = h.size * 0.13;
       ctx.fillStyle = '#1a1a14';
       ctx.beginPath();
-      ctx.arc(trX, hy - 1, 3.5, 0, Math.PI * 2);
+      ctx.arc(trX, trY, trR, 0, Math.PI * 2);
       ctx.fill();
 
       // 2. Spinning main rotor blades
-      const rotL = 24;
+      const rotL = h.size * 0.9;
       const sinR = Math.sin(h.rotorAngle);
       ctx.strokeStyle = '#1a1a14';
       ctx.lineWidth = 2.2;
       ctx.beginPath();
-      ctx.moveTo(h.x, hy - h.size * 0.5 - 3);
+      ctx.moveTo(h.x, hy - h.size * 0.5 - h.size * 0.12);
       ctx.lineTo(h.x, hy - h.size * 0.5);
       ctx.stroke();
 
-      // spinning horizontal rotors (projected in perspective)
+      // spinning horizontal rotors
       ctx.beginPath();
-      ctx.moveTo(h.x - rotL * sinR, hy - h.size * 0.5 - 3);
-      ctx.lineTo(h.x + rotL * sinR, hy - h.size * 0.5 - 3);
+      ctx.moveTo(h.x - rotL * sinR, hy - h.size * 0.5 - h.size * 0.12);
+      ctx.lineTo(h.x + rotL * sinR, hy - h.size * 0.5 - h.size * 0.12);
       ctx.stroke();
 
       // Landing skids
       ctx.strokeStyle = '#1a1a14';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(h.x - 10, hy + 11);
-      ctx.lineTo(h.x - 10, hy + 16);
-      ctx.moveTo(h.x + 10, hy + 11);
-      ctx.lineTo(h.x + 10, hy + 16);
+      ctx.moveTo(h.x - h.size * 0.38, hy + h.size * 0.42);
+      ctx.lineTo(h.x - h.size * 0.38, hy + h.size * 0.6);
+      ctx.moveTo(h.x + h.size * 0.38, hy + h.size * 0.42);
+      ctx.lineTo(h.x + h.size * 0.38, hy + h.size * 0.6);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(h.x - 16, hy + 16);
-      ctx.lineTo(h.x + 16, hy + 16);
+      ctx.moveTo(h.x - h.size * 0.6, hy + h.size * 0.6);
+      ctx.lineTo(h.x + h.size * 0.6, hy + h.size * 0.6);
       ctx.stroke();
 
-      // 3. Large High-contrast identifier letter (b vs d) on side of cabin
+      // 3. Large High-contrast identifier letter
       ctx.fillStyle = '#fff';
       ctx.strokeStyle = '#1a1a14';
       ctx.lineWidth = 3;
-      ctx.font = 'bold 18px "Lilita One", sans-serif';
+      ctx.font = 'bold ' + Math.floor(h.size * 0.8) + 'px "Lilita One", sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      const offset = facingLeft ? -2 : 2;
-      ctx.strokeText(h.letter, h.x - offset, hy + 2);
-      ctx.fillText(h.letter, h.x - offset, hy + 2);
+      const offset = facingLeft ? -h.size * 0.08 : h.size * 0.08;
+      ctx.strokeText(h.letter, h.x - offset, hy + h.size * 0.08);
+      ctx.fillText(h.letter, h.x - offset, hy + h.size * 0.08);
     }
     
     ctx.restore();
@@ -1089,73 +1099,109 @@
 
       // 1. Draw large parachute if active
       if (p.hasChute) {
-        // Red-orange dome for bad chutes, warm yellow for good chutes
         ctx.fillStyle = isBad ? '#ff5c7c' : '#ffd24d';
         
         ctx.beginPath();
         // Dome arch
-        ctx.arc(p.x, p.y - 18, 13, Math.PI, 0);
+        ctx.arc(p.x, p.y - p.size * 0.9, p.size * 0.65, Math.PI, 0);
         ctx.closePath();
         ctx.fill(); ctx.stroke();
         
         // Chute strings
         ctx.beginPath();
-        ctx.moveTo(p.x - 13, p.y - 18);
-        ctx.lineTo(p.x, p.y - 4);
-        ctx.moveTo(p.x + 13, p.y - 18);
-        ctx.lineTo(p.x, p.y - 4);
+        ctx.moveTo(p.x - p.size * 0.65, p.y - p.size * 0.9);
+        ctx.lineTo(p.x, p.y - p.size * 0.2);
+        ctx.moveTo(p.x + p.size * 0.65, p.y - p.size * 0.9);
+        ctx.lineTo(p.x, p.y - p.size * 0.2);
         ctx.stroke();
 
         // Stamped letter (p vs q) in bold high-contrast circle inside parachute
         ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.arc(p.x, p.y - 25, 6.5, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y - p.size * 1.25, p.size * 0.325, 0, Math.PI * 2);
         ctx.fill(); ctx.stroke();
         
         ctx.fillStyle = '#1a1a14';
-        ctx.font = 'bold 11px "Lilita One", sans-serif';
+        ctx.font = 'bold ' + Math.floor(p.size * 0.55) + 'px "Lilita One", sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(p.letter, p.x, p.y - 25 + 0.8);
+        ctx.fillText(p.letter, p.x, p.y - p.size * 1.25 + p.size * 0.04);
       }
 
       // 2. Draw cute tiny flailing character
       // Head
       ctx.fillStyle = '#fff4dc';
       ctx.beginPath();
-      ctx.arc(p.x, p.y - 3, 4, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y - p.size * 0.15, p.size * 0.2, 0, Math.PI * 2);
       ctx.fill(); ctx.stroke();
       
       // Face indicator (tiny specs)
       ctx.fillStyle = '#1a1a14';
-      ctx.fillRect(p.x - 1.5, p.y - 4, 1, 1);
-      ctx.fillRect(p.x + 0.5, p.y - 4, 1, 1);
+      ctx.fillRect(p.x - p.size * 0.075, p.y - p.size * 0.2, p.size * 0.05, p.size * 0.05);
+      ctx.fillRect(p.x + p.size * 0.025, p.y - p.size * 0.2, p.size * 0.05, p.size * 0.05);
 
-      // Torso / Suit (bad = red suit, good = blue/green suit)
+      // Torso / Suit
       ctx.fillStyle = isBad ? '#ff5c7c' : '#5cd97a';
-      ctx.fillRect(p.x - 3, p.y + 1, 6, 8);
-      ctx.strokeRect(p.x - 3, p.y + 1, 6, 8);
+      ctx.fillRect(p.x - p.size * 0.15, p.y + p.size * 0.05, p.size * 0.3, p.size * 0.4);
+      ctx.strokeRect(p.x - p.size * 0.15, p.y + p.size * 0.05, p.size * 0.3, p.size * 0.4);
 
       // Flailing legs (animated curves)
       ctx.strokeStyle = '#1a1a14';
       ctx.lineWidth = 2.0;
       ctx.beginPath();
-      // Left leg
-      ctx.moveTo(p.x - 2, p.y + 9);
-      ctx.lineTo(p.x - 4, p.y + 13 + flailY);
-      // Right leg
-      ctx.moveTo(p.x + 2, p.y + 9);
-      ctx.lineTo(p.x + 4, p.y + 13 - flailY);
+      ctx.moveTo(p.x - p.size * 0.1, p.y + p.size * 0.45);
+      ctx.lineTo(p.x - p.size * 0.2, p.y + p.size * 0.65 + flailY * (p.size / 20));
+      ctx.moveTo(p.x + p.size * 0.1, p.y + p.size * 0.45);
+      ctx.lineTo(p.x + p.size * 0.2, p.y + p.size * 0.65 - flailY * (p.size / 20));
       ctx.stroke();
 
       // Arms holding onto parachute strings (surprised hands!)
       ctx.beginPath();
-      ctx.moveTo(p.x - 3, p.y + 2);
-      ctx.lineTo(p.x - 8, p.y - 2);
-      ctx.moveTo(p.x + 3, p.y + 2);
-      ctx.lineTo(p.x + 8, p.y - 2);
+      ctx.moveTo(p.x - p.size * 0.15, p.y + p.size * 0.1);
+      ctx.lineTo(p.x - p.size * 0.4, p.y - p.size * 0.1);
+      ctx.moveTo(p.x + p.size * 0.15, p.y + p.size * 0.1);
+      ctx.lineTo(p.x + p.size * 0.4, p.y - p.size * 0.1);
       ctx.stroke();
     }
 
+    ctx.restore();
+  }
+
+  function drawRuleBanner() {
+    if (state.phase !== 'playing') return;
+    
+    ctx.save();
+    ctx.font = 'bold 15px "Lilita One", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    const text = state.activeRule.desc;
+    const paddingX = 24;
+    const paddingY = 8;
+    
+    const textWidth = ctx.measureText(window.MathArcadeI18n?.t(text) || text).width;
+    const bannerW = textWidth + paddingX * 2;
+    const bannerH = 34;
+    const bannerX = W / 2 - bannerW / 2;
+    const bannerY = 16;
+    
+    // Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.beginPath();
+    ctx.roundRect(bannerX + 2, bannerY + 4, bannerW, bannerH, 10);
+    ctx.fill();
+    
+    // Banner body
+    ctx.fillStyle = 'rgba(16, 20, 38, 0.94)';
+    ctx.strokeStyle = '#fff4dc';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 10);
+    ctx.fill(); ctx.stroke();
+    
+    // Banner text
+    ctx.fillStyle = '#ffffd0';
+    ctx.fillText(text, W / 2, bannerY + bannerH / 2 + 1);
+    
     ctx.restore();
   }
 
