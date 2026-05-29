@@ -243,6 +243,8 @@
       'RESCUE +20!': 'SAUVÉ +20 !',
       'POP!': 'POP !',
       'CRASH!': 'CRASH !',
+      'CLANG!': 'CLANG !',
+      'CRUSH!': 'ÉCRASÉ !',
       'LEVEL CLEAR': 'NIVEAU RÉUSSI',
       'LEVEL CLEAR!': 'NIVEAU RÉUSSI !',
       'Next briefing incoming': 'Prochaine mission'
@@ -482,6 +484,8 @@
       'RESCUE +20!': '¡RESCATADO +20!',
       'POP!': '¡POP!',
       'CRASH!': '¡CRASH!',
+      'CLANG!': '¡CLANG!',
+      'CRUSH!': '¡APLASTADO!',
       'LEVEL CLEAR': 'NIVEL SUPERADO',
       'LEVEL CLEAR!': '¡NIVEL SUPERADO!',
       'Next briefing incoming': 'Siguiente misión'
@@ -679,6 +683,9 @@
 
     match = value.match(/^COMBO ×(\d+)!$/);
     if (match) return lang === 'fr' ? `COMBO ×${match[1]} !` : `¡COMBO ×${match[1]}!`;
+
+    match = value.match(/^SPLASH x(\d+)!$/);
+    if (match) return lang === 'fr' ? `ÉCRASÉ x${match[1]} !` : `¡APLASTADO x${match[1]}!`;
 
     match = value.match(/^MISS −(.+)$/);
     if (match) return lang === 'fr' ? `RATÉ −${match[1]}` : `FALLO −${match[1]}`;

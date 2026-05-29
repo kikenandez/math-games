@@ -529,6 +529,7 @@
           l.x = -9999;
           p.hasChute = false;
           p.status = 'plunge';
+          p.plungeStartY = p.y;
           p.vy = 280; // fast plunge
           
           showFloaterAt(p.x, p.y - p.size * 1.0, 'POP!', '#ff8a3d');
@@ -629,15 +630,16 @@
     updateHUD();
   }
 
+  function isBadParatrooper(p) {
+    if (state.activeRule.type === 'para') return p.letter === state.activeRule.shoot;
+    if (state.activeRule.type === 'both') return p.letter === state.activeRule.shootPara;
+    return false;
+  }
+
   function destroyParatrooper(p) {
     p.alive = false;
     
-    let isBad = false;
-    if (state.activeRule.type === 'para') {
-      isBad = p.letter === state.activeRule.shoot;
-    } else if (state.activeRule.type === 'both') {
-      isBad = p.letter === state.activeRule.shootPara;
-    }
+    const isBad = isBadParatrooper(p);
     
     if (isBad) {
       state.score += 10;
@@ -668,29 +670,18 @@
   function landParatrooper(p) {
     p.vy = 0;
     
-    // Determine if bad vs good
-    let isBad = false;
-    if (state.activeRule.type === 'para') {
-      isBad = p.letter === state.activeRule.shoot;
-    } else if (state.activeRule.type === 'both') {
-      isBad = p.letter === state.activeRule.shootPara;
-    }
+    const isBad = isBadParatrooper(p);
     
     if (isBad) {
-      // Bad paratrooper landed — joins stack!
-      p.status = 'landed';
-      p.alive = false;
-      
-      // Determine side
-      if (p.x < W / 2) {
-        state.leftPile.push(p);
-        p.x = state.turret.x - state.turret.baseRadius - 10 - state.leftPile.length * 12;
+      if (truckAtX(p.x)) {
+        p.status = 'landed';
+        p.alive = false;
+        p.hasChute = false;
+        showFloaterAt(p.x, H - 87, 'CLANG!', '#5cd9ff');
+        triggerTruckSparks(p.x, H - 62);
       } else {
-        state.rightPile.push(p);
-        p.x = state.turret.x + state.turret.baseRadius + 10 + state.rightPile.length * 12;
+        addLandedBadParatrooper(p);
       }
-      
-      p.y = H - 32 - 12;
       window.MathArcadeAudio?.event('TICK');
       
       // Check Sabotage pile gameover (4 landed on one side)
@@ -713,16 +704,36 @@
   }
 
   function crashParatrooper(p) {
+    const groundY = H - 32;
+    const isBad = isBadParatrooper(p);
+    const fallDistance = groundY - (p.plungeStartY ?? p.y);
+    const hitTruck = truckAtX(p.x);
+    let crushedCount = 0;
+    let crushedRunner = false;
+
     p.alive = false;
+
+    if (hitTruck) {
+      showFloaterAt(p.x, groundY - 55, 'CLANG!', '#5cd9ff');
+      triggerTruckSparks(p.x, groundY - 30);
+    } else if (isBad) {
+      crushedRunner = crushGoodRunnerBelow(p.x);
+      if (fallDistance > 120) {
+        crushedCount = splashLandedBadParatroopers(p.x, 24);
+      }
+      if (!crushedCount) {
+        addLandedBadParatrooper(p);
+      }
+    }
     
     // Particle splat
     for (let i = 0; i < 10; i++) {
       state.particles.push({
         x: p.x,
-        y: H - 32,
+        y: groundY,
         vx: rand(-60, 60),
         vy: -rand(30, 80),
-        color: '#b0b8c4',
+        color: hitTruck ? '#5cd9ff' : '#b0b8c4',
         size: rand(2.5, 4.5),
         life: rand(0.3, 0.5),
         maxLife: 0.5,
@@ -730,13 +741,106 @@
       });
     }
     
-    showFloaterAt(p.x, H - 55, 'CRASH!', '#ff5c7c');
+    if (!hitTruck) {
+      const message = crushedCount
+        ? `SPLASH x${crushedCount}!`
+        : (crushedRunner ? 'CRUSH!' : 'CRASH!');
+      showFloaterAt(p.x, groundY - 55, message, '#ff5c7c');
+    }
     window.MathArcadeAudio?.event('DEATH');
     
     state.spawners.parasRemaining--;
     updateHUD();
     
     checkLevelClear();
+  }
+
+  function addLandedBadParatrooper(p) {
+    p.status = 'landed';
+    p.alive = false;
+    p.hasChute = false;
+
+    const pile = p.x < W / 2 ? state.leftPile : state.rightPile;
+    const neighbor = pile.find(item => Math.abs(item.x - p.x) < 16);
+    const stackX = neighbor ? neighbor.x : p.x;
+    const stackLevel = pile.filter(item => Math.abs(item.x - stackX) < 16).length;
+
+    p.x = stackX;
+    p.groundStack = stackLevel;
+    p.y = H - 32 - 6 - stackLevel * 10;
+    pile.push(p);
+  }
+
+  function splashLandedBadParatroopers(x, radius) {
+    const removeNear = pile => {
+      let removed = 0;
+      for (let i = pile.length - 1; i >= 0; i--) {
+        if (Math.abs(pile[i].x - x) <= radius) {
+          triggerExplosion(pile[i].x, pile[i].y, '#ff5c7c');
+          pile.splice(i, 1);
+          removed++;
+        }
+      }
+      return removed;
+    };
+
+    const count = removeNear(state.leftPile) + removeNear(state.rightPile);
+    restackLandedBadParatroopers();
+    return count;
+  }
+
+  function restackLandedBadParatroopers() {
+    const restack = pile => {
+      const stacks = new Map();
+      for (const p of pile) {
+        const key = Math.round(p.x / 16) * 16;
+        const level = stacks.get(key) || 0;
+        p.groundStack = level;
+        p.y = H - 32 - 6 - level * 10;
+        stacks.set(key, level + 1);
+      }
+    };
+    restack(state.leftPile);
+    restack(state.rightPile);
+  }
+
+  function crushGoodRunnerBelow(x) {
+    const target = state.paratroopers.find(p => (
+      p.status === 'running' &&
+      !isBadParatrooper(p) &&
+      Math.abs(p.x - x) < 18
+    ));
+    if (!target) return false;
+
+    target.alive = false;
+    triggerExplosion(target.x, target.y, '#5cd97a');
+    showFloaterAt(target.x, target.y - 28, 'CRUSH!', '#ff5c7c');
+    return true;
+  }
+
+  function truckAtX(x) {
+    const spans = [
+      state.trucks.left,
+      state.trucks.right
+    ].filter(t => t.status !== 'driving_out').map(t => ({ left: t.x - 4, right: t.x + 66 }));
+
+    return spans.some(span => x >= span.left && x <= span.right);
+  }
+
+  function triggerTruckSparks(x, y) {
+    for (let i = 0; i < 12; i++) {
+      state.particles.push({
+        x,
+        y,
+        vx: rand(-110, 110),
+        vy: -rand(40, 120),
+        color: i % 2 ? '#5cd9ff' : '#ffd24d',
+        size: rand(2, 4),
+        life: rand(0.25, 0.5),
+        maxLife: 0.5,
+        gravity: 160
+      });
+    }
   }
 
   function triggerPyramidClimb(side) {
@@ -949,8 +1053,7 @@
     // Left stack
     for (let i = 0; i < state.leftPile.length; i++) {
       const p = state.leftPile[i];
-      // Draw as small crouched circles stacked vertically
-      const py = H - 32 - 6 - i * 10;
+      const py = p.y ?? H - 32 - 6;
       ctx.beginPath();
       ctx.arc(p.x, py, 6, 0, Math.PI * 2);
       ctx.fill(); ctx.stroke();
@@ -966,7 +1069,7 @@
     // Right stack
     for (let i = 0; i < state.rightPile.length; i++) {
       const p = state.rightPile[i];
-      const py = H - 32 - 6 - i * 10;
+      const py = p.y ?? H - 32 - 6;
       ctx.beginPath();
       ctx.arc(p.x, py, 6, 0, Math.PI * 2);
       ctx.fill(); ctx.stroke();
