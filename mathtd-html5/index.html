@@ -160,22 +160,42 @@
   .stat-chip .stat-val { font-size: 22px; color: var(--paper); }
   .stat-chip.hi .stat-val { color: var(--accent); }
   #speed-btn {
-    position: absolute; top: 122px; right: 14px;
-    background: var(--cool);
-    color: var(--ink);
+    position: absolute;
+    top: 122px; right: 14px;
+    background: linear-gradient(180deg, #ff9e3b, #ff4b72);
+    color: #fff;
     border: 3px solid var(--paper);
-    border-radius: 10px;
-    padding: 8px 16px;
+    border-radius: 12px;
+    padding: 10px 18px;
     font-family: 'Lilita One', sans-serif;
-    font-size: 16px;
+    font-size: 18px;
+    letter-spacing: 0.05em;
     cursor: pointer;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
+    box-shadow: 0 5px 0 #1a1a14;
+    text-shadow: 2px 2px 0 #1a1a14;
     z-index: 7;
     user-select: none;
     -webkit-user-select: none;
+    transition: transform 0.08s, box-shadow 0.08s;
   }
-  #speed-btn:active, #speed-btn.active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.55); background: #45c0e6; }
-  #speed-btn[disabled] { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); cursor: default; box-shadow: none; pointer-events: none; }
+  #speed-btn:hover {
+    transform: scale(1.05);
+  }
+  #speed-btn:active, #speed-btn.active {
+    transform: translateY(3px) scale(0.98);
+    box-shadow: 0 2px 0 #1a1a14;
+    background: linear-gradient(180deg, #ff8a2b, #ff2e56);
+  }
+  #speed-btn[disabled] {
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.4);
+    border-color: rgba(255,255,255,0.3);
+    cursor: default;
+    box-shadow: none;
+    text-shadow: none;
+    pointer-events: none;
+    transform: none;
+  }
 </style>
 </head>
 <body>
@@ -193,7 +213,7 @@
   </div>
 
   <button id="wave-btn">START WAVE</button>
-  <button id="speed-btn" disabled>FAST ⏩</button>
+  <button id="speed-btn" disabled>⚡ TURBO ⏩</button>
 
   <div id="picker"></div>
 
