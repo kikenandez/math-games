@@ -339,6 +339,11 @@
         }
       }
     }
+    if (state.inWave) {
+      state.shake = Math.min(0.3, state.shake + 0.15);
+      showFloater(state.mouse.col, state.mouse.row, 'ONLY BETWEEN WAVES!', '#ff5c7c');
+      return;
+    }
     if (!state.mouse.valid) return;
     const tt = TOWER_TYPES.find(t => t.id === state.selectedTower);
     if (!tt || state.gold < tt.cost) {
@@ -891,7 +896,7 @@
     const tt = TOWER_TYPES.find(t => t.id === state.selectedTower);
     if (!tt) return;
     const p = cellCenter(c, r);
-    const valid = state.mouse.valid && state.gold >= tt.cost;
+    const valid = state.mouse.valid && state.gold >= tt.cost && !state.inWave;
     ctx.globalAlpha = 0.45;
     ctx.fillStyle = valid ? tt.color : '#ff5c7c';
     ctx.fillRect(m.x0 + c * m.cell, m.y0 + r * m.cell, m.cell, m.cell);
