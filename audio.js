@@ -186,6 +186,13 @@
     tone(1320, t + 0.09, 0.08, { type: 'sine', to: 1760, gain: 0.07 });
   }
 
+  // Generic fixed-frequency note — used for letter↔tone association games.
+  // Routes through the shared master gain + global mute (so the 🔊 toggle works).
+  function note(freq, dur = 0.22, opts = {}) {
+    const t = now();
+    tone(freq, t, dur, Object.assign({ type: 'triangle', gain: 0.16, cutoff: 2600 }, opts));
+  }
+
   function event(text) {
     if (!text) return;
     const s = String(text).toUpperCase();
@@ -239,7 +246,7 @@
 
   window.MathArcadeAudio = {
     click, start, correct, wrong, levelClear, gameOver, boing, zap, pop, explosion, hint,
-    missileLaunch, playerBlast, chainBlast, event,
+    missileLaunch, playerBlast, chainBlast, event, note,
     mute: () => setMuted(true),
     unmute: () => setMuted(false),
     get muted() { return muted; }
