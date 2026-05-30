@@ -258,6 +258,7 @@
   .card.mathasteroids .art { background: radial-gradient(ellipse at center, #0c1230 0%, #070a1c 60%, #03040e 100%); }
   .card.mathsnake .art     { background: linear-gradient(180deg, #0e1a14 0%, #1b2c20 100%); }
   .card.mathwhack .art     { background: linear-gradient(180deg, #3a7a3a 0%, #5cb85c 70%, #2e8a3e 100%); }
+  .card.letterwhack .art   { background: radial-gradient(ellipse at center, #5a1838 0%, #2a0a18 65%, #160510 100%); }
   .card.mathmatch3 .art    { background: radial-gradient(ellipse at center, #26204a 0%, #1a1428 60%, #0f0820 100%); }
   .card.mathtd .art        { background: linear-gradient(180deg, #3a7a3a 0%, #5cb85c 70%, #2e8a3e 100%); }
   .card.paratroopers .art  { background: linear-gradient(180deg, #7ad1ff 0%, #a9d8e8 70%, #5cb85c 100%); }
@@ -1047,6 +1048,57 @@
         <p class="desc">Moles pop up with numbers. Whack only the ones matching the rule — evens, primes, multiples. Decoys cost you a miss. Three misses or the timer ends the run.</p>
         <div class="footer">
           <div class="chips"><span class="chip compat-mobile">mobile ok</span><span class="chip">click</span><span class="chip">reflex</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Letter Whack -->
+    <a class="card letterwhack" href="letterwhack-html5/index.html">
+      <div class="art">
+        <svg viewbox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="200" height="120" fill="none"/>
+          <!-- Spotlight -->
+          <ellipse cx="100" cy="70" rx="78" ry="42" fill="rgba(255,210,77,0.12)"/>
+          <!-- Holes -->
+          <g fill="#160510" stroke="#fff4e0" stroke-width="2">
+            <ellipse cx="45" cy="82" rx="24" ry="9"/>
+            <ellipse cx="100" cy="92" rx="27" ry="10"/>
+            <ellipse cx="155" cy="82" rx="24" ry="9"/>
+            <ellipse cx="72" cy="48" rx="22" ry="8"/>
+            <ellipse cx="128" cy="48" rx="22" ry="8"/>
+          </g>
+          <!-- Target banner -->
+          <rect x="62" y="8" width="76" height="26" fill="#ffd24d" stroke="#fff4e0" stroke-width="2" rx="8"/>
+          <text x="100" y="27" text-anchor="middle" font-family="Lilita One" font-size="20" fill="#2a1024">Find b</text>
+          <!-- Letter actors -->
+          <g transform="translate(45, 66)">
+            <circle cx="0" cy="0" r="16" fill="#ff5c7c" stroke="#fff4e0" stroke-width="2"/>
+            <text x="0" y="7" text-anchor="middle" font-family="Lilita One" font-size="28" fill="#fff4e0">d</text>
+          </g>
+          <g transform="translate(100, 71)">
+            <circle cx="0" cy="0" r="18" fill="#5cd97a" stroke="#fff4e0" stroke-width="2"/>
+            <text x="0" y="8" text-anchor="middle" font-family="Lilita One" font-size="32" fill="#2a1024">b</text>
+            <path d="M-18 -20 L-10 -34 L-2 -20" fill="#ffd24d" stroke="#fff4e0" stroke-width="1.5"/>
+          </g>
+          <g transform="translate(155, 66)">
+            <circle cx="0" cy="0" r="16" fill="#7ad1ff" stroke="#fff4e0" stroke-width="2"/>
+            <text x="0" y="7" text-anchor="middle" font-family="Lilita One" font-size="28" fill="#2a1024">p</text>
+          </g>
+          <!-- Mallet cursor -->
+          <g transform="translate(134, 24) rotate(28)">
+            <rect x="-4" y="15" width="8" height="42" fill="#8b5a2b" stroke="#2a1024" stroke-width="2" rx="3"/>
+            <rect x="-18" y="0" width="36" height="18" fill="#fff4e0" stroke="#2a1024" stroke-width="2" rx="5"/>
+            <rect x="-12" y="3" width="24" height="12" fill="#ff8a3d" rx="3"/>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Letter recognition</div>
+        <h2>Letter Whack</h2>
+        <p class="desc">Letters pop up from the holes. Tap only the target letter and ignore look-alikes like b, d, p, and q before three misses end the round.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip compat-mobile">mobile ok</span><span class="chip">tap</span><span class="chip">letters</span><span class="chip">reflex</span></div>
           <div class="play-cta">PLAY ▶</div>
         </div>
       </div>
