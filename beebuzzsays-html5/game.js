@@ -94,10 +94,8 @@
 
   const state = {
     phase: 'title',            // title | watch | input | resolve | level_clear | game_over
-    score: 0,
     best: parseInt(localStorage.getItem('beebuzzsays_best') || '0', 10) || 0,
     level: 1,
-    strikes: 0,
     maxStrikes: 3,
     seq: [],                   // [{letter, cell}]
     typed: [],                 // [letter]
@@ -122,7 +120,7 @@
     versusRun: 0,          // versus: which player's full run is in progress (0,1)
   };
   function activePlayer() { return session.players[session.active]; }
-  function makePlayer(id) { return { id, score: 0, strikes: 0, maxSpan: 0, metrics: newMetrics() }; }
+  function makePlayer(id) { return { id, score: 0, strikes: 0, metrics: newMetrics() }; }
   function newRng() { return session.mode === 'versus' ? C.makeRng(session.seed) : Math.random; }
 
   function newMetrics() {
