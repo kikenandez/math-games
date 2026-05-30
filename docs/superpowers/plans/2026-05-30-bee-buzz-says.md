@@ -9,7 +9,7 @@
 **Tech Stack:** Vanilla JS, HTML5 Canvas 2D, Web Audio (via shared `audio.js`), Node v23 built-in `node:test`/`node:assert` for unit tests. No build step, no dependencies.
 
 **Verification reality (read first):** This repo has no bundler or jest. Two verification modes are used below and each task says which:
-- **Unit (Node):** for `core.js` only — `node --test beebuzzsays-html5/test/` gives true red-green TDD.
+- **Unit (Node):** for `core.js` only — `node --test "beebuzzsays-html5/test/*.test.js"` gives true red-green TDD. (Note: Node v23's directory form `node --test beebuzzsays-html5/test/` errors without an `index.js`; use the explicit-file or glob form.)
 - **Probe/browser:** for `game.js`/`index.html`/`audio.js` — open the page and assert against `window.__bbs()` (a read-only state probe) or visible behavior. Use the `.playwright-mcp` browser tooling already in the repo, or manual checks; commands below use a headless Node+playwright snippet only where noted, otherwise manual steps with exact expected results.
 
 ---
@@ -1418,7 +1418,7 @@ git commit -m "feat(hub): add Bee Buzz Says card"
 
 - [ ] **Step 1: Run the unit suite**
 
-Run: `node --test beebuzzsays-html5/test/`
+Run: `node --test "beebuzzsays-html5/test/*.test.js"`
 Expected: all tests PASS (10 tests across 10 cases).
 
 - [ ] **Step 2: Acceptance checklist (browser)**
