@@ -788,7 +788,7 @@
     const key = el.getAttribute('data-i18n');
     if (key) {
       const translated = tr(key);
-      if (translated !== key) el.innerHTML = translated;
+      if (translated !== key && el.innerHTML !== translated) el.innerHTML = translated;
       return;
     }
     if (el.childNodes.length && Array.from(el.childNodes).some((child) => child.nodeType === 1)) {
