@@ -261,7 +261,210 @@
     else { state.shakeX = state.shakeY = 0; }
     updatePhase(dt);
   }
-  function updatePhase() {}  // replaced in Task 10
+  // ----- timing helpers (scale with difficulty + age) -----
+  function flashGap() {
+    let g = 0.62;
+    if (TWEAKS.difficulty === 'easy') g *= 1.4;
+    if (TWEAKS.difficulty === 'hard') g *= 0.72;
+    const a = parseInt(TWEAKS.age, 10); if (!Number.isNaN(a) && a <= 7) g *= 1.25;
+    return g;
+  }
+  function inputBudget() {
+    let s = 3.0;
+    if (TWEAKS.difficulty === 'easy') s *= 1.5;
+    if (TWEAKS.difficulty === 'hard') s *= 0.7;
+    const a = parseInt(TWEAKS.age, 10); if (!Number.isNaN(a) && a <= 7) s *= 1.3;
+    return s;
+  }
+
+  function startGame() {
+    state.score = 0; state.level = 1; state.strikes = 0;
+    Object.assign(metrics, newMetrics());
+    state.seq = []; state.typed = [];
+    layoutBoard();
+    document.getElementById('overlay').classList.add('hidden');
+    growAndWatch();
+  }
+
+  function growAndWatch() {
+    const step = C.growTrail(state.seq, state.activeLetters, state.cells.length, Math.random);
+    state.seq = state.seq.concat([step]);
+    state.level = state.seq.length;
+    updateHUD();
+    beginWatch();
+  }
+
+  function beginWatch() {
+    state.phase = 'watch'; state.typed = [];
+    state.watchIndex = -1; state.flashCell = -1; state.watchTimer = 0.4;
+    updateAnswerDisplay();
+    showFloater(T.watch, '#3a2410', -H * 0.30);
+  }
+
+  function beginInput() {
+    state.phase = 'input'; state.flashCell = -1;
+    state.inputTimer = inputBudget();
+    showFloater(T.recall, '#ffaa00', -H * 0.30);
+  }
+
+  function updatePhase(dt) {
+    if (state.phase === 'watch') {
+      state.watchTimer -= dt;
+      if (state.watchTimer <= 0) {
+        state.watchIndex++;
+        if (state.watchIndex >= state.seq.length) { beginInput(); return; }
+        const step = state.seq[state.watchIndex];
+        state.flashCell = step.cell;
+        window.MathArcadeAudio?.note(C.LETTER_FREQ[step.letter]);
+        state.watchTimer = flashGap();
+      } else if (state.watchTimer < flashGap() * 0.45) {
+        state.flashCell = -1; // dark gap between flashes
+      }
+    } else if (state.phase === 'input') {
+      state.inputTimer -= dt;
+      if (state.inputTimer <= 0) registerMiss('slow');
+    }
+  }
+
+  function pressLetter(ch) {
+    if (state.phase !== 'input') return;
+    window.MathArcadeAudio?.note(C.LETTER_FREQ[ch]); // always hear what you pressed
+    const idx = state.typed.length;
+    const res = C.checkTap(state.seq, idx, ch);
+    if (!res.ok) {
+      metrics.wrongTaps++;
+      if (res.mirror) metrics.mirrorConfusions++;
+      registerMiss('wrong');
+      return;
+    }
+    state.typed.push(ch);
+    state.inputTimer = inputBudget();
+    updateAnswerDisplay();
+    flashTile(ch, '#5cd97a');
+    if (C.isComplete(state.seq, state.typed)) resolveCorrect();
+  }
+
+  function registerMiss(reason) {
+    metrics.rounds++;
+    recordSpan(state.seq.length, false);
+    state.strikes++;
+    state.shake = Math.min(0.5, state.shake + 0.3);
+    window.MathArcadeAudio?.wrong();
+    showFloater(reason === 'slow' ? T.tooSlow : T.wrong, '#ff5c7c', -H * 0.30);
+    updateHUD();
+    if (state.strikes >= state.maxStrikes) { gameOver(T.tooMany); return; }
+    state.phase = 'level_clear';
+    setTimeout(() => { if (state.phase === 'level_clear') beginWatch(); }, 1100); // retry SAME trail
+  }
+
+  function resolveCorrect() {
+    metrics.rounds++; metrics.correct++;
+    recordSpan(state.seq.length, true);
+    const pts = 50 + state.seq.length * 20 + state.level * 10;
+    state.score += pts;
+    burst(W / 2, H * 0.40, '#ffd24d');
+    showFloater(`${T.correct}  +${pts}`, '#5cd97a', -H * 0.30);
+    window.MathArcadeAudio?.levelClear();
+    updateHUD();
+    state.phase = 'level_clear';
+    setTimeout(() => { if (state.phase === 'level_clear') growAndWatch(); }, 1100);
+  }
+
+  function flashTile(ch, color) {
+    const t = state.keypad.find(k => k.letter === ch); if (!t) return;
+    burst(t.x + t.w / 2, t.y + t.h / 2, color);
+  }
+
+  function gameOver(reason) {
+    state.phase = 'game_over';
+    if (state.score > state.best) { state.best = state.score; localStorage.setItem('beebuzzsays_best', String(state.best)); }
+    const summary = saveMetrics();
+    window.MathArcadeAudio?.gameOver();
+    const overlay = document.getElementById('overlay');
+    overlay.querySelector('.card')?.remove();
+    const card = document.createElement('div'); card.className = 'card';
+    const revPct = summary.wrongTaps ? Math.round((summary.mirrorConfusions / summary.wrongTaps) * 100) : 0;
+    card.innerHTML = `
+      <h1><span class="acc">${T.gameAcc}</span>${T.gameRest}</h1>
+      <div class="sub">${reason}</div>
+      <div class="stats-row">
+        <div class="stat-chip"><div class="stat-label">${T.score}</div><div class="stat-val">${state.score}</div></div>
+        <div class="stat-chip hi"><div class="stat-label">${T.maxLen}</div><div class="stat-val">${summary.maxSpan}</div></div>
+        <div class="stat-chip"><div class="stat-label">${T.best}</div><div class="stat-val">${state.best}</div></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-chip"><div class="stat-label">${T.reversals}</div><div class="stat-val">${revPct}%</div></div>
+      </div>
+      <button class="big-btn" id="restart-btn">${T.playAgain}</button>
+      <div class="note">${T.note}</div>`;
+    overlay.appendChild(card); overlay.classList.remove('hidden');
+    document.getElementById('restart-btn').addEventListener('click', startGame);
+  }
+
+  function saveMetrics() {
+    const summary = {
+      date: new Date().toISOString(), lang: LANG, age: TWEAKS.age || null,
+      difficulty: TWEAKS.difficulty, colorCues: colorOn(),
+      level: state.level, score: state.score,
+      rounds: metrics.rounds, correct: metrics.correct, strikes: state.strikes,
+      maxSpan: metrics.maxSpan, spanAttempts: metrics.spanAttempts,
+      mirrorConfusions: metrics.mirrorConfusions, wrongTaps: metrics.wrongTaps,
+      reversalRate: metrics.wrongTaps ? +(metrics.mirrorConfusions / metrics.wrongTaps).toFixed(3) : 0,
+    };
+    try {
+      const key = 'dyslexiaScreening.beebuzzsays';
+      const store = JSON.parse(localStorage.getItem(key) || '{"history":[]}');
+      store.lastSession = summary;
+      store.history = (store.history || []).concat([summary]).slice(-50);
+      localStorage.setItem(key, JSON.stringify(store));
+    } catch (e) { /* storage unavailable — game still playable */ }
+    return summary;
+  }
+  window.DyslexiaScreening = window.DyslexiaScreening || {};
+  window.DyslexiaScreening.beebuzzsays = () => {
+    try { return JSON.parse(localStorage.getItem('dyslexiaScreening.beebuzzsays') || 'null'); }
+    catch (e) { return null; }
+  };
+
+  function updateAnswerDisplay() {
+    const el = document.getElementById('ans-val');
+    if (!state.typed.length) { el.classList.add('empty'); el.innerHTML = '<span class="cursor">_</span>'; }
+    else { el.classList.remove('empty'); el.innerHTML = `${state.typed.join(' ')}<span class="cursor">|</span>`; }
+  }
+  function showFloater(text, color, dy) { state.floaters.push({ x: W / 2, y: H * 0.5 + (dy || 0), text, color, t: 0, dur: 1.2 }); }
+  function burst(x, y, color) {
+    for (let i = 0; i < 14; i++) {
+      const a = Math.random() * Math.PI * 2, sp = rand(120, 260);
+      state.particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60, life: rand(0.5, 0.9), maxLife: 0.9, size: rand(3, 7), color: i % 2 ? color : '#fff2c4', gravity: 320 });
+    }
+  }
+
+  // ----- input wiring -----
+  function canvasPoint(e) {
+    const r = canvas.getBoundingClientRect();
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+    return { x: cx, y: cy };
+  }
+  function hitKeypad(pt) {
+    return state.keypad.find(t => pt.x >= t.x && pt.x <= t.x + t.w && pt.y >= t.y && pt.y <= t.y + t.h);
+  }
+  canvas.addEventListener('pointerdown', (e) => {
+    if (state.phase === 'title' || state.phase === 'game_over') return;
+    const tile = hitKeypad(canvasPoint(e));
+    if (tile) { e.preventDefault(); pressLetter(tile.letter); }
+  });
+  window.addEventListener('keydown', (e) => {
+    if (state.phase === 'title' || state.phase === 'game_over') {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(); }
+      return;
+    }
+    if (/^[a-zA-Z]$/.test(e.key)) {
+      const ch = e.key.toLowerCase();
+      if (state.activeLetters.includes(ch)) { e.preventDefault(); pressLetter(ch); }
+    }
+  });
+  document.getElementById('start-btn').addEventListener('click', startGame);
 
   applyStaticText();
   updateHUD();
