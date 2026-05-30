@@ -51,16 +51,23 @@
 
   function pick(arr, rng) { return arr[Math.floor(rng() * arr.length)]; }
 
-  // Returns the next {letter, cell} for the trail, avoiding an immediate
-  // repeat of the previous letter AND previous cell (clarity for kids).
+  // Returns the next {letter, cell} for the trail, avoiding an immediate repeat
+  // of the previous letter and using each cell at most once. Returns null when
+  // every cell is already used (the board is full).
   function growTrail(seq, letters, cellCount, rng) {
     const r = rng || Math.random;
+    const used = new Set(seq.map((s) => s.cell));
+    if (used.size >= cellCount) return null;
     const prev = seq.length ? seq[seq.length - 1] : null;
     let letter;
     do { letter = pick(letters, r); } while (prev && letters.length > 1 && letter === prev.letter);
     let cell;
-    do { cell = Math.floor(r() * cellCount); } while (prev && cellCount > 1 && cell === prev.cell);
+    do { cell = Math.floor(r() * cellCount); } while (used.has(cell));
     return { letter, cell };
+  }
+
+  function boardFull(seq, cellCount) {
+    return seq.length >= cellCount;
   }
 
   function checkTap(seq, index, letter) {
@@ -102,5 +109,5 @@
     return pts;
   }
 
-  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS, keypadLetters, gridRadius, makeRng, growTrail, checkTap, isComplete, axialCells, axialToPixel, hexCorners };
+  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS, keypadLetters, gridRadius, makeRng, growTrail, boardFull, checkTap, isComplete, axialCells, axialToPixel, hexCorners };
 });

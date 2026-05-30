@@ -43,22 +43,46 @@ test('makeRng is deterministic for a given seed', () => {
   a.forEach(v => { assert.ok(v >= 0 && v < 1); });
 });
 
-test('growTrail appends one step using only active letters, no immediate letter repeat', () => {
+test('growTrail uses each cell at most once, then returns null when the board is full', () => {
   const letters = ['b','d','p','q'];
   const cellCount = 7;
   const rng = C.makeRng(1);
   let seq = [];
-  for (let i = 0; i < 30; i++) {
+  const usedCells = new Set();
+  for (let i = 0; i < cellCount; i++) {
     const step = C.growTrail(seq, letters, cellCount, rng);
+    assert.ok(step, `step ${i} should exist`);
     assert.ok(letters.includes(step.letter), 'letter from active set');
     assert.ok(step.cell >= 0 && step.cell < cellCount, 'cell in range');
+    assert.ok(!usedCells.has(step.cell), 'cell not reused');
+    usedCells.add(step.cell);
     if (seq.length) {
       assert.notEqual(step.letter, seq[seq.length - 1].letter, 'no immediate letter repeat');
-      assert.notEqual(step.cell, seq[seq.length - 1].cell, 'no immediate cell repeat');
     }
     seq = seq.concat([step]);
   }
-  assert.equal(seq.length, 30);
+  assert.equal(usedCells.size, cellCount, 'every cell used exactly once');
+  assert.equal(C.growTrail(seq, letters, cellCount, rng), null, 'full board returns null');
+});
+
+test('boardFull is true exactly when the trail covers every cell', () => {
+  assert.equal(C.boardFull([], 7), false);
+  assert.equal(C.boardFull([{letter:'b',cell:0}], 7), false);
+  const seq = Array.from({ length: 7 }, (_, i) => ({ letter: 'b', cell: i }));
+  assert.equal(C.boardFull(seq, 7), true);
+  assert.equal(C.boardFull(seq.concat([{letter:'d',cell:0}]), 7), true);
+});
+
+test('growTrail is deterministic for a given seed (Versus fairness)', () => {
+  const letters = ['b','d','p','q','m','w','n','u'];
+  const cellCount = 19;
+  const run = () => {
+    const rng = C.makeRng(777);
+    let seq = [];
+    for (let i = 0; i < cellCount; i++) seq = seq.concat([C.growTrail(seq, letters, cellCount, rng)]);
+    return seq;
+  };
+  assert.deepEqual(run(), run());
 });
 
 test('checkTap reports correctness and mirror confusions', () => {
@@ -79,6 +103,7 @@ test('isComplete is true only when typed matches the full trail in order', () =>
 test('axialCells covers the right count per radius', () => {
   assert.equal(C.axialCells(1).length, 7);
   assert.equal(C.axialCells(2).length, 19);
+  assert.equal(C.axialCells(3).length, 37);
   assert.ok(C.axialCells(1).some(c => c.q === 0 && c.r === 0));
 });
 
