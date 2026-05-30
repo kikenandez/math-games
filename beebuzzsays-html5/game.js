@@ -483,6 +483,44 @@
     span: state.seq.length, level: state.level, strikes: state.strikes,
   });
 
+  function setupTweaks() {
+    const wire = (rowId, key, isToggle) => {
+      const row = document.getElementById(rowId);
+      if (!row) return;
+      row.querySelectorAll('.opt').forEach(opt => {
+        const v = opt.dataset.value;
+        const cur = isToggle ? (colorOn() ? 'on' : 'off') : String(TWEAKS[key]);
+        opt.classList.toggle('active', v === cur);
+        opt.addEventListener('click', () => {
+          if (isToggle) TWEAKS[key] = (v === 'on');
+          else TWEAKS[key] = (TWEAKS[key] === v && key === 'age') ? '' : v;
+          const now = isToggle ? (colorOn() ? 'on' : 'off') : String(TWEAKS[key]);
+          row.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o.dataset.value === now));
+          persistTweaks();
+          layoutBoard();
+        });
+      });
+    };
+    wire('diff-row', 'difficulty', false);
+    wire('age-row', 'age', false);
+    wire('color-row', 'colorCues', true);
+    document.getElementById('tweaks-close').addEventListener('click', () => { hideTweaks(); try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {} });
+    document.getElementById('gear-btn').addEventListener('click', () => {
+      const open = document.getElementById('tweaks').classList.contains('open');
+      if (open) { hideTweaks(); try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {} } else showTweaks();
+    });
+  }
+  function persistTweaks() { try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {} }
+  function showTweaks() { document.getElementById('tweaks').classList.add('open'); }
+  function hideTweaks() { document.getElementById('tweaks').classList.remove('open'); }
+  window.addEventListener('message', (e) => {
+    const d = e.data; if (!d || typeof d !== 'object') return;
+    if (d.type === '__activate_edit_mode') showTweaks();
+    if (d.type === '__deactivate_edit_mode') hideTweaks();
+  });
+  setupTweaks();
+  try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (e) {}
+
   resize();
   let lastTime = performance.now();
   function loop(now) {
