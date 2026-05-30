@@ -27,5 +27,16 @@
     hard: ['b', 'd', 'p', 'q', 'm', 'w', 'n', 'u', 'a', 'e', 'o'],
   };
 
-  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS };
+  function keypadLetters(difficulty) {
+    return KEYPAD_SETS[difficulty] ? KEYPAD_SETS[difficulty].slice() : KEYPAD_SETS.normal.slice();
+  }
+
+  function gridRadius(difficulty, age) {
+    const a = parseInt(age, 10);
+    if (difficulty === 'easy') return 1;
+    if (!Number.isNaN(a) && a <= 7) return 1;
+    return 2;
+  }
+
+  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS, keypadLetters, gridRadius };
 });

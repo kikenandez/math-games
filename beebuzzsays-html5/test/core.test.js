@@ -19,3 +19,18 @@ test('frozen constants are present and consistent', () => {
   assert.equal(C.KEYPAD_SETS.normal.length, 8);
   assert.equal(C.KEYPAD_SETS.hard.length, 11);
 });
+
+test('keypadLetters returns the difficulty set, defaulting to normal', () => {
+  assert.deepEqual(C.keypadLetters('easy'), ['b','d','p','q']);
+  assert.equal(C.keypadLetters('hard').length, 11);
+  assert.deepEqual(C.keypadLetters('bogus'), C.KEYPAD_SETS.normal);
+});
+
+test('gridRadius is 1 for easy or young child, else 2', () => {
+  assert.equal(C.gridRadius('easy', ''), 1);
+  assert.equal(C.gridRadius('normal', '6'), 1);
+  assert.equal(C.gridRadius('normal', '7'), 1);
+  assert.equal(C.gridRadius('normal', '8'), 2);
+  assert.equal(C.gridRadius('normal', ''), 2);
+  assert.equal(C.gridRadius('hard', ''), 2);
+});
