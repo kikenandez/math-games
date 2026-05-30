@@ -171,10 +171,12 @@
     for (let i = 0; i < state.cells.length; i++) {
       const cell = state.cells[i];
       const isFlash = state.phase === 'watch' && state.flashCell === i;
-      // While retracing, reveal the letters already typed correctly in their
-      // honeycomb cells with their order number (most recent wins if a cell repeats).
+      // While retracing (and through the short resolve pause), reveal the letters
+      // already typed correctly in their honeycomb cells with their order number
+      // (most recent wins if a cell repeats). Keeping them through 'level_clear'
+      // lets the final letter land in the honey before the round resolves.
       let revealed = null, revealOrd = -1;
-      if (state.phase === 'input') {
+      if (state.phase === 'input' || state.phase === 'level_clear') {
         for (let k = 0; k < state.typed.length; k++) {
           if (state.seq[k] && state.seq[k].cell === i) { revealed = state.seq[k].letter; revealOrd = k + 1; }
         }
