@@ -315,6 +315,32 @@
     return s;
   }
 
+  // Versus: begin a fresh run for session.players[session.versusRun] on the shared seed.
+  function startVersusRun() {
+    session.active = session.versusRun;
+    session.boardRadius = 1;
+    state.rng = C.makeRng(session.seed); // identical board sequence for both players
+    state.seq = []; state.typed = [];
+    layoutBoard();
+    document.getElementById('overlay').classList.add('hidden');
+    growAndWatch();
+  }
+
+  function showVersusPass() {
+    const overlay = document.getElementById('overlay');
+    overlay.querySelector('.card')?.remove();
+    const next = session.players[session.versusRun];
+    const beat = session.players[0].score;
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `
+      <h1>${T.pass} <span class="acc">${T.player} ${next.id}</span></h1>
+      <div class="sub">${T.player} 1: ${beat} ${T.toBeat}</div>
+      <button class="big-btn" id="pass-btn">${T.tap}</button>`;
+    overlay.appendChild(card); overlay.classList.remove('hidden');
+    document.getElementById('pass-btn').addEventListener('click', () => { startVersusRun(); });
+    state.phase = 'versus_pass'; // freeze input until CONTINUE (no handler acts on this phase)
+  }
+
   function startGame() {
     // session.mode is intentionally NOT reset — the player's title-screen choice persists across PLAY AGAIN.
     session.players = session.mode === 'solo' ? [makePlayer(1)] : [makePlayer(1), makePlayer(2)];
@@ -322,6 +348,7 @@
     session.versusRun = 0;
     session.boardRadius = 1;
     session.seed = (Math.floor(Math.random() * 0x7fffffff)) || 1;
+    if (session.mode === 'versus') { session.versusRun = 0; startVersusRun(); return; }
     state.rng = newRng();
     state.seq = []; state.typed = [];
     layoutBoard();
@@ -481,6 +508,30 @@
           <div class="stat-chip hi"><div class="stat-label">${T.team} ${T.score}</div><div class="stat-val">${team}</div></div>
           <div class="stat-chip"><div class="stat-label">${T.maxLen}</div><div class="stat-val">${span}</div></div>
           <div class="stat-chip"><div class="stat-label">${T.level}</div><div class="stat-val">${session.boardRadius}</div></div>
+        </div>`);
+      return;
+    }
+    if (session.mode === 'versus') {
+      if (session.versusRun === 0) {
+        // Player 1 finished — hand off to Player 2 on the same seed (no game-over yet).
+        window.MathArcadeAudio?.levelClear?.();
+        session.versusRun = 1;
+        showVersusPass();
+        return;
+      }
+      // Both runs done — decide winner (score; tiebreak max trail; else draw) and show scoreboard.
+      const [a, b] = session.players;
+      const winner = a.score === b.score
+        ? (a.metrics.maxSpan === b.metrics.maxSpan ? 0 : (a.metrics.maxSpan > b.metrics.maxSpan ? 1 : 2))
+        : (a.score > b.score ? 1 : 2);
+      const best = Math.max(a.score, b.score);
+      if (best > state.best) { state.best = best; localStorage.setItem('beebuzzsays_best', String(state.best)); }
+      const headline = winner === 0 ? T.draw : `${T.player} ${winner} ${T.wins}`;
+      showResultCard(`
+        <h1><span class="acc">${headline}</span></h1>
+        <div class="stats-row">
+          <div class="stat-chip ${winner === 1 ? 'hi' : ''}"><div class="stat-label">${T.player} 1</div><div class="stat-val">${a.score}</div></div>
+          <div class="stat-chip ${winner === 2 ? 'hi' : ''}"><div class="stat-label">${T.player} 2</div><div class="stat-val">${b.score}</div></div>
         </div>`);
       return;
     }
