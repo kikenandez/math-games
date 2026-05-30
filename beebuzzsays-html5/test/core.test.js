@@ -75,3 +75,24 @@ test('isComplete is true only when typed matches the full trail in order', () =>
   assert.equal(C.isComplete(seq, ['b']), false);
   assert.equal(C.isComplete(seq, ['b','q']), false);
 });
+
+test('axialCells covers the right count per radius', () => {
+  assert.equal(C.axialCells(1).length, 7);
+  assert.equal(C.axialCells(2).length, 19);
+  assert.ok(C.axialCells(1).some(c => c.q === 0 && c.r === 0));
+});
+
+test('axialToPixel places the center at origin and is flat-top spaced', () => {
+  const size = 40;
+  assert.deepEqual(C.axialToPixel({q:0,r:0}, size), { x: 0, y: 0 });
+  assert.equal(C.axialToPixel({q:1,r:0}, size).x, 60);
+});
+
+test('hexCorners returns 6 points around the center', () => {
+  const pts = C.hexCorners(0, 0, 40);
+  assert.equal(pts.length, 6);
+  pts.forEach(p => {
+    const d = Math.hypot(p.x, p.y);
+    assert.ok(Math.abs(d - 40) < 1e-6, 'corner is `size` from center');
+  });
+});

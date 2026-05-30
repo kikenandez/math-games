@@ -73,5 +73,34 @@
     return typed.length === seq.length && seq.every((s, i) => s.letter === typed[i]);
   }
 
-  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS, keypadLetters, gridRadius, makeRng, growTrail, checkTap, isComplete };
+  // Axial coordinates for a hexagon of the given radius (center + rings).
+  function axialCells(radius) {
+    const cells = [];
+    for (let q = -radius; q <= radius; q++) {
+      const r1 = Math.max(-radius, -q - radius);
+      const r2 = Math.min(radius, -q + radius);
+      for (let r = r1; r <= r2; r++) cells.push({ q, r });
+    }
+    return cells;
+  }
+
+  // Flat-top hex layout. size = center-to-corner distance.
+  function axialToPixel(cell, size) {
+    return {
+      x: size * 1.5 * cell.q,
+      y: size * Math.sqrt(3) * (cell.r + cell.q / 2),
+    };
+  }
+
+  // Flat-top corners at angles 0,60,...,300 degrees.
+  function hexCorners(cx, cy, size) {
+    const pts = [];
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI / 180) * (60 * i);
+      pts.push({ x: cx + size * Math.cos(a), y: cy + size * Math.sin(a) });
+    }
+    return pts;
+  }
+
+  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS, keypadLetters, gridRadius, makeRng, growTrail, checkTap, isComplete, axialCells, axialToPixel, hexCorners };
 });
