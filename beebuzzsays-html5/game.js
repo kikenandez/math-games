@@ -407,6 +407,8 @@
     const strikeCount = session.mode === 'coop' ? session.players[0].strikes : activePlayer().strikes;
     if (strikeCount >= state.maxStrikes) { gameOver(T.tooMany); return; }
     state.phase = 'level_clear';
+    // session.active is intentionally NOT changed here: the same player retries the SAME trail.
+    // growAndWatch recomputes session.active (coop relay) only when a new round is added.
     setTimeout(() => { if (state.phase === 'level_clear') beginWatch(); }, 1100); // retry SAME trail
   }
 
@@ -452,40 +454,41 @@
     burst(t.x + t.w / 2, t.y + t.h / 2, color);
   }
 
+  // Builds + shows a result overlay card. `bodyHtml` is everything above the
+  // restart button (headline, optional sub, stat rows). Shared by all modes.
+  function showResultCard(bodyHtml) {
+    state.phase = 'game_over';
+    window.MathArcadeAudio?.gameOver();
+    const overlay = document.getElementById('overlay');
+    overlay.querySelector('.card')?.remove();
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `${bodyHtml}
+      <button class="big-btn" id="restart-btn">${T.playAgain}</button>
+      <div class="note">${T.note}</div>`;
+    overlay.appendChild(card); overlay.classList.remove('hidden');
+    document.getElementById('restart-btn').addEventListener('click', startGame);
+  }
+
   function gameOver(reason) {
     if (session.mode === 'coop') {
       const team = session.players.reduce((a, x) => a + x.score, 0);
       const span = Math.max(...session.players.map((x) => x.metrics.maxSpan), state.seq.length);
       if (team > state.best) { state.best = team; localStorage.setItem('beebuzzsays_best', String(state.best)); }
-      window.MathArcadeAudio?.gameOver();
-      const overlay = document.getElementById('overlay');
-      overlay.querySelector('.card')?.remove();
-      const card = document.createElement('div'); card.className = 'card';
-      card.innerHTML = `
+      showResultCard(`
         <h1><span class="acc">${T.gameAcc}</span>${T.gameRest}</h1>
         <div class="sub">${reason}</div>
         <div class="stats-row">
           <div class="stat-chip hi"><div class="stat-label">${T.team} ${T.score}</div><div class="stat-val">${team}</div></div>
           <div class="stat-chip"><div class="stat-label">${T.maxLen}</div><div class="stat-val">${span}</div></div>
           <div class="stat-chip"><div class="stat-label">${T.level}</div><div class="stat-val">${session.boardRadius}</div></div>
-        </div>
-        <button class="big-btn" id="restart-btn">${T.playAgain}</button>
-        <div class="note">${T.note}</div>`;
-      overlay.appendChild(card); overlay.classList.remove('hidden');
-      document.getElementById('restart-btn').addEventListener('click', startGame);
-      state.phase = 'game_over';
+        </div>`);
       return;
     }
-    state.phase = 'game_over';
     const p = activePlayer();
     if (p.score > state.best) { state.best = p.score; localStorage.setItem('beebuzzsays_best', String(state.best)); }
     const summary = saveMetrics();
-    window.MathArcadeAudio?.gameOver();
-    const overlay = document.getElementById('overlay');
-    overlay.querySelector('.card')?.remove();
-    const card = document.createElement('div'); card.className = 'card';
     const revPct = summary.wrongTaps ? Math.round((summary.mirrorConfusions / summary.wrongTaps) * 100) : 0;
-    card.innerHTML = `
+    showResultCard(`
       <h1><span class="acc">${T.gameAcc}</span>${T.gameRest}</h1>
       <div class="sub">${reason}</div>
       <div class="stats-row">
@@ -495,11 +498,7 @@
       </div>
       <div class="stats-row">
         <div class="stat-chip"><div class="stat-label">${T.reversals}</div><div class="stat-val">${revPct}%</div></div>
-      </div>
-      <button class="big-btn" id="restart-btn">${T.playAgain}</button>
-      <div class="note">${T.note}</div>`;
-    overlay.appendChild(card); overlay.classList.remove('hidden');
-    document.getElementById('restart-btn').addEventListener('click', startGame);
+      </div>`);
   }
 
   function saveMetrics() {
