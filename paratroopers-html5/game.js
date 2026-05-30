@@ -169,13 +169,13 @@
     const ruleIdx = (state.level - 1) % LEVEL_DATA.length;
     state.activeRule = LEVEL_DATA[ruleIdx];
     
-    // Adjust spawners for difficulty
-    state.spawners.parasTotal = 8 + state.level * 4;
+    // Adjust spawners for difficulty (Harder levels = higher number of paratroopers + faster spawn intervals)
+    state.spawners.parasTotal = 8 + state.level * 6;
     state.spawners.parasSpawned = 0;
     state.spawners.parasRemaining = state.spawners.parasTotal;
     state.spawners.clearedSpawns = 0;
-    state.spawners.maxSpawns = 8 + state.level * 4;
-    state.spawners.heliInterval = Math.max(1.8, 3.8 - state.level * 0.25);
+    state.spawners.maxSpawns = 8 + state.level * 6;
+    state.spawners.heliInterval = Math.max(1.2, 3.8 - state.level * 0.4);
     state.spawners.heliTimer = 0.5; // Quick spawn first heli
     
     // Truck positioning resets
@@ -233,17 +233,37 @@
     }
   }
 
+  // Helper to define 12 exact columns on each side of the turret (24 total)
+  function getColumns() {
+    const leftCols = [];
+    const rightCols = [];
+    const count = 12; // 12 columns on each side
+    const colWidth = (W / 2 - 140) / (count - 1);
+    for (let i = 0; i < count; i++) {
+      leftCols.push(80 + i * colWidth);
+      rightCols.push(W / 2 + 60 + i * colWidth);
+    }
+    return { left: leftCols, right: rightCols };
+  }
+
   function spawnHelicopter() {
     if (state.spawners.parasSpawned >= state.spawners.parasTotal) return;
     state.spawners.clearedSpawns++;
 
     const side = Math.random() < 0.5 ? 'left' : 'right';
     const x = side === 'left' ? -60 : W + 60;
-    const vx = side === 'left' ? rand(80, 140) : -rand(80, 140);
+    // Harder levels = higher speed drop (helicopter speed scales with level)
+    const baseSpeed = rand(90, 150) + state.level * 15;
+    const vx = side === 'left' ? baseSpeed : -baseSpeed;
     const y = rand(40, H * 0.22);
     
     // letter select b vs d
     const letter = Math.random() < 0.5 ? 'b' : 'd';
+    
+    // Choose a random column from the 24 columns
+    const cols = getColumns();
+    const allCols = [...cols.left, ...cols.right];
+    const dropX = allCols[randInt(0, allCols.length - 1)];
     
     state.helicopters.push({
       id: state.spawners.clearedSpawns,
@@ -255,7 +275,7 @@
       active: true,
       hasDropped: false,
       rotorAngle: 0,
-      dropTimer: rand(0.6, 1.4), // Quick first drop!
+      dropX,
       size: 38
     });
   }
@@ -349,7 +369,10 @@
       state.spawners.heliTimer -= dt;
       if (state.spawners.heliTimer <= 0 && state.spawners.parasSpawned < state.spawners.parasTotal) {
         spawnHelicopter();
-        state.spawners.heliTimer = state.spawners.heliInterval;
+        // Dynamically speed up spawns toward the end of the level (even faster accelerator: up to 55%)
+        const progress = state.spawners.parasSpawned / state.spawners.parasTotal;
+        const currentInterval = state.spawners.heliInterval * (1 - progress * 0.55);
+        state.spawners.heliTimer = currentInterval;
       }
     }
 
@@ -376,19 +399,18 @@
       h.rotorAngle += 28 * dt;
       
       // Spawn drops during play
-      if (state.phase === 'playing') {
-        h.dropTimer -= dt;
-        if (h.dropTimer <= 0 && h.x > 80 && h.x < W - 80 && state.spawners.parasSpawned < state.spawners.parasTotal) {
-          h.dropTimer = 9999; // Drop exactly one paratrooper per helicopter flyby
+      if (state.phase === 'playing' && !h.hasDropped && state.spawners.parasSpawned < state.spawners.parasTotal) {
+        const crossed = h.vx > 0 ? h.x >= h.dropX : h.x <= h.dropX;
+        if (crossed && h.x > 80 && h.x < W - 80) {
           h.hasDropped = true;
           state.spawners.parasSpawned++;
           
           // Drop paratrooper carrying p vs q
           const letter = Math.random() < 0.5 ? 'p' : 'q';
           state.paratroopers.push({
-            x: h.x,
+            x: h.dropX, // Drop exactly at column center for perfect vertical alignment
             y: h.y + h.size * 0.4,
-            vy: 42, // slow drift speed
+            vy: 45 + state.level * 8, // Drift speed scales with level
             letter,
             status: 'drift', // 'drift', 'plunge', 'landed', 'running'
             flailPhase: 0,
@@ -530,7 +552,7 @@
           p.hasChute = false;
           p.status = 'plunge';
           p.plungeStartY = p.y;
-          p.vy = 280; // fast plunge
+          p.vy = 300 + state.level * 25; // scaled plunge speed
           
           showFloaterAt(p.x, p.y - p.size * 1.0, 'POP!', '#ff8a3d');
           
@@ -711,19 +733,24 @@
     let crushedCount = 0;
     let crushedRunner = false;
 
+    // Survive if plunge was extremely short (close to the ground)
+    if (fallDistance < 80 && !hitTruck) {
+      p.status = 'drift';
+      p.y = groundY - 8;
+      landParatrooper(p);
+      return;
+    }
+
     p.alive = false;
 
     if (hitTruck) {
       showFloaterAt(p.x, groundY - 55, 'CLANG!', '#5cd9ff');
       triggerTruckSparks(p.x, groundY - 30);
-    } else if (isBad) {
+    } else {
       crushedRunner = crushGoodRunnerBelow(p.x);
-      if (fallDistance > 120) {
-        crushedCount = splashLandedBadParatroopers(p.x, 24);
-      }
-      if (!crushedCount) {
-        addLandedBadParatrooper(p);
-      }
+      // Any paratrooper that loses its chute and falls (fallDistance >= 80)
+      // will clear the bad paratroopers stacked at that same landing position column
+      crushedCount = splashLandedBadParatroopers(p.x, 8);
     }
     
     // Particle splat
@@ -760,12 +787,25 @@
     p.alive = false;
     p.hasChute = false;
 
-    const pile = p.x < W / 2 ? state.leftPile : state.rightPile;
-    const neighbor = pile.find(item => Math.abs(item.x - p.x) < 16);
-    const stackX = neighbor ? neighbor.x : p.x;
-    const stackLevel = pile.filter(item => Math.abs(item.x - stackX) < 16).length;
+    const cols = getColumns();
+    const allCols = [...cols.left, ...cols.right];
+    
+    // Find closest exact column coordinate
+    let closestColX = allCols[0];
+    let minDist = Math.abs(p.x - closestColX);
+    for (let i = 1; i < allCols.length; i++) {
+      const dist = Math.abs(p.x - allCols[i]);
+      if (dist < minDist) {
+        minDist = dist;
+        closestColX = allCols[i];
+      }
+    }
+    
+    p.x = closestColX; // Snap exactly to the column X coordinate!
 
-    p.x = stackX;
+    const pile = p.x < W / 2 ? state.leftPile : state.rightPile;
+    const stackLevel = pile.filter(item => Math.abs(item.x - p.x) < 4).length;
+
     p.groundStack = stackLevel;
     p.y = H - 32 - 6 - stackLevel * 10;
     pile.push(p);
@@ -790,14 +830,28 @@
   }
 
   function restackLandedBadParatroopers() {
+    const cols = getColumns();
+    const allCols = [...cols.left, ...cols.right];
+    
     const restack = pile => {
       const stacks = new Map();
       for (const p of pile) {
-        const key = Math.round(p.x / 16) * 16;
-        const level = stacks.get(key) || 0;
+        // Find the closest column coordinate
+        let closestColX = allCols[0];
+        let minDist = Math.abs(p.x - closestColX);
+        for (let i = 1; i < allCols.length; i++) {
+          const dist = Math.abs(p.x - allCols[i]);
+          if (dist < minDist) {
+            minDist = dist;
+            closestColX = allCols[i];
+          }
+        }
+        
+        p.x = closestColX; // snap to exact column coordinate
+        const level = stacks.get(closestColX) || 0;
         p.groundStack = level;
         p.y = H - 32 - 6 - level * 10;
-        stacks.set(key, level + 1);
+        stacks.set(closestColX, level + 1);
       }
     };
     restack(state.leftPile);
