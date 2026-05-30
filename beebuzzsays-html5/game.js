@@ -316,6 +316,7 @@
   }
 
   function startGame() {
+    // session.mode is intentionally NOT reset — the player's title-screen choice persists across PLAY AGAIN.
     session.players = session.mode === 'solo' ? [makePlayer(1)] : [makePlayer(1), makePlayer(2)];
     session.active = 0;
     session.versusRun = 0;
@@ -557,6 +558,8 @@
   function setupModeSelector() {
     const row = document.getElementById('mode-row');
     if (!row) return;
+    // Sync the highlight to the real mode rather than trusting the hardcoded markup.
+    row.querySelectorAll('.opt').forEach((o) => o.classList.toggle('active', o.dataset.value === session.mode));
     row.querySelectorAll('.opt').forEach((opt) => {
       opt.addEventListener('click', () => {
         session.mode = opt.dataset.value;
