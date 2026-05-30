@@ -34,6 +34,7 @@
       tapWhat: 'Tap the letters you saw', hint: 'tap them in order on the comb keypad',
       watch: 'WATCH…', recall: 'YOUR TURN!',
       score: 'Score', level: 'Level', best: 'Best', strikes: 'Strikes',
+      boardClear: 'HIVE COMPLETE!',
       correct: 'PERFECT!', wrong: 'OOPS', tooSlow: 'TOO SLOW',
       gameAcc: 'SWARM', gameRest: ' RESTS', tooMany: 'too many slip-ups!',
       maxLen: 'Best trail', tweaks: 'Tweaks', difficulty: 'Difficulty',
@@ -48,6 +49,7 @@
       tapWhat: 'Tape les lettres vues', hint: "tape-les dans l’ordre sur le clavier",
       watch: 'REGARDE…', recall: 'À TOI !',
       score: 'Score', level: 'Niveau', best: 'Record', strikes: 'Erreurs',
+      boardClear: 'RUCHE COMPLÈTE !',
       correct: 'PARFAIT !', wrong: 'RATÉ', tooSlow: 'TROP LENT',
       gameAcc: "L’ESSAIM", gameRest: ' SE REPOSE', tooMany: "trop d’erreurs !",
       maxLen: 'Meilleure série', tweaks: 'Réglages', difficulty: 'Difficulté',
@@ -62,6 +64,7 @@
       tapWhat: 'Toca las letras que viste', hint: 'tócalas en orden en el teclado',
       watch: 'MIRA…', recall: '¡TU TURNO!',
       score: 'Puntos', level: 'Nivel', best: 'Récord', strikes: 'Fallos',
+      boardClear: '¡PANAL COMPLETO!',
       correct: '¡PERFECTO!', wrong: 'UPS', tooSlow: 'MUY LENTO',
       gameAcc: 'EL ENJAMBRE', gameRest: ' DESCANSA', tooMany: '¡demasiados fallos!',
       maxLen: 'Mejor serie', tweaks: 'Ajustes', difficulty: 'Dificultad',
@@ -138,7 +141,7 @@
   function letterColor(ch) { return colorOn() ? (C.LETTER_COLOR[ch] || '#ffe0a0') : '#f3d9a6'; }
 
   function layoutBoard() {
-    state.radius = C.gridRadius(TWEAKS.difficulty, TWEAKS.age);
+    state.radius = session.boardRadius;
     state.activeLetters = C.keypadLetters(TWEAKS.difficulty);
     // Honeycomb sizing: fit the grid in the upper ~62% of the screen.
     const span = state.radius * 2 + 1;
@@ -321,7 +324,8 @@
   }
 
   function growAndWatch() {
-    const step = C.growTrail(state.seq, state.activeLetters, state.cells.length, Math.random);
+    const step = C.growTrail(state.seq, state.activeLetters, state.cells.length, state.rng);
+    if (step === null) { boardClear(); return; }
     state.seq = state.seq.concat([step]);
     state.level = state.seq.length;
     updateHUD();
@@ -401,7 +405,27 @@
     window.MathArcadeAudio?.levelClear();
     updateHUD();
     state.phase = 'level_clear';
-    setTimeout(() => { if (state.phase === 'level_clear') growAndWatch(); }, 1100);
+    if (C.boardFull(state.seq, state.cells.length)) {
+      setTimeout(() => { if (state.phase === 'level_clear') boardClear(); }, 1100);
+    } else {
+      setTimeout(() => { if (state.phase === 'level_clear') growAndWatch(); }, 1100);
+    }
+  }
+
+  // Whole honeycomb recalled — celebrate, grow one ring, reset the trail.
+  function boardClear() {
+    burst(W / 2, H * 0.40, '#ffd24d');
+    showFloater(T.boardClear, '#5cd97a', -H * 0.30);
+    window.MathArcadeAudio?.levelClear();
+    state.phase = 'level_clear';
+    setTimeout(() => {
+      if (state.phase !== 'level_clear') return;
+      session.boardRadius++;
+      state.seq = []; state.typed = [];
+      layoutBoard();
+      updateHUD();
+      growAndWatch();
+    }, 1300);
   }
 
   function flashTile(ch, color) {
