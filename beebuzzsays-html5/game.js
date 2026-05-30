@@ -40,6 +40,7 @@
       maxLen: 'Best trail', tweaks: 'Tweaks', difficulty: 'Difficulty',
       easy: 'EASY', normal: 'NORMAL', hard: 'HARD', age: 'Child age',
       color: 'Color cues', on: 'ON', off: 'OFF', reversals: 'b/d/p/q',
+      players: 'Players', modeSolo: '1 PLAYER', modeCoop: '2P CO-OP', modeVersus: '2P VERSUS', yourTurn: 'YOUR TURN', team: 'Team', pass: 'PASS TO', tap: 'CONTINUE', wins: 'WINS!', draw: "IT'S A DRAW!", toBeat: 'to beat', player: 'Player',
     },
     fr: {
       titleAcc: "L’ABEILLE", titleRest: ' DIT',
@@ -55,6 +56,7 @@
       maxLen: 'Meilleure série', tweaks: 'Réglages', difficulty: 'Difficulté',
       easy: 'FACILE', normal: 'NORMAL', hard: 'DIFFICILE', age: "Âge de l’enfant",
       color: 'Couleurs', on: 'OUI', off: 'NON', reversals: 'b/d/p/q',
+      players: 'Joueurs', modeSolo: '1 JOUEUR', modeCoop: '2J COOP', modeVersus: '2J DUEL', yourTurn: 'À TOI', team: 'Équipe', pass: 'AU TOUR DE', tap: 'CONTINUER', wins: 'GAGNE !', draw: 'ÉGALITÉ !', toBeat: 'à battre', player: 'Joueur',
     },
     es: {
       titleAcc: 'LA ABEJA', titleRest: ' DICE',
@@ -70,6 +72,7 @@
       maxLen: 'Mejor serie', tweaks: 'Ajustes', difficulty: 'Dificultad',
       easy: 'FÁCIL', normal: 'NORMAL', hard: 'DIFÍCIL', age: 'Edad del niño',
       color: 'Colores', on: 'SÍ', off: 'NO', reversals: 'b/d/p/q',
+      players: 'Jugadores', modeSolo: '1 JUGADOR', modeCoop: '2J COOP', modeVersus: '2J DUELO', yourTurn: 'TU TURNO', team: 'Equipo', pass: 'TURNO DE', tap: 'CONTINUAR', wins: '¡GANA!', draw: '¡EMPATE!', toBeat: 'a batir', player: 'Jugador',
     },
   };
   const T = STR[LANG];
@@ -84,6 +87,8 @@
     set('tw-title', T.tweaks); set('tw-diff', T.difficulty);
     set('tw-easy', T.easy); set('tw-normal', T.normal); set('tw-hard', T.hard);
     set('tw-age', T.age); set('tw-color', T.color); set('tw-color-on', T.on); set('tw-color-off', T.off);
+    set('lbl-mode', T.players);
+    set('mode-solo', T.modeSolo); set('mode-coop', T.modeCoop); set('mode-versus', T.modeVersus);
   }
 
   const TWEAKS = /*EDITMODE-BEGIN*/{
@@ -544,8 +549,22 @@
   // Expose a read-only probe for scripted checks.
   window.__bbs = () => ({
     phase: state.phase, seq: state.seq.map(s => s.letter), typed: state.typed.slice(),
-    span: state.seq.length, level: state.level, strikes: activePlayer()?.strikes ?? 0,
+    span: state.seq.length, level: session.boardRadius, cells: state.cells.length,
+    mode: session.mode, active: session.active, versusRun: session.versusRun,
+    players: session.players.map(p => ({ id: p.id, score: p.score, strikes: p.strikes })),
   });
+
+  function setupModeSelector() {
+    const row = document.getElementById('mode-row');
+    if (!row) return;
+    row.querySelectorAll('.opt').forEach((opt) => {
+      opt.addEventListener('click', () => {
+        session.mode = opt.dataset.value;
+        row.querySelectorAll('.opt').forEach((o) => o.classList.toggle('active', o === opt));
+      });
+    });
+  }
+  setupModeSelector();
 
   function setupTweaks() {
     const wire = (rowId, key, isToggle) => {
