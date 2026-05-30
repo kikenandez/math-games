@@ -122,10 +122,146 @@
     metrics.spanAttempts[len] = s;
   }
 
-  // Layout + render + flow are added in later tasks. Stub so boot runs:
-  function layoutBoard() {}
-  function draw() {}
-  function update() {}
+  function colorOn() { return TWEAKS.colorCues === true || TWEAKS.colorCues === 'on'; }
+  function letterColor(ch) { return colorOn() ? (C.LETTER_COLOR[ch] || '#ffe0a0') : '#f3d9a6'; }
+
+  function layoutBoard() {
+    state.radius = C.gridRadius(TWEAKS.difficulty, TWEAKS.age);
+    state.activeLetters = C.keypadLetters(TWEAKS.difficulty);
+    // Honeycomb sizing: fit the grid in the upper ~62% of the screen.
+    const span = state.radius * 2 + 1;
+    const avail = Math.min(W * 0.9, H * 0.62);
+    state.hexSize = clamp(avail / (span * 1.6), 26, 64);
+    const cx = W / 2, cy = H * 0.40;
+    state.cells = C.axialCells(state.radius).map((c) => {
+      const p = C.axialToPixel(c, state.hexSize);
+      return { q: c.q, r: c.r, x: cx + p.x, y: cy + p.y };
+    });
+    // Keypad: a centered row (wraps to 2 rows if many letters) near the bottom.
+    const letters = state.activeLetters;
+    const perRow = letters.length <= 6 ? letters.length : Math.ceil(letters.length / 2);
+    const tileW = clamp(W / (perRow + 1.5), 44, 78), tileH = tileW;
+    const gap = tileW * 0.22;
+    const rows = Math.ceil(letters.length / perRow);
+    const baseY = H * 0.74;
+    state.keypad = letters.map((ch, i) => {
+      const row = Math.floor(i / perRow), col = i % perRow;
+      const countThisRow = Math.min(perRow, letters.length - row * perRow);
+      const rowW = countThisRow * tileW + (countThisRow - 1) * gap;
+      const x0 = W / 2 - rowW / 2;
+      return { letter: ch, x: x0 + col * (tileW + gap), y: baseY + row * (tileH + gap), w: tileW, h: tileH };
+    });
+    void rows;
+  }
+
+  function hexPath(cx, cy, size) {
+    const pts = C.hexCorners(cx, cy, size);
+    ctx.beginPath();
+    pts.forEach((p, i) => { i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
+    ctx.closePath();
+  }
+
+  function drawBg() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#f6b73c'); g.addColorStop(0.55, '#e89a2a'); g.addColorStop(1, '#caa05a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawHoneycomb() {
+    for (let i = 0; i < state.cells.length; i++) {
+      const cell = state.cells[i];
+      const isFlash = state.phase === 'watch' && state.flashCell === i;
+      const letter = isFlash ? state.seq[state.watchIndex].letter : null;
+      hexPath(cell.x, cell.y, state.hexSize * 0.94);
+      ctx.fillStyle = isFlash ? (colorOn() ? letterColor(letter) : '#fff2c4') : '#caa44e';
+      ctx.fill();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#7a531a'; ctx.stroke();
+      // waxy inner ring
+      hexPath(cell.x, cell.y, state.hexSize * 0.72);
+      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(122,83,26,0.35)'; ctx.stroke();
+      if (isFlash) {
+        ctx.fillStyle = colorOn() ? '#241500' : '#3a2410';
+        ctx.font = `bold ${Math.round(state.hexSize * 1.0)}px "Lilita One", sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(letter, cell.x, cell.y + 2);
+        drawBee(cell.x, cell.y - state.hexSize * 0.1, state.hexSize * 0.5);
+      }
+    }
+  }
+
+  function drawBee(x, y, s) {
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = '#2a1a05'; ctx.strokeStyle = '#2a1a05'; ctx.lineWidth = 2;
+    // body
+    ctx.beginPath(); ctx.ellipse(0, 0, s * 0.55, s * 0.4, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffcf3a'; ctx.fill(); ctx.stroke();
+    // stripes
+    ctx.fillStyle = '#2a1a05';
+    ctx.fillRect(-s * 0.12, -s * 0.4, s * 0.12, s * 0.8);
+    ctx.fillRect(s * 0.12, -s * 0.35, s * 0.1, s * 0.7);
+    // wings
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath(); ctx.ellipse(-s * 0.1, -s * 0.45, s * 0.3, s * 0.18, -0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawKeypad() {
+    const active = state.phase === 'input';
+    for (const t of state.keypad) {
+      const r = 10;
+      roundRect(t.x, t.y, t.w, t.h, r);
+      ctx.fillStyle = colorOn() ? letterColor(t.letter) : '#fff2c4';
+      ctx.globalAlpha = active ? 1 : 0.5; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.lineWidth = 3; ctx.strokeStyle = '#7a531a'; ctx.stroke();
+      ctx.fillStyle = colorOn() ? '#241500' : '#3a2410';
+      ctx.font = `bold ${Math.round(t.h * 0.6)}px "Lilita One", sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.globalAlpha = active ? 1 : 0.5;
+      ctx.fillText(t.letter, t.x + t.w / 2, t.y + t.h / 2 + 2);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+  }
+
+  function draw() {
+    ctx.save(); ctx.translate(state.shakeX, state.shakeY);
+    drawBg(); drawHoneycomb(); drawKeypad(); drawParticles(); drawFloaters();
+    ctx.restore();
+  }
+  function drawParticles() {
+    for (const p of state.particles) {
+      ctx.globalAlpha = clamp(p.life / p.maxLife, 0, 1); ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size); ctx.globalAlpha = 1;
+    }
+  }
+  function drawFloaters() {
+    for (const f of state.floaters) {
+      const t = f.t / f.dur, a = 1 - t, sc = 1 + (1 - Math.min(1, t * 3)) * 0.4;
+      ctx.save(); ctx.globalAlpha = a; ctx.translate(f.x, f.y); ctx.scale(sc, sc);
+      ctx.font = 'bold 44px "Lilita One", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 5; ctx.strokeStyle = '#3a2410'; ctx.strokeText(f.text, 0, 0);
+      ctx.fillStyle = f.color; ctx.fillText(f.text, 0, 0); ctx.restore();
+    }
+  }
+
+  function update(dt) {
+    state.elapsed += dt;
+    for (const f of state.floaters) { f.t += dt; f.y -= 30 * dt; }
+    state.floaters = state.floaters.filter(f => f.t < f.dur);
+    for (const p of state.particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.gravity ?? 200) * dt; p.life -= dt; }
+    state.particles = state.particles.filter(p => p.life > 0);
+    if (state.shake > 0) { state.shake = Math.max(0, state.shake - dt * 3); state.shakeX = (Math.random() - 0.5) * state.shake * 12; state.shakeY = (Math.random() - 0.5) * state.shake * 12; }
+    else { state.shakeX = state.shakeY = 0; }
+    updatePhase(dt);
+  }
+  function updatePhase() {}  // replaced in Task 10
 
   applyStaticText();
   updateHUD();
