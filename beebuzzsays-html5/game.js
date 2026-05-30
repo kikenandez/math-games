@@ -171,20 +171,36 @@
     for (let i = 0; i < state.cells.length; i++) {
       const cell = state.cells[i];
       const isFlash = state.phase === 'watch' && state.flashCell === i;
-      const letter = isFlash ? state.seq[state.watchIndex].letter : null;
+      // While retracing, reveal the letters already typed correctly in their
+      // honeycomb cells with their order number (most recent wins if a cell repeats).
+      let revealed = null, revealOrd = -1;
+      if (state.phase === 'input') {
+        for (let k = 0; k < state.typed.length; k++) {
+          if (state.seq[k] && state.seq[k].cell === i) { revealed = state.seq[k].letter; revealOrd = k + 1; }
+        }
+      }
+      const letter = isFlash ? state.seq[state.watchIndex].letter : revealed;
+      const lit = isFlash || revealed !== null;
       hexPath(cell.x, cell.y, state.hexSize * 0.94);
-      ctx.fillStyle = isFlash ? (colorOn() ? letterColor(letter) : '#fff2c4') : '#caa44e';
+      ctx.fillStyle = lit ? (colorOn() ? letterColor(letter) : '#fff2c4') : '#caa44e';
       ctx.fill();
       ctx.lineWidth = 4; ctx.strokeStyle = '#7a531a'; ctx.stroke();
       // waxy inner ring
       hexPath(cell.x, cell.y, state.hexSize * 0.72);
       ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(122,83,26,0.35)'; ctx.stroke();
-      if (isFlash) {
+      if (lit) {
         ctx.fillStyle = colorOn() ? '#241500' : '#3a2410';
         ctx.font = `bold ${Math.round(state.hexSize * 1.0)}px "Lilita One", sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(letter, cell.x, cell.y + 2);
-        drawBee(cell.x, cell.y - state.hexSize * 0.1, state.hexSize * 0.5);
+        // order badge in the honey while retracing
+        if (revealOrd > 0) {
+          ctx.font = `bold ${Math.round(state.hexSize * 0.4)}px "Lilita One", sans-serif`;
+          ctx.fillStyle = '#7a531a';
+          ctx.fillText(String(revealOrd), cell.x - state.hexSize * 0.5, cell.y - state.hexSize * 0.5);
+        }
+        // bee hovers ABOVE the cell so it never hides the letter
+        if (isFlash) drawBee(cell.x, cell.y - state.hexSize * 1.15, state.hexSize * 0.5);
       }
     }
   }
