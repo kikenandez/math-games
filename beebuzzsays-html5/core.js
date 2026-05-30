@@ -61,11 +61,14 @@
     const prev = seq.length ? seq[seq.length - 1] : null;
     let letter;
     do { letter = pick(letters, r); } while (prev && letters.length > 1 && letter === prev.letter);
+    // Rejection-sample a free cell: the early null-return above guarantees one exists.
     let cell;
     do { cell = Math.floor(r() * cellCount); } while (used.has(cell));
     return { letter, cell };
   }
 
+  // True when the trail covers every cell. Assumes seq has no duplicate cells
+  // (as guaranteed by growTrail), so trail length equals occupied-cell count.
   function boardFull(seq, cellCount) {
     return seq.length >= cellCount;
   }

@@ -70,10 +70,11 @@ test('boardFull is true exactly when the trail covers every cell', () => {
   assert.equal(C.boardFull([{letter:'b',cell:0}], 7), false);
   const seq = Array.from({ length: 7 }, (_, i) => ({ letter: 'b', cell: i }));
   assert.equal(C.boardFull(seq, 7), true);
+  // length-based: 8 steps >= 7 cells is "full" even though one cell repeats
   assert.equal(C.boardFull(seq.concat([{letter:'d',cell:0}]), 7), true);
 });
 
-test('growTrail is deterministic for a given seed (Versus fairness)', () => {
+test('growTrail produces identical sequences for the same seed', () => {
   const letters = ['b','d','p','q','m','w','n','u'];
   const cellCount = 19;
   const run = () => {
