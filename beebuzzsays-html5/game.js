@@ -413,6 +413,10 @@
   }
 
   // Whole honeycomb recalled — celebrate, grow one ring, reset the trail.
+  // Called from resolveCorrect's 1100ms timeout (phase is already 'level_clear');
+  // re-asserting the phase keeps any stale prior-round timer blocked. The inner
+  // 1300ms timeout makes total celebration ~2.4s (correct recall + ring grow), and
+  // its phase guard suppresses the ring grow if a game-over lands in that window.
   function boardClear() {
     burst(W / 2, H * 0.40, '#ffd24d');
     showFloater(T.boardClear, '#5cd97a', -H * 0.30);
