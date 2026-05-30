@@ -334,6 +334,7 @@
     if (step === null) { boardClear(); return; }
     state.seq = state.seq.concat([step]);
     state.level = state.seq.length;
+    if (session.mode === 'coop') session.active = (state.seq.length - 1) % 2; // P1 round1, P2 round2, ...
     updateHUD();
     beginWatch();
   }
@@ -349,6 +350,9 @@
     state.phase = 'input'; state.flashCell = -1;
     state.inputTimer = inputBudget();
     showFloater(T.recall, '#ffaa00', -H * 0.30);
+    if (session.mode === 'coop') {
+      showFloater(`${T.player} ${activePlayer().id} — ${T.yourTurn}`, '#ffd24d', -H * 0.40);
+    }
   }
 
   function updatePhase(dt) {
@@ -391,12 +395,17 @@
   function registerMiss(reason) {
     metrics().rounds++;
     recordSpan(state.seq.length, false);
-    activePlayer().strikes++;
+    if (session.mode === 'coop') {
+      session.players.forEach((pl) => { pl.strikes++; }); // shared pool: keep both in lockstep
+    } else {
+      activePlayer().strikes++;
+    }
     state.shake = Math.min(0.5, state.shake + 0.3);
     window.MathArcadeAudio?.wrong();
     showFloater(reason === 'slow' ? T.tooSlow : T.wrong, '#ff5c7c', -H * 0.30);
     updateHUD();
-    if (activePlayer().strikes >= state.maxStrikes) { gameOver(T.tooMany); return; }
+    const strikeCount = session.mode === 'coop' ? session.players[0].strikes : activePlayer().strikes;
+    if (strikeCount >= state.maxStrikes) { gameOver(T.tooMany); return; }
     state.phase = 'level_clear';
     setTimeout(() => { if (state.phase === 'level_clear') beginWatch(); }, 1100); // retry SAME trail
   }
@@ -444,6 +453,29 @@
   }
 
   function gameOver(reason) {
+    if (session.mode === 'coop') {
+      const team = session.players.reduce((a, x) => a + x.score, 0);
+      const span = Math.max(...session.players.map((x) => x.metrics.maxSpan), state.seq.length);
+      if (team > state.best) { state.best = team; localStorage.setItem('beebuzzsays_best', String(state.best)); }
+      window.MathArcadeAudio?.gameOver();
+      const overlay = document.getElementById('overlay');
+      overlay.querySelector('.card')?.remove();
+      const card = document.createElement('div'); card.className = 'card';
+      card.innerHTML = `
+        <h1><span class="acc">${T.gameAcc}</span>${T.gameRest}</h1>
+        <div class="sub">${reason}</div>
+        <div class="stats-row">
+          <div class="stat-chip hi"><div class="stat-label">${T.team} ${T.score}</div><div class="stat-val">${team}</div></div>
+          <div class="stat-chip"><div class="stat-label">${T.maxLen}</div><div class="stat-val">${span}</div></div>
+          <div class="stat-chip"><div class="stat-label">${T.level}</div><div class="stat-val">${session.boardRadius}</div></div>
+        </div>
+        <button class="big-btn" id="restart-btn">${T.playAgain}</button>
+        <div class="note">${T.note}</div>`;
+      overlay.appendChild(card); overlay.classList.remove('hidden');
+      document.getElementById('restart-btn').addEventListener('click', startGame);
+      state.phase = 'game_over';
+      return;
+    }
     state.phase = 'game_over';
     const p = activePlayer();
     if (p.score > state.best) { state.best = p.score; localStorage.setItem('beebuzzsays_best', String(state.best)); }
@@ -539,12 +571,17 @@
   updateHUD();
 
   function updateHUD() {
+    const sumScore = session.players.reduce((a, p) => a + p.score, 0);
     const p = activePlayer() || { score: 0, strikes: 0 };
-    document.getElementById('score').textContent = p.score;
+    const score = session.mode === 'coop' ? sumScore : p.score;
+    const strikes = session.mode === 'coop'
+      ? session.players.reduce((a, x) => Math.max(a, x.strikes), 0)
+      : p.strikes;
+    document.getElementById('score').textContent = score;
     document.getElementById('level').textContent = session.boardRadius;
     document.getElementById('best').textContent = state.best;
     document.getElementById('strikes').textContent =
-      '✕'.repeat(p.strikes) + '○'.repeat(Math.max(0, state.maxStrikes - p.strikes));
+      '✕'.repeat(strikes) + '○'.repeat(Math.max(0, state.maxStrikes - strikes));
   }
 
   // Expose a read-only probe for scripted checks.
