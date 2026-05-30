@@ -34,3 +34,29 @@ test('gridRadius is 1 for easy or young child, else 2', () => {
   assert.equal(C.gridRadius('normal', ''), 2);
   assert.equal(C.gridRadius('hard', ''), 2);
 });
+
+test('makeRng is deterministic for a given seed', () => {
+  const r1 = C.makeRng(42), r2 = C.makeRng(42);
+  const a = [r1(), r1(), r1()];
+  const b = [r2(), r2(), r2()];
+  assert.deepEqual(a, b);
+  a.forEach(v => { assert.ok(v >= 0 && v < 1); });
+});
+
+test('growTrail appends one step using only active letters, no immediate letter repeat', () => {
+  const letters = ['b','d','p','q'];
+  const cellCount = 7;
+  const rng = C.makeRng(1);
+  let seq = [];
+  for (let i = 0; i < 30; i++) {
+    const step = C.growTrail(seq, letters, cellCount, rng);
+    assert.ok(letters.includes(step.letter), 'letter from active set');
+    assert.ok(step.cell >= 0 && step.cell < cellCount, 'cell in range');
+    if (seq.length) {
+      assert.notEqual(step.letter, seq[seq.length - 1].letter, 'no immediate letter repeat');
+      assert.notEqual(step.cell, seq[seq.length - 1].cell, 'no immediate cell repeat');
+    }
+    seq = seq.concat([step]);
+  }
+  assert.equal(seq.length, 30);
+});

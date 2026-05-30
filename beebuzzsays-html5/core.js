@@ -38,5 +38,30 @@
     return 2;
   }
 
-  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS, keypadLetters, gridRadius };
+  // mulberry32 — small deterministic PRNG for tests/reproducibility.
+  function makeRng(seed) {
+    let s = seed >>> 0;
+    return function () {
+      s |= 0; s = (s + 0x6D2B79F5) | 0;
+      let t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function pick(arr, rng) { return arr[Math.floor(rng() * arr.length)]; }
+
+  // Returns the next {letter, cell} for the trail, avoiding an immediate
+  // repeat of the previous letter AND previous cell (clarity for kids).
+  function growTrail(seq, letters, cellCount, rng) {
+    const r = rng || Math.random;
+    const prev = seq.length ? seq[seq.length - 1] : null;
+    let letter;
+    do { letter = pick(letters, r); } while (prev && letters.length > 1 && letter === prev.letter);
+    let cell;
+    do { cell = Math.floor(r() * cellCount); } while (prev && cellCount > 1 && cell === prev.cell);
+    return { letter, cell };
+  }
+
+  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS, keypadLetters, gridRadius, makeRng, growTrail };
 });
