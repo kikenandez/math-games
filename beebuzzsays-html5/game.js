@@ -112,14 +112,28 @@
     shake: 0, shakeX: 0, shakeY: 0, elapsed: 0,
   };
 
-  const metrics = newMetrics();
+  // ===== Session: owns mode, players, board radius, RNG (layered over `state`) =====
+  const session = {
+    mode: 'solo',          // 'solo' | 'coop' | 'versus'
+    seed: 0,               // shared per match (versus); set at startGame
+    boardRadius: 1,        // starts at 1; +1 per board cleared
+    players: [],           // [{ id, score, strikes, maxSpan, metrics }]
+    active: 0,             // index of the player whose taps count now
+    versusRun: 0,          // versus: which player's full run is in progress (0,1)
+  };
+  function activePlayer() { return session.players[session.active]; }
+  function makePlayer(id) { return { id, score: 0, strikes: 0, maxSpan: 0, metrics: newMetrics() }; }
+  function newRng() { return session.mode === 'versus' ? C.makeRng(session.seed) : Math.random; }
+
   function newMetrics() {
     return { rounds: 0, correct: 0, mirrorConfusions: 0, wrongTaps: 0, maxSpan: 0, spanAttempts: {} };
   }
+  function metrics() { return activePlayer().metrics; }
   function recordSpan(len, ok) {
-    const s = metrics.spanAttempts[len] || { ok: 0, fail: 0 };
-    if (ok) { s.ok++; if (len > metrics.maxSpan) metrics.maxSpan = len; } else s.fail++;
-    metrics.spanAttempts[len] = s;
+    const m = metrics();
+    const s = m.spanAttempts[len] || { ok: 0, fail: 0 };
+    if (ok) { s.ok++; if (len > m.maxSpan) m.maxSpan = len; } else s.fail++;
+    m.spanAttempts[len] = s;
   }
 
   function colorOn() { return TWEAKS.colorCues === true || TWEAKS.colorCues === 'on'; }
@@ -296,8 +310,12 @@
   }
 
   function startGame() {
-    state.score = 0; state.level = 1; state.strikes = 0;
-    Object.assign(metrics, newMetrics());
+    session.players = session.mode === 'solo' ? [makePlayer(1)] : [makePlayer(1), makePlayer(2)];
+    session.active = 0;
+    session.versusRun = 0;
+    session.boardRadius = 1;
+    session.seed = (Math.floor(Math.random() * 0x7fffffff)) || 1;
+    state.rng = newRng();
     state.seq = []; state.typed = [];
     layoutBoard();
     document.getElementById('overlay').classList.add('hidden');
@@ -350,8 +368,8 @@
     const idx = state.typed.length;
     const res = C.checkTap(state.seq, idx, ch);
     if (!res.ok) {
-      metrics.wrongTaps++;
-      if (res.mirror) metrics.mirrorConfusions++;
+      metrics().wrongTaps++;
+      if (res.mirror) metrics().mirrorConfusions++;
       registerMiss('wrong');
       return;
     }
@@ -363,23 +381,23 @@
   }
 
   function registerMiss(reason) {
-    metrics.rounds++;
+    metrics().rounds++;
     recordSpan(state.seq.length, false);
-    state.strikes++;
+    activePlayer().strikes++;
     state.shake = Math.min(0.5, state.shake + 0.3);
     window.MathArcadeAudio?.wrong();
     showFloater(reason === 'slow' ? T.tooSlow : T.wrong, '#ff5c7c', -H * 0.30);
     updateHUD();
-    if (state.strikes >= state.maxStrikes) { gameOver(T.tooMany); return; }
+    if (activePlayer().strikes >= state.maxStrikes) { gameOver(T.tooMany); return; }
     state.phase = 'level_clear';
     setTimeout(() => { if (state.phase === 'level_clear') beginWatch(); }, 1100); // retry SAME trail
   }
 
   function resolveCorrect() {
-    metrics.rounds++; metrics.correct++;
+    metrics().rounds++; metrics().correct++;
     recordSpan(state.seq.length, true);
-    const pts = 50 + state.seq.length * 20 + state.level * 10;
-    state.score += pts;
+    const pts = 50 + state.seq.length * 20 + session.boardRadius * 10;
+    activePlayer().score += pts;
     burst(W / 2, H * 0.40, '#ffd24d');
     showFloater(`${T.correct}  +${pts}`, '#5cd97a', -H * 0.30);
     window.MathArcadeAudio?.levelClear();
@@ -395,7 +413,8 @@
 
   function gameOver(reason) {
     state.phase = 'game_over';
-    if (state.score > state.best) { state.best = state.score; localStorage.setItem('beebuzzsays_best', String(state.best)); }
+    const p = activePlayer();
+    if (p.score > state.best) { state.best = p.score; localStorage.setItem('beebuzzsays_best', String(state.best)); }
     const summary = saveMetrics();
     window.MathArcadeAudio?.gameOver();
     const overlay = document.getElementById('overlay');
@@ -406,7 +425,7 @@
       <h1><span class="acc">${T.gameAcc}</span>${T.gameRest}</h1>
       <div class="sub">${reason}</div>
       <div class="stats-row">
-        <div class="stat-chip"><div class="stat-label">${T.score}</div><div class="stat-val">${state.score}</div></div>
+        <div class="stat-chip"><div class="stat-label">${T.score}</div><div class="stat-val">${p.score}</div></div>
         <div class="stat-chip hi"><div class="stat-label">${T.maxLen}</div><div class="stat-val">${summary.maxSpan}</div></div>
         <div class="stat-chip"><div class="stat-label">${T.best}</div><div class="stat-val">${state.best}</div></div>
       </div>
@@ -423,11 +442,11 @@
     const summary = {
       date: new Date().toISOString(), lang: LANG, age: TWEAKS.age || null,
       difficulty: TWEAKS.difficulty, colorCues: colorOn(),
-      level: state.level, score: state.score,
-      rounds: metrics.rounds, correct: metrics.correct, strikes: state.strikes,
-      maxSpan: metrics.maxSpan, spanAttempts: metrics.spanAttempts,
-      mirrorConfusions: metrics.mirrorConfusions, wrongTaps: metrics.wrongTaps,
-      reversalRate: metrics.wrongTaps ? +(metrics.mirrorConfusions / metrics.wrongTaps).toFixed(3) : 0,
+      level: state.level, score: activePlayer().score,
+      rounds: metrics().rounds, correct: metrics().correct, strikes: activePlayer().strikes,
+      maxSpan: metrics().maxSpan, spanAttempts: metrics().spanAttempts,
+      mirrorConfusions: metrics().mirrorConfusions, wrongTaps: metrics().wrongTaps,
+      reversalRate: metrics().wrongTaps ? +(metrics().mirrorConfusions / metrics().wrongTaps).toFixed(3) : 0,
     };
     try {
       const key = 'dyslexiaScreening.beebuzzsays';
@@ -488,17 +507,18 @@
   updateHUD();
 
   function updateHUD() {
-    document.getElementById('score').textContent = state.score;
-    document.getElementById('level').textContent = state.level;
+    const p = activePlayer() || { score: 0, strikes: 0 };
+    document.getElementById('score').textContent = p.score;
+    document.getElementById('level').textContent = session.boardRadius;
     document.getElementById('best').textContent = state.best;
     document.getElementById('strikes').textContent =
-      '✕'.repeat(state.strikes) + '○'.repeat(Math.max(0, state.maxStrikes - state.strikes));
+      '✕'.repeat(p.strikes) + '○'.repeat(Math.max(0, state.maxStrikes - p.strikes));
   }
 
   // Expose a read-only probe for scripted checks.
   window.__bbs = () => ({
     phase: state.phase, seq: state.seq.map(s => s.letter), typed: state.typed.slice(),
-    span: state.seq.length, level: state.level, strikes: state.strikes,
+    span: state.seq.length, level: state.level, strikes: activePlayer()?.strikes ?? 0,
   });
 
   function setupTweaks() {
