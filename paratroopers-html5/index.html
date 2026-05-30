@@ -185,6 +185,31 @@
     .hud-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .badge.rule { grid-column: 1 / -1; }
   }
+
+  /* Tweaks (gear) panel */
+  #gear-btn {
+    position: absolute; top: 16px; right: 16px; width: 42px; height: 42px;
+    background: rgba(16, 20, 38, 0.92); border: 3px solid var(--paper); border-radius: 10px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.55); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    z-index: 25; font-family: 'Lilita One', sans-serif; font-size: 20px; color: var(--paper); padding: 0;
+  }
+  #tweaks {
+    position: absolute; top: 68px; right: 16px; width: 240px;
+    background: rgba(16, 20, 38, 0.96); border: 3px solid var(--paper); border-radius: 12px;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.6); padding: 12px 14px 14px; z-index: 30; display: none; color: var(--paper);
+  }
+  #tweaks.open { display: block; }
+  #tweaks h3 { font-family: 'Lilita One', sans-serif; font-size: 17px; margin: 0 0 10px; letter-spacing: 0.06em; display: flex; align-items: center; justify-content: space-between; }
+  #tweaks .close { background: none; border: none; cursor: pointer; color: rgba(255,244,220,0.7); font-size: 20px; font-family: 'Lilita One', sans-serif; }
+  .tweak-row { margin: 0 0 10px; }
+  .tweak-row .lbl { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,244,220,0.6); margin-bottom: 4px; }
+  .tweak-row .opts { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tweak-row .opt {
+    padding: 5px 10px; border: 2px solid var(--paper); border-radius: 8px; background: rgba(0,0,0,0.4); color: var(--paper);
+    font-family: 'Lilita One', sans-serif; font-size: 11px; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,0.55);
+  }
+  .tweak-row .opt.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tweak-row .hint { font-size: 10px; color: rgba(255,244,220,0.45); margin-top: 3px; font-family: 'Fredoka', sans-serif; }
 </style>
 </head>
 <body>
@@ -201,13 +226,36 @@
     </div>
   </div>
 
+  <button id="gear-btn" title="Settings">⚙</button>
+
+  <div id="tweaks">
+    <h3><span>Settings</span> <button class="close" id="tweaks-close">×</button></h3>
+    <div class="tweak-row">
+      <div class="lbl"><span>Pace</span></div>
+      <div class="opts" id="pace-row">
+        <div class="opt" data-value="relaxed">CALM</div>
+        <div class="opt active" data-value="normal">NORMAL</div>
+        <div class="opt" data-value="fast">FAST</div>
+      </div>
+      <div class="hint">how fast paratroopers arrive</div>
+    </div>
+    <div class="tweak-row">
+      <div class="lbl"><span>Color cues</span></div>
+      <div class="opts" id="color-row">
+        <div class="opt" data-value="off">OFF</div>
+        <div class="opt active" data-value="on">ON</div>
+      </div>
+      <div class="hint">color shows good vs bad (off = read the letter)</div>
+    </div>
+  </div>
+
   <!-- Start Title Overlay -->
   <div class="overlay" id="overlay-title">
     <div class="card">
       <h1><span class="acc">PARA</span>TROOPERS</h1>
       <div class="sub">visual action training · distinguish letter reversals</div>
       <p>Aim and fire your base turret! Helicopters fly across the sky, dropping paratroopers. At each level, you must shoot down <b>only the target letters</b> while letting the friendly ones land safely so they can run into the <b>Rescue Truck</b>!</p>
-      <p style="font-size: 13px; color: rgba(255,244,220,0.65)">⚠️ <b>SABOTAGE STACKING:</b> Landing 4 bad paratroopers on either side of the turret will blow you up!</p>
+      <p style="font-size: 13px; color: rgba(255,244,220,0.65)">⚠️ <b>SABOTAGE STACKING:</b> Landing 4 bad paratroopers on either side of the turret will blow you up! And if a bad paratrooper lands on a <b>Rescue Truck</b>, it explodes — game over!</p>
       <button class="big-btn" id="start-btn">DEFEND</button>
     </div>
   </div>

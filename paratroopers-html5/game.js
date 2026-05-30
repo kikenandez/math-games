@@ -88,6 +88,26 @@
   const randInt = (min, max) => Math.floor(rand(min, max + 1));
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+  // ===== Tweaks (editable from the gear panel / hub edit-mode) =====
+  const TWEAKS = /*EDITMODE-BEGIN*/{
+    "pace": "normal",
+    "colorCues": true
+  }/*EDITMODE-END*/;
+
+  // Color cues are a *visual aid* — bad/good is shown by colour. Off by intent
+  // for letter-orientation training (read the letter, not the colour); on as help.
+  function colorOn() { return TWEAKS.colorCues === true || TWEAKS.colorCues === 'on'; }
+
+  // Spawn pacing per setting. Defaults are deliberately brisker than the old
+  // values so the action ramps up quickly instead of trickling at the start.
+  function paceCfg() {
+    switch (TWEAKS.pace) {
+      case 'relaxed': return { base: 8,  per: 5, int0: 3.0, intMin: 1.3, intPer: 0.35, first: 0.5 };
+      case 'fast':    return { base: 14, per: 7, int0: 1.5, intMin: 0.6, intPer: 0.28, first: 0.3 };
+      default:        return { base: 10, per: 6, int0: 2.2, intMin: 0.95, intPer: 0.34, first: 0.4 }; // normal
+    }
+  }
+
   // Initialize background clouds
   for (let i = 0; i < 5; i++) {
     state.clouds.push({
@@ -169,14 +189,15 @@
     const ruleIdx = (state.level - 1) % LEVEL_DATA.length;
     state.activeRule = LEVEL_DATA[ruleIdx];
     
-    // Adjust spawners for difficulty (Harder levels = higher number of paratroopers + faster spawn intervals)
-    state.spawners.parasTotal = 8 + state.level * 6;
+    // Adjust spawners for the chosen pace (Harder levels = more paratroopers + faster intervals)
+    const cfg = paceCfg();
+    state.spawners.parasTotal = cfg.base + state.level * cfg.per;
     state.spawners.parasSpawned = 0;
     state.spawners.parasRemaining = state.spawners.parasTotal;
     state.spawners.clearedSpawns = 0;
-    state.spawners.maxSpawns = 8 + state.level * 6;
-    state.spawners.heliInterval = Math.max(1.2, 3.8 - state.level * 0.4);
-    state.spawners.heliTimer = 0.5; // Quick spawn first heli
+    state.spawners.maxSpawns = state.spawners.parasTotal;
+    state.spawners.heliInterval = Math.max(cfg.intMin, cfg.int0 - state.level * cfg.intPer);
+    state.spawners.heliTimer = cfg.first; // Quick spawn first heli
     
     // Truck positioning resets
     state.trucks.left = { x: -80, targetX: 60, status: 'driving_in', doorsOpen: 0, passengers: 0, speed: 120 };
@@ -660,12 +681,16 @@
 
   function destroyParatrooper(p) {
     p.alive = false;
-    
+
     const isBad = isBadParatrooper(p);
-    
+    // Combo: chute was popped first, then the body shot mid-fall before it crashed.
+    const combo = p.status === 'plunge';
+
     if (isBad) {
-      state.score += 10;
-      showFloaterAt(p.x, p.y - 25, `HIT +10`, '#5cd97a');
+      const pts = combo ? 25 : 10;
+      state.score += pts;
+      showFloaterAt(p.x, p.y - 25, combo ? `MID-AIR COMBO +${pts}!` : `HIT +10`, '#ffd24d');
+      if (combo) burstStars(p.x, p.y);
       window.MathArcadeAudio?.event('SOLVED');
     } else {
       state.score = Math.max(0, state.score - 15);
@@ -695,15 +720,15 @@
     const isBad = isBadParatrooper(p);
     
     if (isBad) {
-      if (truckAtX(p.x)) {
+      const truck = truckAt(p.x);
+      if (truck) {
         p.status = 'landed';
         p.alive = false;
         p.hasChute = false;
-        showFloaterAt(p.x, H - 87, 'CLANG!', '#5cd9ff');
-        triggerTruckSparks(p.x, H - 62);
-      } else {
-        addLandedBadParatrooper(p);
+        explodeTruck(truck, p.x);
+        return; // game over
       }
+      addLandedBadParatrooper(p);
       window.MathArcadeAudio?.event('TICK');
       
       // Check Sabotage pile gameover (4 landed on one side)
@@ -742,6 +767,12 @@
     }
 
     p.alive = false;
+
+    // A bad paratrooper crashing onto a truck blows it up — game over.
+    if (hitTruck && isBad) {
+      explodeTruck(truckAt(p.x), p.x);
+      return;
+    }
 
     if (hitTruck) {
       showFloaterAt(p.x, groundY - 55, 'CLANG!', '#5cd9ff');
@@ -872,13 +903,34 @@
     return true;
   }
 
-  function truckAtX(x) {
-    const spans = [
-      state.trucks.left,
-      state.trucks.right
-    ].filter(t => t.status !== 'driving_out').map(t => ({ left: t.x - 4, right: t.x + 66 }));
+  // Returns the truck whose body sits under x (or null). Driving-out / destroyed
+  // trucks are not collidable.
+  function truckAt(x) {
+    return [state.trucks.left, state.trucks.right].find(t =>
+      t.status !== 'driving_out' && t.status !== 'destroyed' &&
+      x >= t.x - 4 && x <= t.x + 66
+    ) || null;
+  }
+  function truckAtX(x) { return truckAt(x) !== null; }
 
-    return spans.some(span => x >= span.left && x <= span.right);
+  // A bad paratrooper reaching a rescue truck blows it up — instant game over.
+  function explodeTruck(truck, x) {
+    if (truck) truck.status = 'destroyed';
+    const ex = truck ? truck.x + 31 : x;
+    const ey = H - 56;
+    for (let i = 0; i < 38; i++) {
+      const a = rand(0, Math.PI * 2);
+      const spd = rand(80, 300);
+      state.particles.push({
+        x: ex, y: ey,
+        vx: Math.cos(a) * spd, vy: Math.sin(a) * spd - 50,
+        color: i % 3 === 0 ? '#ff5c7c' : (i % 3 === 1 ? '#ff8a3d' : '#ffd24d'),
+        size: rand(4, 10), life: rand(0.6, 1.2), maxLife: 1.2, gravity: 150
+      });
+    }
+    showFloaterAt(ex, ey - 50, 'TRUCK DOWN!', '#ff5c7c');
+    window.MathArcadeAudio?.event('DEATH');
+    handleGameOver('A bad paratrooper destroyed the rescue truck!');
   }
 
   function triggerTruckSparks(x, y) {
@@ -915,6 +967,20 @@
         step++;
       }
     }, 200);
+  }
+
+  // Celebratory gold star sparkle (used for skill rewards like the mid-air combo).
+  function burstStars(x, y) {
+    for (let i = 0; i < 14; i++) {
+      const a = rand(0, Math.PI * 2);
+      const spd = rand(70, 200);
+      state.particles.push({
+        x, y,
+        vx: Math.cos(a) * spd, vy: Math.sin(a) * spd - 40,
+        color: i % 2 ? '#ffd24d' : '#fff4dc',
+        size: rand(2.5, 5), life: rand(0.4, 0.8), maxLife: 0.8, gravity: 90
+      });
+    }
   }
 
   function triggerExplosion(x, y, color) {
@@ -1018,6 +1084,7 @@
     ctx.lineWidth = 2.5;
     
     const drawSingleTruck = (t, isLeft) => {
+      if (t.status === 'destroyed') return; // blown up — gone
       // 0. Drop shadow
       ctx.fillStyle = 'rgba(0,0,0,0.16)';
       ctx.beginPath();
@@ -1212,7 +1279,7 @@
         isBad = h.letter === state.activeRule.shootHeli;
       }
       
-      ctx.fillStyle = isBad ? '#ff5c7c' : '#7ad1ff';
+      ctx.fillStyle = colorOn() ? (isBad ? '#ff5c7c' : '#7ad1ff') : '#b4c2d4';
       ctx.beginPath();
       ctx.ellipse(h.x, hy, h.size * 0.75, h.size * 0.5, 0, 0, Math.PI * 2);
       ctx.fill(); ctx.stroke();
@@ -1231,7 +1298,7 @@
       const tailY = hy - h.size * 0.1;
       const tailW = h.size * 0.6;
       const tailH = h.size * 0.18;
-      ctx.fillStyle = isBad ? '#d9405c' : '#4fa9d9';
+      ctx.fillStyle = colorOn() ? (isBad ? '#d9405c' : '#4fa9d9') : '#8c9bb0';
       ctx.fillRect(tailX, tailY, tailW, tailH);
       ctx.strokeRect(tailX, tailY, tailW, tailH);
 
@@ -1308,7 +1375,7 @@
 
       // 1. Draw large parachute if active
       if (p.hasChute) {
-        ctx.fillStyle = isBad ? '#ff5c7c' : '#ffd24d';
+        ctx.fillStyle = colorOn() ? (isBad ? '#ff5c7c' : '#ffd24d') : '#ecd49a';
         
         ctx.beginPath();
         // Dome arch
@@ -1349,7 +1416,7 @@
       ctx.fillRect(p.x + p.size * 0.025, p.y - p.size * 0.2, p.size * 0.05, p.size * 0.05);
 
       // Torso / Suit
-      ctx.fillStyle = isBad ? '#ff5c7c' : '#5cd97a';
+      ctx.fillStyle = colorOn() ? (isBad ? '#ff5c7c' : '#5cd97a') : '#9aa6ba';
       ctx.fillRect(p.x - p.size * 0.15, p.y + p.size * 0.05, p.size * 0.3, p.size * 0.4);
       ctx.strokeRect(p.x - p.size * 0.15, p.y + p.size * 0.05, p.size * 0.3, p.size * 0.4);
 
@@ -1506,6 +1573,44 @@
   document.getElementById('start-btn').addEventListener('click', startGame);
   document.getElementById('rule-btn').addEventListener('click', commenceLevel);
   document.getElementById('restart-btn').addEventListener('click', startGame);
+
+  // ===== Tweaks panel (gear) + hub edit-mode protocol =====
+  function setupTweaks() {
+    const wire = (rowId, key, isToggle) => {
+      const row = document.getElementById(rowId);
+      if (!row) return;
+      const current = () => (isToggle ? (colorOn() ? 'on' : 'off') : String(TWEAKS[key]));
+      row.querySelectorAll('.opt').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.value === current());
+        opt.addEventListener('click', () => {
+          TWEAKS[key] = isToggle ? (opt.dataset.value === 'on') : opt.dataset.value;
+          const now = current();
+          row.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o.dataset.value === now));
+          persistTweaks();
+        });
+      });
+    };
+    wire('pace-row', 'pace', false);
+    wire('color-row', 'colorCues', true);
+    const gear = document.getElementById('gear-btn');
+    const close = document.getElementById('tweaks-close');
+    gear?.addEventListener('click', () => {
+      const open = document.getElementById('tweaks').classList.contains('open');
+      if (open) { hideTweaks(); notifyDismiss(); } else showTweaks();
+    });
+    close?.addEventListener('click', () => { hideTweaks(); notifyDismiss(); });
+  }
+  function persistTweaks() { try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {} }
+  function notifyDismiss() { try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {} }
+  function showTweaks() { document.getElementById('tweaks')?.classList.add('open'); }
+  function hideTweaks() { document.getElementById('tweaks')?.classList.remove('open'); }
+  window.addEventListener('message', (e) => {
+    const d = e.data; if (!d || typeof d !== 'object') return;
+    if (d.type === '__activate_edit_mode') showTweaks();
+    if (d.type === '__deactivate_edit_mode') hideTweaks();
+  });
+  setupTweaks();
+  try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (e) {}
 
   // Initialize
   updateHUD();
