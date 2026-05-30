@@ -263,6 +263,7 @@
   .card.mathtd .art        { background: linear-gradient(180deg, #3a7a3a 0%, #5cb85c 70%, #2e8a3e 100%); }
   .card.paratroopers .art  { background: linear-gradient(180deg, #7ad1ff 0%, #a9d8e8 70%, #5cb85c 100%); }
   .card.recallcrates .art  { background: radial-gradient(ellipse at center, #7a1230 0%, #4a0a1a 60%, #1c050a 100%); }
+  .card.beebuzzsays .art   { background: radial-gradient(ellipse at center, #f6b73c 0%, #c98a14 60%, #6e4a10 100%); }
 
   /* Footer */
   footer {
@@ -1346,6 +1347,40 @@
         <p class="desc">A circus cargo crate of letters opens briefly, snaps shut, and falls. Type the letters back in the correct order before it lands.</p>
         <div class="footer">
           <div class="chips"><span class="chip compat-mobile">mobile ok</span><span class="chip">type</span><span class="chip">memory</span><span class="chip">puzzle</span></div>
+          <div class="play-cta">PLAY ▶</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Bee Buzz Says -->
+    <a class="card beebuzzsays" href="beebuzzsays-html5/index.html">
+      <div class="art">
+        <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="200" height="120" fill="none"/>
+          <!-- honeycomb cluster -->
+          <g stroke="#7a531a" stroke-width="2" fill="#ffd24d">
+            <polygon points="100,30 118,40 118,60 100,70 82,60 82,40"/>
+            <polygon points="64,50 82,60 82,80 64,90 46,80 46,60"/>
+            <polygon points="136,50 154,60 154,80 136,90 118,80 118,60"/>
+            <polygon points="100,70 118,80 118,100 100,110 82,100 82,80" fill="#fff2c4"/>
+          </g>
+          <!-- letter on the lit cell -->
+          <text x="100" y="98" text-anchor="middle" font-family="Lilita One" font-size="20" fill="#3a2410">b</text>
+          <!-- bee -->
+          <g transform="translate(100,50)">
+            <ellipse cx="0" cy="0" rx="11" ry="8" fill="#ffcf3a" stroke="#2a1a05" stroke-width="2"/>
+            <rect x="-3" y="-8" width="3" height="16" fill="#2a1a05"/>
+            <rect x="3" y="-7" width="2.4" height="14" fill="#2a1a05"/>
+            <ellipse cx="-3" cy="-9" rx="7" ry="4" fill="rgba(255,255,255,0.75)" transform="rotate(-25 -3 -9)"/>
+          </g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="tagline">Sequence memory</div>
+        <h2>Bee Buzz Says</h2>
+        <p class="desc">Watch the bee buzz a trail of letters across the honeycomb, then tap them back in order on the keypad. Each letter has its own buzz; the trail grows every round. A playful memory + b/d/p/q drill.</p>
+        <div class="footer">
+          <div class="chips"><span class="chip compat-mobile">mobile ok</span><span class="chip">tap</span><span class="chip">memory</span><span class="chip">puzzle</span></div>
           <div class="play-cta">PLAY ▶</div>
         </div>
       </div>
