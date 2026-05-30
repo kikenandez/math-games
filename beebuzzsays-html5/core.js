@@ -63,5 +63,15 @@
     return { letter, cell };
   }
 
-  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS, keypadLetters, gridRadius, makeRng, growTrail };
+  function checkTap(seq, index, letter) {
+    const expected = seq[index] && seq[index].letter;
+    const ok = letter === expected;
+    return { ok, mirror: !ok && MIRROR[expected] === letter };
+  }
+
+  function isComplete(seq, typed) {
+    return typed.length === seq.length && seq.every((s, i) => s.letter === typed[i]);
+  }
+
+  return { LETTER_FREQ, LETTER_COLOR, PAIRS, MIRROR, KEYPAD_SETS, keypadLetters, gridRadius, makeRng, growTrail, checkTap, isComplete };
 });

@@ -60,3 +60,18 @@ test('growTrail appends one step using only active letters, no immediate letter 
   }
   assert.equal(seq.length, 30);
 });
+
+test('checkTap reports correctness and mirror confusions', () => {
+  const seq = [{letter:'b',cell:0},{letter:'p',cell:1}];
+  assert.deepEqual(C.checkTap(seq, 0, 'b'), { ok: true,  mirror: false });
+  assert.deepEqual(C.checkTap(seq, 0, 'd'), { ok: false, mirror: true  });
+  assert.deepEqual(C.checkTap(seq, 1, 'q'), { ok: false, mirror: true  });
+  assert.deepEqual(C.checkTap(seq, 1, 'a'), { ok: false, mirror: false });
+});
+
+test('isComplete is true only when typed matches the full trail in order', () => {
+  const seq = [{letter:'b',cell:0},{letter:'p',cell:1}];
+  assert.equal(C.isComplete(seq, ['b','p']), true);
+  assert.equal(C.isComplete(seq, ['b']), false);
+  assert.equal(C.isComplete(seq, ['b','q']), false);
+});
