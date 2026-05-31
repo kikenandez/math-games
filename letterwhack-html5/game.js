@@ -45,6 +45,11 @@
       tooManyMisses: 'too many misses!', tooManyEscapes: 'too many escapes!',
       tweaks: 'Tweaks', difficulty: 'Difficulty', easy: 'EASY', normal: 'NORMAL', hard: 'HARD',
       speed: 'Spawn speed', age: 'Child age',
+      bigTop: 'Big top', day: 'DAY', night: 'NIGHT',
+      ht1: 'THE TARGET', hd1: 'Shown up top — and spoken.',
+      ht2: 'WHACK IT', hd2: 'Tap clowns holding that letter.',
+      ht3: 'DODGE', hd3: 'Leave the look-alikes alone.',
+      warn: "A wrong tap or a target that ducks away is a <b style='color:var(--hot)'>miss</b>. Three misses ends the show.",
     },
     fr: {
       titleAcc: 'TAPE', titleRest: '-LETTRE',
@@ -58,6 +63,11 @@
       tooManyMisses: "trop d'erreurs !", tooManyEscapes: 'trop de ratés !',
       tweaks: 'Réglages', difficulty: 'Difficulté', easy: 'FACILE', normal: 'NORMAL', hard: 'DIFFICILE',
       speed: 'Vitesse', age: "Âge de l'enfant",
+      bigTop: 'Chapiteau', day: 'JOUR', night: 'NUIT',
+      ht1: 'LA CIBLE', hd1: 'Affichée en haut — et dite.',
+      ht2: 'TAPE-LA', hd2: 'Tape les clowns avec cette lettre.',
+      ht3: 'ÉVITE', hd3: 'Laisse les sosies tranquilles.',
+      warn: "Une mauvaise tape ou une cible qui s’échappe, c’est une <b style='color:var(--hot)'>erreur</b>. Trois erreurs et le spectacle est fini.",
     },
     es: {
       titleAcc: 'GOLPEA', titleRest: '-LETRAS',
@@ -71,6 +81,11 @@
       tooManyMisses: '¡demasiados fallos!', tooManyEscapes: '¡demasiados escapes!',
       tweaks: 'Ajustes', difficulty: 'Dificultad', easy: 'FÁCIL', normal: 'NORMAL', hard: 'DIFÍCIL',
       speed: 'Velocidad', age: 'Edad del niño',
+      bigTop: 'Carpa', day: 'DÍA', night: 'NOCHE',
+      ht1: 'EL OBJETIVO', hd1: 'Arriba — y se dice en voz alta.',
+      ht2: 'GOLPÉALA', hd2: 'Toca payasos con esa letra.',
+      ht3: 'ESQUIVA', hd3: 'Deja en paz a las parecidas.',
+      warn: "Una mala tocada o un objetivo que escapa es un <b style='color:var(--hot)'>fallo</b>. Tres fallos y se acabó el espectáculo.",
     },
   };
   const T = STR[LANG];
@@ -78,7 +93,6 @@
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     document.getElementById('title-h1').innerHTML = `<span class="acc">${T.titleAcc}</span>${T.titleRest}`;
     set('title-sub', T.sub);
-    document.getElementById('title-p').innerHTML = T.intro;
     set('start-btn', T.start);
     set('title-note', T.note);
     set('target-label', T.findLetter);
@@ -87,6 +101,11 @@
     set('tw-title', T.tweaks); set('tw-diff', T.difficulty);
     set('tw-easy', T.easy); set('tw-normal', T.normal); set('tw-hard', T.hard);
     set('tw-speed', T.speed); set('tw-age', T.age);
+    set('tw-bigtop', T.bigTop); set('tw-day', T.day); set('tw-night', T.night);
+    set('how1-t', T.ht1); set('how1-d', T.hd1);
+    set('how2-t', T.ht2); set('how2-d', T.hd2);
+    set('how3-t', T.ht3); set('how3-d', T.hd3);
+    const tp = document.getElementById('title-p'); if (tp) tp.innerHTML = T.warn;
   }
 
   // ===== Layout =====
@@ -107,7 +126,8 @@
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "speed": 1.0,
-    "age": ""
+    "age": "",
+    "theme": "day"
   }/*EDITMODE-END*/;
 
   // ===== Letter sets =====
@@ -347,9 +367,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing' && !state.paused) update(dt);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing' && !state.paused) update(dt);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Letter Whack loop error:', err); }
     requestAnimationFrame(loop);
   }
   function updateIdle(dt) { state.elapsed += dt * 0.5; }
@@ -442,12 +464,13 @@
       <div class="sub">${reason}</div>
       <div class="stats-row">
         <div class="stat-chip"><div class="stat-label">${T.score}</div><div class="stat-val">${state.score}</div></div>
-        <div class="stat-chip"><div class="stat-label">${T.level}</div><div class="stat-val">${state.level}</div></div>
         <div class="stat-chip hi"><div class="stat-label">${T.best}</div><div class="stat-val">${state.best}</div></div>
-      </div>
-      <div class="stats-row">
-        <div class="stat-chip"><div class="stat-label">b/d/p/q</div><div class="stat-val">${revPct}%</div></div>
         <div class="stat-chip"><div class="stat-label">RT</div><div class="stat-val">${rt}</div></div>
+      </div>
+      <div class="insight">
+        <div class="ih"><span class="t">Look-alike mix-ups</span><span class="pct">${revPct}%</span></div>
+        <div class="bar"><i style="width:${revPct}%"></i></div>
+        <div class="cap">Wrong taps that were a mirror letter — b&#8596;d, p&#8596;q. RT is the median time to spot the target (reading speed). Fewer mix-ups is sharper.</div>
       </div>
       <button class="big-btn" id="restart-btn">${T.playAgain}</button>
       <div class="note">${T.note}</div>
@@ -488,8 +511,10 @@
     document.getElementById('score').textContent = state.score;
     document.getElementById('level').textContent = state.level;
     document.getElementById('time').textContent = Math.ceil(state.timeLeft);
-    document.getElementById('misses').textContent =
-      '✕'.repeat(state.misses) + '○'.repeat(Math.max(0, state.maxMisses - state.misses));
+    const tChip = document.getElementById('timer-chip');
+    if (tChip) tChip.classList.toggle('low', state.phase === 'playing' && state.timeLeft <= 5);
+    const pips = document.querySelectorAll('#lives .miss-pip');
+    pips.forEach((pip, i) => pip.classList.toggle('spent', i < state.misses));
   }
   function updateTargetHUD() {
     document.getElementById('rule-text').textContent = state.target;
@@ -509,12 +534,20 @@
     ctx.restore();
   }
   function drawBg() {
+    const night = TWEAKS.theme === 'night';
     // Sky-to-sawdust gradient.
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#7a1230');
-    g.addColorStop(0.45, '#b5223a');
-    g.addColorStop(0.55, '#d8b27a');
-    g.addColorStop(1, '#c79a5e');
+    if (night) {
+      g.addColorStop(0, '#2a1a5e');
+      g.addColorStop(0.45, '#3d2a7a');
+      g.addColorStop(0.55, '#6b5a3a');
+      g.addColorStop(1, '#4a3a26');
+    } else {
+      g.addColorStop(0, '#7a1230');
+      g.addColorStop(0.45, '#b5223a');
+      g.addColorStop(0.55, '#d8b27a');
+      g.addColorStop(1, '#c79a5e');
+    }
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
@@ -529,7 +562,7 @@
       const a0 = (i / panels) * Math.PI - Math.PI / 2;
       const a1 = ((i + 1) / panels) * Math.PI - Math.PI / 2;
       const R = H * 1.6;
-      ctx.fillStyle = 'rgba(255, 244, 224, 0.32)';
+      ctx.fillStyle = night ? 'rgba(180, 200, 255, 0.18)' : 'rgba(255, 244, 224, 0.32)';
       ctx.beginPath();
       ctx.moveTo(apexX, apexY);
       ctx.lineTo(apexX + Math.cos(a0) * R, apexY + Math.sin(a0) * R);
@@ -823,6 +856,17 @@
       spVal.textContent = `${TWEAKS.speed.toFixed(1)}×`;
       persistTweaks();
     });
+    const themeRow = document.getElementById('theme-row');
+    if (themeRow) {
+      themeRow.querySelectorAll('.opt').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.value === TWEAKS.theme);
+        opt.addEventListener('click', () => {
+          TWEAKS.theme = opt.dataset.value;
+          themeRow.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o.dataset.value === TWEAKS.theme));
+          persistTweaks();
+        });
+      });
+    }
     document.getElementById('tweaks-close').addEventListener('click', () => {
       hideTweaks();
       try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {}
@@ -862,9 +906,11 @@
   }
   updateHUD();
   updateTargetHUD();
+  draw(); // paint one frame immediately so the scene is never blank before rAF starts
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) lastTime = performance.now() - 16;
+    if (!document.hidden) { lastTime = performance.now() - 16; draw(); }
   });
+  window.addEventListener('focus', () => { lastTime = performance.now() - 16; draw(); });
   requestAnimationFrame(loop);
 })();
