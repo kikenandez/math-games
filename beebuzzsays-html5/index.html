@@ -2,112 +2,258 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Bee Buzz Says</title>
+<title>Bee Buzz Says — Redesign</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Fredoka:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
+  /* ============================ DESIGN TOKENS ============================ */
   :root {
-    --ink: #3a2410;
-    --paper: #fff6df;
-    --accent: #ffc233;
-    --hot: #ff5c7c;
-    --good: #5cd97a;
+    /* Honey theme (default) */
+    --ink:        #2e1c0c;   /* deep hive brown */
+    --ink-soft:   #6b4a22;
+    --paper:      #fff4dc;   /* warm cream */
+    --paper-dim:  rgba(255, 244, 220, 0.62);
+    --honey:      #ffbf33;   /* primary accent */
+    --honey-deep: #f0992a;   /* caramel mid */
+    --good:       #57d977;   /* mint */
+    --hot:        #ff6b6b;   /* coral */
+    --comb:       #caa44e;   /* empty cell */
+    --comb-edge:  #7a531a;
+
+    /* Atmosphere — set per theme, consumed by canvas via JS too */
+    --bg-1:       #ffd877;
+    --bg-2:       #f0a52c;
+    --bg-3:       #d4862f;
+    --glow:       rgba(255, 247, 214, 0.85);
+
+    --card-bg:    #3a2410;
+    --shadow:     rgba(60, 34, 8, 0.5);
+    --radius:     18px;
   }
+  [data-theme="dusk"] {
+    --ink: #1b1330; --paper: #f3ecff; --paper-dim: rgba(243,236,255,0.6);
+    --honey: #ffc94d; --honey-deep: #b07cff; --comb: #6a5a9c; --comb-edge: #2a1f52;
+    --bg-1: #5b4aa8; --bg-2: #3a2c74; --bg-3: #241a4d; --glow: rgba(255, 233, 170, 0.55);
+    --card-bg: #261a4d; --shadow: rgba(10, 6, 30, 0.6);
+  }
+  [data-theme="meadow"] {
+    --ink: #143018; --paper: #f3ffe9; --paper-dim: rgba(243,255,233,0.62);
+    --honey: #ffd24d; --honey-deep: #5cae3f; --comb: #8fb56a; --comb-edge: #3c5e2a;
+    --bg-1: #b7df6a; --bg-2: #6fb04a; --bg-3: #3f7c34; --glow: rgba(244, 255, 210, 0.8);
+    --card-bg: #1c3a20; --shadow: rgba(10, 30, 12, 0.5);
+  }
+
   *, *::before, *::after { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-    background: #3a2410; font-family: 'Fredoka', sans-serif; color: var(--paper); user-select: none;
+    background: var(--bg-3); font-family: 'Fredoka', sans-serif; color: var(--paper);
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
   }
   #game-wrap { position: fixed; inset: 0; overflow: hidden; }
   canvas#game { display: block; width: 100%; height: 100%; cursor: pointer; }
 
+  /* ============================== HUD ============================== */
   #hud {
-    position: absolute; top: 14px; left: 14px; right: 70px;
+    position: absolute; top: 0; left: 0; right: 0; padding: 16px 16px 0;
     display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
-    pointer-events: none; font-family: 'Lilita One', sans-serif; z-index: 5;
+    pointer-events: none; z-index: 5;
   }
-  .hud-group { display: flex; gap: 10px; }
-  .badge {
-    background: rgba(58, 36, 16, 0.92); border: 3px solid var(--paper); border-radius: 10px;
-    padding: 7px 12px; box-shadow: 0 4px 0 rgba(0,0,0,0.45);
-    display: flex; align-items: center; gap: 8px; font-size: 18px; color: var(--paper); line-height: 1;
-  }
-  .badge .label {
-    font-size: 10px; color: rgba(255, 246, 223, 0.55); letter-spacing: 0.2em;
-    font-family: 'Fredoka', sans-serif; font-weight: 600; text-transform: uppercase;
-  }
-  .badge .val { font-size: 20px; min-width: 1ch; }
-  .badge.score .val { color: var(--accent); }
-  .badge.level .val { color: var(--good); }
-  .badge.best  .val { color: #ffe08a; }
-  .badge.strikes .val { color: var(--hot); }
+  .hud-left, .hud-right { display: flex; gap: 10px; align-items: flex-start; }
+  .hud-right { align-items: center; }
 
-  .cursor { animation: blink 1s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-
-  #gear-btn {
-    position: absolute; top: 14px; right: 14px; width: 42px; height: 42px;
-    background: rgba(58, 36, 16, 0.92); border: 3px solid var(--paper); border-radius: 10px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.45); cursor: pointer; display: flex; align-items: center; justify-content: center;
-    z-index: 25; font-family: 'Lilita One', sans-serif; font-size: 20px; color: var(--paper); padding: 0;
+  .pill {
+    background: var(--card-bg); border: 2.5px solid var(--paper);
+    border-radius: 13px; padding: 6px 13px 7px;
+    box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.12);
+    display: flex; flex-direction: column; align-items: flex-start; line-height: 1;
+    min-width: 58px;
   }
+  .pill .label {
+    font-size: 9px; color: var(--paper-dim); letter-spacing: 0.18em; font-weight: 600;
+    text-transform: uppercase; margin-bottom: 3px;
+  }
+  .pill .val { font-family: 'Lilita One', sans-serif; font-size: 22px; color: var(--paper); }
+  .pill.score .val { color: var(--honey); }
+  .pill.best  .val { color: #ffe7a6; }
+
+  /* Level — a little comb ring chip */
+  .level-chip {
+    background: var(--card-bg); border: 2.5px solid var(--paper); border-radius: 13px;
+    box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.12);
+    padding: 6px 12px 7px; display: flex; flex-direction: column; align-items: center; line-height: 1;
+  }
+  .level-chip .label { font-size: 9px; color: var(--paper-dim); letter-spacing: 0.18em; font-weight: 600; text-transform: uppercase; margin-bottom: 3px; }
+  .level-chip .val { font-family: 'Lilita One', sans-serif; font-size: 22px; color: var(--good); }
+
+  /* Strikes — three honey pips that drain */
+  .lives {
+    display: flex; gap: 7px; align-items: center; padding: 8px 12px;
+    background: var(--card-bg); border: 2.5px solid var(--paper); border-radius: 13px;
+    box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.12);
+  }
+  .pip {
+    width: 18px; height: 20px; position: relative; transition: transform 0.3s, opacity 0.3s, filter 0.3s;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: linear-gradient(180deg, var(--honey), var(--honey-deep));
+    box-shadow: inset 0 0 0 2px var(--paper);
+  }
+  .pip.spent { opacity: 0.32; filter: grayscale(0.7); transform: scale(0.82); background: var(--comb); }
+
+  .icon-btn {
+    pointer-events: auto; width: 40px; height: 40px; flex: 0 0 auto;
+    background: var(--card-bg); border: 2.5px solid var(--paper); border-radius: 12px;
+    box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.12);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 19px; color: var(--paper); padding: 0; transition: transform 0.12s;
+  }
+  .icon-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--shadow); }
+
+  /* ============================== TWEAKS ============================== */
   #tweaks {
-    position: absolute; top: 68px; right: 14px; width: 260px;
-    background: rgba(58, 36, 16, 0.96); border: 3px solid var(--paper); border-radius: 12px;
-    box-shadow: 0 6px 0 rgba(0,0,0,0.5); padding: 12px 14px 14px; z-index: 30; display: none; color: var(--paper);
+    position: absolute; top: 66px; right: 16px; width: 268px; pointer-events: auto;
+    background: var(--card-bg); border: 2.5px solid var(--paper); border-radius: 16px;
+    box-shadow: 0 8px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.12);
+    padding: 14px 16px 16px; z-index: 30; display: none;
   }
   #tweaks.open { display: block; }
-  #tweaks h3 { font-family: 'Lilita One', sans-serif; font-size: 17px; margin: 0 0 10px; letter-spacing: 0.06em; display: flex; align-items: center; justify-content: space-between; }
-  #tweaks .close { background: none; border: none; cursor: pointer; color: rgba(255,246,223,0.7); font-size: 20px; font-family: 'Lilita One', sans-serif; }
-  .tweak-row { margin: 0 0 10px; }
-  .tweak-row .lbl { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,246,223,0.6); margin-bottom: 3px; }
+  #tweaks h3 {
+    font-family: 'Lilita One', sans-serif; font-size: 16px; margin: 0 0 12px; letter-spacing: 0.04em;
+    display: flex; align-items: center; justify-content: space-between; color: var(--paper);
+  }
+  #tweaks .close { background: none; border: none; cursor: pointer; color: var(--paper-dim); font-size: 22px; font-family: 'Lilita One', sans-serif; line-height: 1; }
+  .tweak-row { margin: 0 0 12px; }
+  .tweak-row:last-child { margin-bottom: 0; }
+  .tweak-row .lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--paper-dim); margin-bottom: 5px; }
   .tweak-row .opts { display: flex; gap: 5px; flex-wrap: wrap; }
   .tweak-row .opt {
-    padding: 5px 9px; border: 2px solid var(--paper); border-radius: 8px; background: rgba(0,0,0,0.4); color: var(--paper);
-    font-family: 'Lilita One', sans-serif; font-size: 11px; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+    flex: 1 1 auto; text-align: center; padding: 6px 8px; border: 2px solid rgba(255,244,220,0.55); border-radius: 9px;
+    background: rgba(0,0,0,0.22); color: var(--paper); font-family: 'Lilita One', sans-serif; font-size: 11px;
+    cursor: pointer; transition: all 0.12s; white-space: nowrap;
   }
-  .tweak-row .opt.active { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+  .tweak-row .opt:hover { border-color: var(--paper); }
+  .tweak-row .opt.active { background: var(--honey); color: var(--ink); border-color: var(--honey); box-shadow: 0 2px 0 var(--shadow); }
 
-  .overlay { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(58, 36, 16, 0.55), rgba(0,0,0,0.86)); display: flex; align-items: center; justify-content: center; z-index: 20; opacity: 1; transition: opacity 0.25s; }
-  .overlay.hidden { opacity: 0; pointer-events: none; }
-  .card { background: rgba(58, 36, 16, 0.96); border: 4px solid var(--paper); border-radius: 20px; box-shadow: 0 8px 0 rgba(0,0,0,0.5); padding: 32px 38px; text-align: center; width: min(560px, calc(100vw - 28px)); max-width: 560px; max-height: calc(100vh - 28px); overflow-y: auto; }
-  .card h1 { font-family: 'Lilita One', sans-serif; font-size: clamp(28px, 7vw, 54px); line-height: 1.05; margin: 0 0 6px; color: var(--paper); letter-spacing: 0.02em; overflow-wrap: break-word; }
-  .card h1 .acc { color: var(--accent); }
-  .card .sub { font-family: 'Fredoka', sans-serif; font-weight: 600; color: rgba(255,246,223,0.7); font-size: 15px; margin: 4px 0 18px; }
-  .card p { font-family: 'Fredoka', sans-serif; font-size: 14px; line-height: 1.55; color: rgba(255,246,223,0.85); margin: 0 0 18px; }
-  .card p b { color: var(--paper); }
-  .big-btn { font-family: 'Lilita One', sans-serif; font-size: 26px; letter-spacing: 0.05em; background: var(--accent); color: var(--ink); border: 3px solid var(--paper); border-radius: 12px; padding: 10px 30px; box-shadow: 0 5px 0 rgba(0,0,0,0.5); cursor: pointer; white-space: nowrap; }
-  .big-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 0 rgba(0,0,0,0.5); }
-  .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
-  .note { font-family: 'Fredoka', sans-serif; font-size: 11px; color: rgba(255,246,223,0.5); margin-top: 14px; letter-spacing: 0.04em; }
-  .stats-row { display: flex; gap: 8px; justify-content: center; margin: 0 0 16px; flex-wrap: wrap; }
-  .stat-chip { background: rgba(0,0,0,0.4); border: 2px solid var(--paper); border-radius: 10px; padding: 6px 12px; font-family: 'Lilita One', sans-serif; box-shadow: 0 3px 0 rgba(0,0,0,0.55); min-width: 70px; }
-  .stat-chip .stat-label { font-size: 9px; color: rgba(255,246,223,0.6); letter-spacing: 0.16em; font-family: 'Fredoka', sans-serif; font-weight: 600; text-transform: uppercase; }
-  .stat-chip .stat-val { font-size: 22px; color: var(--paper); }
-  .stat-chip.hi .stat-val { color: var(--accent); }
+  /* ============================== OVERLAY / CARDS ============================== */
+  .overlay {
+    position: absolute; inset: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 32%, rgba(46,28,12,0.35), rgba(20,12,4,0.82));
+    opacity: 1; transition: opacity 0.3s;
+  }
+  .overlay.hidden { opacity: 0 !important; pointer-events: none !important; }
+
+  .card {
+    position: relative; background: var(--card-bg);
+    border: 3px solid var(--paper); border-radius: 26px;
+    box-shadow: 0 14px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.14);
+    padding: 30px 36px 32px; text-align: center;
+    width: min(540px, calc(100vw - 28px)); max-height: calc(100vh - 28px); overflow-y: auto;
+  }
+  .card::-webkit-scrollbar { width: 0; }
+
+  /* Title hero */
+  .hero-bee { width: 132px; height: 110px; margin: -2px auto 4px; display: block; }
+  .card h1 {
+    font-family: 'Lilita One', sans-serif; font-size: clamp(34px, 8.5vw, 60px); line-height: 0.96;
+    margin: 0; color: var(--paper); letter-spacing: 0.015em; text-shadow: 0 3px 0 var(--shadow);
+  }
+  .card h1 .acc { color: var(--honey); }
+  .card .sub {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; color: var(--paper-dim);
+    font-size: 15px; margin: 8px 0 0;
+  }
+
+  /* How-to strip — three compact steps replacing the paragraph */
+  .howto { display: flex; gap: 8px; margin: 20px 0 6px; }
+  .step {
+    flex: 1; background: rgba(0,0,0,0.22); border: 2px solid rgba(255,244,220,0.4); border-radius: 14px;
+    padding: 12px 8px 11px; display: flex; flex-direction: column; align-items: center; gap: 7px;
+  }
+  .step .ico { width: 34px; height: 34px; }
+  .step .t { font-family: 'Lilita One', sans-serif; font-size: 11px; letter-spacing: 0.04em; color: var(--honey); }
+  .step .d { font-size: 11px; line-height: 1.3; color: var(--paper-dim); }
+
+  /* Segmented mode control */
+  .seg-wrap { margin: 18px auto 4px; }
+  .seg-lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.18em; color: var(--paper-dim); margin-bottom: 7px; }
+  .seg {
+    display: inline-flex; background: rgba(0,0,0,0.28); border: 2px solid rgba(255,244,220,0.35);
+    border-radius: 13px; padding: 4px; gap: 4px;
+  }
+  .seg .opt {
+    padding: 8px 16px; border-radius: 9px; font-family: 'Lilita One', sans-serif; font-size: 13px;
+    color: var(--paper-dim); cursor: pointer; transition: all 0.14s; border: none; background: none;
+  }
+  .seg .opt.active { background: var(--honey); color: var(--ink); box-shadow: 0 2px 0 var(--shadow); }
+
+  .big-btn {
+    font-family: 'Lilita One', sans-serif; font-size: 27px; letter-spacing: 0.06em;
+    background: linear-gradient(180deg, #ffd45e, var(--honey)); color: var(--ink);
+    border: 3px solid var(--paper); border-radius: 15px; padding: 13px 44px; margin-top: 22px;
+    box-shadow: 0 6px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.4); cursor: pointer; white-space: nowrap;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .big-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.4); }
+  .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.4); }
+
+  .note { font-family: 'Fredoka', sans-serif; font-size: 11px; color: var(--paper-dim); margin-top: 16px; letter-spacing: 0.03em; }
+
+  /* Result stat chips */
+  .stats-row { display: flex; gap: 9px; justify-content: center; margin: 20px 0 0; flex-wrap: wrap; }
+  .stat-chip {
+    flex: 1; min-width: 92px; background: rgba(0,0,0,0.26); border: 2px solid rgba(255,244,220,0.4);
+    border-radius: 14px; padding: 12px 10px; box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.08);
+  }
+  .stat-chip .stat-label { font-size: 9px; color: var(--paper-dim); letter-spacing: 0.14em; font-weight: 600; text-transform: uppercase; }
+  .stat-chip .stat-val { font-family: 'Lilita One', sans-serif; font-size: 28px; color: var(--paper); margin-top: 4px; }
+  .stat-chip.hi { background: rgba(255,191,51,0.16); border-color: var(--honey); }
+  .stat-chip.hi .stat-val { color: var(--honey); }
+
+  /* Reversal insight panel (parent/teacher facing) */
+  .insight {
+    margin-top: 18px; background: rgba(0,0,0,0.24); border: 2px solid rgba(255,244,220,0.35);
+    border-radius: 16px; padding: 14px 16px; text-align: left;
+  }
+  .insight .ih { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+  .insight .ih .t { font-family: 'Lilita One', sans-serif; font-size: 13px; letter-spacing: 0.03em; color: var(--paper); }
+  .insight .ih .pct { font-family: 'Lilita One', sans-serif; font-size: 13px; color: var(--honey); }
+  .insight .bar { height: 9px; border-radius: 99px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .insight .bar > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--good), var(--honey)); transition: width 0.6s ease; }
+  .insight .cap { font-size: 11px; line-height: 1.4; color: var(--paper-dim); margin-top: 9px; }
+
+  @media (max-width: 480px) {
+    .howto { flex-direction: row; }
+    .step .d { display: none; }
+    .card { padding: 24px 20px 26px; }
+  }
 </style>
 </head>
 <body>
 <div id="game-wrap">
   <canvas id="game"></canvas>
 
+  <!-- HUD -->
   <div id="hud">
-    <div class="hud-group">
-      <div class="badge score"><span class="label" id="lbl-score">Score</span><span class="val" id="score">0</span></div>
-      <div class="badge level"><span class="label" id="lbl-level">Level</span><span class="val" id="level">1</span></div>
-      <div class="badge best"><span class="label" id="lbl-best">Best</span><span class="val" id="best">0</span></div>
-      <div class="badge strikes"><span class="label" id="lbl-strikes">Strikes</span><span class="val" id="strikes">○○○</span></div>
+    <div class="hud-left">
+      <div class="pill score"><span class="label" id="lbl-score">Score</span><span class="val" id="score">0</span></div>
+      <div class="pill best"><span class="label" id="lbl-best">Best</span><span class="val" id="best">0</span></div>
+      <div class="level-chip"><span class="label" id="lbl-level">Level</span><span class="val" id="level">1</span></div>
+    </div>
+    <div class="hud-right">
+      <div class="lives" id="lives" title="Strikes left">
+        <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+      </div>
+      <button class="icon-btn" id="gear-btn" title="Tweaks">⚙</button>
     </div>
   </div>
 
-  <button id="gear-btn" title="Tweaks">⚙</button>
-
+  <!-- Tweaks -->
   <div id="tweaks">
     <h3><span id="tw-title">Tweaks</span> <button class="close" id="tweaks-close">×</button></h3>
     <div class="tweak-row">
-      <div class="lbl"><span id="tw-diff">Difficulty</span></div>
+      <div class="lbl" id="tw-diff">Difficulty</div>
       <div class="opts" id="diff-row">
         <div class="opt" data-value="easy" id="tw-easy">EASY</div>
         <div class="opt active" data-value="normal" id="tw-normal">NORMAL</div>
@@ -115,7 +261,7 @@
       </div>
     </div>
     <div class="tweak-row">
-      <div class="lbl"><span id="tw-age">Child age</span></div>
+      <div class="lbl" id="tw-age">Child age</div>
       <div class="opts" id="age-row">
         <div class="opt" data-value="6">6</div>
         <div class="opt" data-value="7">7</div>
@@ -124,28 +270,64 @@
       </div>
     </div>
     <div class="tweak-row">
-      <div class="lbl"><span id="tw-color">Color cues</span></div>
+      <div class="lbl" id="tw-color">Color cues</div>
       <div class="opts" id="color-row">
         <div class="opt active" data-value="none" id="tw-color-none">NONE</div>
         <div class="opt" data-value="fun" id="tw-color-fun">FUN</div>
         <div class="opt" data-value="letters" id="tw-color-letters">LETTERS</div>
       </div>
     </div>
+    <div class="tweak-row">
+      <div class="lbl">Hive theme</div>
+      <div class="opts" id="theme-row">
+        <div class="opt active" data-value="honey">HONEY</div>
+        <div class="opt" data-value="dusk">DUSK</div>
+        <div class="opt" data-value="meadow">MEADOW</div>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <div class="lbl">Motion</div>
+      <div class="opts" id="motion-row">
+        <div class="opt active" data-value="full">FULL</div>
+        <div class="opt" data-value="reduced">CALM</div>
+      </div>
+    </div>
   </div>
 
+  <!-- Overlay -->
   <div class="overlay" id="overlay">
     <div class="card" id="title-card">
+      <canvas class="hero-bee" id="hero-bee" width="264" height="220"></canvas>
       <h1 id="title-h1"><span class="acc">BEE BUZZ</span> SAYS</h1>
       <div class="sub" id="title-sub">watch the bee — then tap the letters back in order</div>
-      <div class="tweak-row" style="margin: 14px auto 4px; max-width: 320px;">
-        <div class="lbl" style="justify-content:center;"><span id="lbl-mode">Players</span></div>
-        <div class="opts" id="mode-row" style="justify-content:center;">
-          <div class="opt active" data-value="solo" id="mode-solo">1 PLAYER</div>
-          <div class="opt" data-value="coop" id="mode-coop">2P CO-OP</div>
-          <div class="opt" data-value="versus" id="mode-versus">2P VERSUS</div>
+
+      <div class="howto">
+        <div class="step">
+          <canvas class="ico" data-ico="watch" width="68" height="68"></canvas>
+          <div class="t" id="ht1">WATCH</div>
+          <div class="d" id="hd1">A bee lights up letters, one buzz each.</div>
+        </div>
+        <div class="step">
+          <canvas class="ico" data-ico="tap" width="68" height="68"></canvas>
+          <div class="t" id="ht2">REPEAT</div>
+          <div class="d" id="hd2">Tap them back in the same order.</div>
+        </div>
+        <div class="step">
+          <canvas class="ico" data-ico="grow" width="68" height="68"></canvas>
+          <div class="t" id="ht3">GROW</div>
+          <div class="d" id="hd3">Each round adds one more letter.</div>
         </div>
       </div>
-      <p id="title-p">A bee buzzes from cell to cell, lighting up a letter each time. <b>Tap the same letters in the same order</b> on the keypad. Each round adds one more. Listen — every letter has its own buzz. Three slip-ups and the swarm rests.</p>
+
+      <div class="seg-wrap">
+        <div class="seg-lbl" id="lbl-mode">Players</div>
+        <div class="seg" id="mode-row">
+          <button class="opt active" data-value="solo" id="mode-solo">1 PLAYER</button>
+          <button class="opt" data-value="coop" id="mode-coop">2P CO-OP</button>
+          <button class="opt" data-value="versus" id="mode-versus">2P VERSUS</button>
+        </div>
+      </div>
+
       <button class="big-btn" id="start-btn">START</button>
       <div class="note" id="title-note">Practice game — not a diagnosis.</div>
     </div>
