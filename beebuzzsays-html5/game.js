@@ -259,15 +259,17 @@
     ctx.restore();
   }
 
-  // Which keypad tile is currently lit, and in what colour — synced with the honeycomb.
-  // During WATCH it mirrors the flashed step (Simon-style); during INPUT it's brief tap feedback.
+  // Which keypad tile is lit, and in what colour.
+  // - A tap always lights the pressed tile (both colour modes) — "colour when you hit a key".
+  // - During WATCH the keypad mirrors the flash (Simon) ONLY when colour cues are on; with
+  //   cues off the keypad stays neutral until a key is hit.
   function keypadHighlight() {
-    if (state.phase === 'watch' && state.flashCell >= 0 && state.watchIndex >= 0 && state.seq[state.watchIndex]) {
-      const step = state.seq[state.watchIndex];
-      return { letter: step.letter, color: stepColor(step) };
-    }
     if (state.tapTimer > 0 && state.tapStep) {
       return { letter: state.tapStep.letter, color: stepColor(state.tapStep) };
+    }
+    if (colorOn() && state.phase === 'watch' && state.flashCell >= 0 && state.watchIndex >= 0 && state.seq[state.watchIndex]) {
+      const step = state.seq[state.watchIndex];
+      return { letter: step.letter, color: stepColor(step) };
     }
     return null;
   }
@@ -279,14 +281,21 @@
       const isHi = !!hi && t.letter === hi.letter;
       const baseFill = colorOn() ? letterColor(t.letter) : '#fff2c4';
       const fill = isHi ? hi.color : baseFill;
-      const alpha = isHi || active ? 1 : 0.5;
+      // Fill intensity: a lit tile pops to full. Otherwise colour-ON tiles are toned
+      // down on the INPUT keypad (full colour stays on the watch/secondary display),
+      // while neutral cream stays solid while inputting.
+      let fillAlpha;
+      if (isHi) fillAlpha = 1;
+      else if (colorOn()) fillAlpha = active ? 0.55 : 0.5;
+      else fillAlpha = active ? 1 : 0.5;
+      const labelAlpha = isHi ? 1 : (active ? 1 : 0.5); // keep borders + letters crisp on input
       const r = 10;
       ctx.save();
       if (isHi) { ctx.shadowColor = hi.color; ctx.shadowBlur = 20; }
       roundRect(t.x, t.y, t.w, t.h, r);
-      ctx.globalAlpha = alpha; ctx.fillStyle = fill; ctx.fill();
+      ctx.globalAlpha = fillAlpha; ctx.fillStyle = fill; ctx.fill();
       ctx.restore();
-      ctx.globalAlpha = alpha;
+      ctx.globalAlpha = labelAlpha;
       ctx.lineWidth = isHi ? 4 : 3; ctx.strokeStyle = isHi ? '#fff6df' : '#7a531a'; ctx.stroke();
       ctx.fillStyle = isHi ? inkOn(fill) : (colorOn() ? '#241500' : '#3a2410');
       ctx.font = `bold ${Math.round(t.h * 0.6)}px "Lilita One", sans-serif`;
