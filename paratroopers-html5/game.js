@@ -81,8 +81,14 @@
     elapsed: 0,
     levelClearTimer: null,
     keys: {},
-    mouse: { x: 0, y: 0 }
+    mouse: { x: 0, y: 0 },
+    fireCooldown: 0,
+    metrics: { shots: 0, badHits: 0, friendlyFire: 0, rescues: 0 }
   };
+
+  // Mirror pairs powering the look-alike (reversal) confusion metric.
+  const MIRROR = { b: 'd', d: 'b', p: 'q', q: 'p' };
+  function resetMetrics() { state.metrics = { shots: 0, badHits: 0, friendlyFire: 0, rescues: 0 }; }
 
   const rand = (min, max) => Math.random() * (max - min) + min;
   const randInt = (min, max) => Math.floor(rand(min, max + 1));
@@ -91,7 +97,8 @@
   // ===== Tweaks (editable from the gear panel / hub edit-mode) =====
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "pace": "normal",
-    "colorCues": true
+    "colorCues": true,
+    "theme": "day"
   }/*EDITMODE-END*/;
 
   // Color cues are a *visual aid* — bad/good is shown by colour. Off by intent
@@ -164,6 +171,7 @@
   // ===== Game flow triggers =====
   function startGame() {
     clearPendingLevelTransition();
+    resetMetrics();
     state.score = 0;
     state.level = 1;
     state.lives = state.maxLives;
@@ -205,7 +213,7 @@
     
     // Update overlays
     document.getElementById('rule-level-num').textContent = state.level;
-    document.getElementById('rule-text').innerHTML = `⚡ ${state.activeRule.desc} ⚡`;
+    document.getElementById('rule-legend').innerHTML = buildLegend(state.activeRule);
     document.getElementById('overlay-rule').classList.remove('hidden');
     
     updateHUD();
@@ -218,6 +226,8 @@
   }
 
   function fireTurret() {
+    if (state.fireCooldown > 0) return; // gentle cadence: read, then shoot
+    state.fireCooldown = 0.16;
     const barrelX = state.turret.x + Math.cos(state.turret.angle) * state.turret.barrelLength;
     const barrelY = state.turret.y + Math.sin(state.turret.angle) * state.turret.barrelLength;
     
@@ -230,6 +240,7 @@
       color: '#ffd24d'
     });
     
+    state.metrics.shots++;
     // Trigger sound if helper loaded
     window.MathArcadeAudio?.event('SHOOT');
     
@@ -306,8 +317,14 @@
 
     const allPayloadsResolved = state.spawners.parasRemaining <= 0;
     const noActiveParatroopers = state.paratroopers.length === 0;
-    if (!allPayloadsResolved || !noActiveParatroopers) return;
-    
+    // Anti-softlock: once every payload has been launched (no more drops coming)
+    // and the field is empty, the level is over even if the remaining-counter
+    // drifted out of sync — otherwise passive play could stall forever.
+    const spawnsExhausted = state.spawners.parasSpawned >= state.spawners.parasTotal;
+    const fieldEmpty = state.helicopters.length === 0 && state.paratroopers.length === 0;
+    const cleared = (allPayloadsResolved && noActiveParatroopers) || (spawnsExhausted && fieldEmpty);
+    if (!cleared) return;
+
     state.phase = 'level_clear';
     state.lasers = [];
     state.helicopters = [];
@@ -366,6 +383,20 @@
     document.getElementById('over-score').textContent = state.score;
     document.getElementById('over-level').textContent = state.level;
     document.getElementById('over-best').textContent = state.best;
+    // Look-alike (reversal) insight: how many connected shots hit the wrong, mirror letter.
+    const m = state.metrics;
+    const connected = m.badHits + m.friendlyFire;
+    const pct = connected ? Math.round((m.friendlyFire / connected) * 100) : 0;
+    const mixEl = document.getElementById('over-mix');
+    const barEl = document.getElementById('over-mix-bar');
+    const capEl = document.getElementById('over-cap');
+    if (mixEl) mixEl.textContent = m.friendlyFire;
+    if (barEl) barEl.style.width = pct + '%';
+    if (capEl) {
+      capEl.textContent = m.friendlyFire === 0
+        ? `Zero look-alike mix-ups — you read every letter. ${m.rescues} rescued.`
+        : `${pct}% of your hits struck the look-alike letter (b↔d, p↔q) by mistake. ${m.rescues} rescued. Fewer mix-ups is sharper.`;
+    }
     document.getElementById('overlay-over').classList.remove('hidden');
     
     updateHUD();
@@ -384,6 +415,7 @@
       state.turret.recoil -= dt * 25;
       if (state.turret.recoil < 0) state.turret.recoil = 0;
     }
+    if (state.fireCooldown > 0) state.fireCooldown -= dt;
 
     if (state.phase === 'playing') {
       // 1. Spawners updates
@@ -501,6 +533,7 @@
           }
           
           // Bonus points
+          state.metrics.rescues++;
           state.score += 20;
           showFloaterAt(p.x, p.y - 25, `RESCUE +20!`, '#5cd97a');
           window.MathArcadeAudio?.event('SOLVED');
@@ -641,10 +674,12 @@
     }
     
     if (isBad) {
+      state.metrics.badHits++;
       state.score += 50;
       showFloaterAt(h.x, h.y - 25, `BOOM +50!`, '#5cd97a');
       window.MathArcadeAudio?.event('SOLVED');
     } else {
+      state.metrics.friendlyFire++;
       state.score = Math.max(0, state.score - 30);
       state.lives--;
       showFloaterAt(h.x, h.y - 25, `RESCUE DAMAGE! −1♥ −30`, '#ff5c7c');
@@ -687,12 +722,14 @@
     const combo = p.status === 'plunge';
 
     if (isBad) {
+      state.metrics.badHits++;
       const pts = combo ? 25 : 10;
       state.score += pts;
       showFloaterAt(p.x, p.y - 25, combo ? `MID-AIR COMBO +${pts}!` : `HIT +10`, '#ffd24d');
       if (combo) burstStars(p.x, p.y);
       window.MathArcadeAudio?.event('SOLVED');
     } else {
+      state.metrics.friendlyFire++;
       state.score = Math.max(0, state.score - 15);
       state.lives--;
       showFloaterAt(p.x, p.y - 25, `FRIENDLY FIRE! −1♥ −15`, '#ff5c7c');
@@ -1005,30 +1042,44 @@
     state.floaters.push({ x, y, text, color, t: 0, dur: 1.0 });
   }
 
+  // ===== Mission legend (visual rule — replaces the old truncated RULE badge) =====
+  function glyphHTML(letter, kind, cls) { return `<span class="glyph ${kind} ${cls || ''}">${letter}</span>`; }
+  function ruleTokens(rule, which) {
+    if (!rule) return [];
+    if (rule.type === 'para') return [{ letter: which === 'shoot' ? rule.shoot : rule.save, entity: 'trooper' }];
+    if (rule.type === 'heli') return [{ letter: which === 'shoot' ? rule.shoot : rule.save, entity: 'chopper' }];
+    if (which === 'shoot') return [{ letter: rule.shootPara, entity: 'trooper' }, { letter: rule.shootHeli, entity: 'chopper' }];
+    return [{ letter: rule.savePara, entity: 'trooper' }, { letter: rule.saveHeli, entity: 'chopper' }];
+  }
+  function entityLabel(toks) {
+    const ents = [...new Set(toks.map(t => t.entity))];
+    return ents.map(e => e === 'chopper' ? 'helicopters' : 'parachute troopers').join(' & ');
+  }
+  function buildLegend(rule) {
+    const sh = ruleTokens(rule, 'shoot'), sv = ruleTokens(rule, 'save');
+    const shG = sh.map(t => glyphHTML(t.letter, 'shoot', 'lbig')).join('');
+    const svG = sv.map(t => glyphHTML(t.letter, 'save', 'lbig')).join('');
+    return `
+      <div class="lcol shoot"><div class="lhead">🎯 SHOOT</div><div class="ltokens">${shG}</div><div class="ldesc">these ${entityLabel(sh)} — zap them</div></div>
+      <div class="lcol save"><div class="lhead">🛟 SAVE</div><div class="ltokens">${svG}</div><div class="ldesc">let these land &amp; reach the truck</div></div>`;
+  }
+  function updateMissionBar() {
+    const el = document.getElementById('mission');
+    if (!el) return;
+    if (state.phase !== 'playing' || !state.activeRule) { el.classList.remove('show'); return; }
+    const sh = ruleTokens(state.activeRule, 'shoot').map(t => glyphHTML(t.letter, 'shoot')).join('');
+    const sv = ruleTokens(state.activeRule, 'save').map(t => glyphHTML(t.letter, 'save')).join('');
+    el.innerHTML = `<div class="m-grp shoot"><span class="m-verb">SHOOT</span>${sh}</div><div class="m-div"></div><div class="m-grp save"><span class="m-verb">SAVE</span>${sv}</div>`;
+    el.classList.add('show');
+  }
+
   function updateHUD() {
-    document.getElementById('hp').textContent = '♥'.repeat(Math.max(0, state.lives));
+    document.getElementById('hp').textContent = '♥'.repeat(Math.max(0, state.lives)) || '–';
     document.getElementById('score').textContent = state.score;
     document.getElementById('level').textContent = state.level;
-    
     const parasLeftEl = document.getElementById('paras-left');
-    if (parasLeftEl) {
-      parasLeftEl.textContent = Math.max(0, state.spawners.parasRemaining);
-    }
-    
-    const ruleEl = document.getElementById('rule');
-    if (state.phase === 'level_clear') {
-      ruleEl.textContent = 'LEVEL CLEAR';
-      return;
-    }
-    if (state.activeRule) {
-      if (state.activeRule.type === 'para') {
-        ruleEl.textContent = `SHOOT ${state.activeRule.shoot}`;
-      } else if (state.activeRule.type === 'heli') {
-        ruleEl.textContent = `SHOOT HELI ${state.activeRule.shoot}`;
-      } else {
-        ruleEl.textContent = `SHOOT ${state.activeRule.shootPara} & ${state.activeRule.shootHeli}`;
-      }
-    }
+    if (parasLeftEl) parasLeftEl.textContent = Math.max(0, state.spawners.parasRemaining);
+    updateMissionBar();
   }
 
   // ===== Rendering / Drawing =====
@@ -1036,6 +1087,7 @@
     drawBg();
     drawClouds();
     drawRescueTrucks();
+    drawDangerMeters();
     drawBadPiles();
     drawTurret();
     drawLasers();
@@ -1043,23 +1095,68 @@
     drawParatroopers();
     drawParticles();
     drawFloaters();
-    drawRuleBanner();
     drawLevelClearBanner();
   }
 
+  // Per-side sabotage threat: a rising red ground glow on the threatened side,
+  // with a flashing warning once 3+ bad troopers have piled up (4 = base lost).
+  function drawDangerMeters() {
+    if (!(state.phase === 'playing' || state.phase === 'level_clear')) return;
+    const side = (count, x0, x1, labelX) => {
+      if (count <= 0) return;
+      const frac = Math.min(1, count / 4);
+      const danger = count >= 3;
+      const flash = danger ? (Math.sin(state.elapsed * 10) * 0.5 + 0.5) : 1;
+      const h = 10 + frac * 30;
+      const gx0 = Math.min(x0, x1), gw = Math.abs(x1 - x0);
+      const grad = ctx.createLinearGradient(0, H - 32 - h, 0, H - 32);
+      grad.addColorStop(0, 'rgba(255,93,108,0)');
+      grad.addColorStop(1, `rgba(255,93,108,${(0.16 + frac * 0.34) * flash})`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(gx0, H - 32 - h, gw, h);
+      if (danger) {
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#7a0d18'; ctx.lineWidth = 3;
+        ctx.font = 'bold 13px "Lilita One", sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        const txt = `⚠ SABOTAGE ${count}/4`;
+        ctx.strokeText(txt, labelX, H - 32 - h - 6);
+        ctx.fillText(txt, labelX, H - 32 - h - 6);
+      }
+    };
+    side(state.leftPile.length, 0, state.turret.x - 30, state.turret.x * 0.5);
+    side(state.rightPile.length, state.turret.x + 30, W, state.turret.x + (W - state.turret.x) * 0.5);
+  }
+
   function drawBg() {
-    // Premium sky-to-grass cartoon gradient
+    const dusk = TWEAKS.theme === 'dusk';
     const skyG = ctx.createLinearGradient(0, 0, 0, H);
-    skyG.addColorStop(0, '#7ad1ff');
-    skyG.addColorStop(0.7, '#cfe0ff');
-    skyG.addColorStop(0.85, '#cfe0ff');
-    skyG.addColorStop(0.85, '#5cb85c');
-    skyG.addColorStop(1, '#2e8a3e');
+    if (dusk) {
+      skyG.addColorStop(0, '#3a2f6e');
+      skyG.addColorStop(0.45, '#6d5aa0');
+      skyG.addColorStop(0.7, '#e88f6a');
+      skyG.addColorStop(0.85, '#e88f6a');
+      skyG.addColorStop(0.85, '#3c6e3a');
+      skyG.addColorStop(1, '#234e26');
+    } else {
+      skyG.addColorStop(0, '#7ad1ff');
+      skyG.addColorStop(0.7, '#cfe0ff');
+      skyG.addColorStop(0.85, '#cfe0ff');
+      skyG.addColorStop(0.85, '#5cb85c');
+      skyG.addColorStop(1, '#2e8a3e');
+    }
     ctx.fillStyle = skyG;
     ctx.fillRect(0, 0, W, H);
-    
-    // Draw ground lines
-    ctx.strokeStyle = 'rgba(26,26,20,0.12)';
+
+    // soft sun / moon glow
+    const gx = W * 0.78, gy = H * 0.16, gr = Math.min(W, H) * 0.55;
+    const glow = ctx.createRadialGradient(gx, gy, 4, gx, gy, gr);
+    glow.addColorStop(0, dusk ? 'rgba(255,224,170,0.5)' : 'rgba(255,255,255,0.55)');
+    glow.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+    // horizon line
+    ctx.strokeStyle = 'rgba(26,26,20,0.14)';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(0, H - 32);
@@ -1167,41 +1264,22 @@
 
   function drawBadPiles() {
     ctx.save();
-    ctx.fillStyle = '#ff5c7c'; // bad paratrooper distinct red suits
     ctx.strokeStyle = '#1a1a14';
-    ctx.lineWidth = 2.5;
-
-    // Left stack
-    for (let i = 0; i < state.leftPile.length; i++) {
-      const p = state.leftPile[i];
+    ctx.lineWidth = 2;
+    const drawSab = (p) => {
       const py = p.y ?? H - 32 - 6;
-      ctx.beginPath();
-      ctx.arc(p.x, py, 6, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-      
-      // draw their tiny letter to show they are bad
-      ctx.fillStyle = '#fff';
+      // little red-suited saboteur figure (clearer than a bare dot)
+      ctx.fillStyle = '#ff5d6c';
+      ctx.beginPath(); ctx.roundRect(p.x - 6, py - 4, 12, 12, 3); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#ffd9b0'; // head
+      ctx.beginPath(); ctx.arc(p.x, py - 7, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fff'; // stamped letter so you can still read what landed
       ctx.font = 'bold 8px "Lilita One", sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(p.letter, p.x, py);
-      ctx.fillStyle = '#ff5c7c';
-    }
-
-    // Right stack
-    for (let i = 0; i < state.rightPile.length; i++) {
-      const p = state.rightPile[i];
-      const py = p.y ?? H - 32 - 6;
-      ctx.beginPath();
-      ctx.arc(p.x, py, 6, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-      
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 8px "Lilita One", sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(p.letter, p.x, py);
-      ctx.fillStyle = '#ff5c7c';
-    }
-
+      ctx.fillText(p.letter, p.x, py + 2);
+    };
+    for (const p of state.leftPile) drawSab(p);
+    for (const p of state.rightPile) drawSab(p);
     ctx.restore();
   }
 
@@ -1563,9 +1641,10 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    
-    update(dt);
-    draw();
+
+    // Resilience: one bad frame should never kill the whole game loop.
+    try { update(dt); draw(); }
+    catch (err) { console.error('Paratroopers loop error:', err); }
     requestAnimationFrame(loop);
   }
 
@@ -1592,6 +1671,7 @@
     };
     wire('pace-row', 'pace', false);
     wire('color-row', 'colorCues', true);
+    wire('theme-row', 'theme', false);
     const gear = document.getElementById('gear-btn');
     const close = document.getElementById('tweaks-close');
     gear?.addEventListener('click', () => {
@@ -1613,6 +1693,7 @@
   try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (e) {}
 
   // Initialize
+  document.getElementById('title-legend').innerHTML = buildLegend(LEVEL_DATA[0]);
   updateHUD();
   requestAnimationFrame(loop);
 })();
