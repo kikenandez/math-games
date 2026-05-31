@@ -9,6 +9,17 @@
 
   const map = {
     fr: {
+      "Settings": "Réglages", "Pace": "Rythme", "CALM": "CALME", "FAST": "RAPIDE",
+      "how fast paratroopers arrive": "vitesse d’arrivée des parachutistes",
+      "Color cues": "Couleurs",
+      "off = read the letter, not the color": "non = lis la lettre, pas la couleur",
+      "Sky": "Ciel", "DAY": "JOUR", "DUSK": "SOIR",
+      "spot the look-alike letter · b d p q": "repère la lettre sosie · b d p q",
+      "Look-alike mistakes": "Confusions de sosies",
+      "Times you fired on the mirror letter (b↔d, p↔q) instead of the target. Fewer is sharper.": "Combien de fois tu as tiré sur la lettre miroir (b↔d, p↔q) au lieu de la cible. Moins = plus précis.",
+      "<span class=\"acc\">BASE</span> DESTROYED": "<span class=\"acc\">BASE</span> DÉTRUITE",
+      "Aim your turret and shoot down <b>only the target letter</b>. Let the look-alikes land safely — they'll run to the <b>rescue truck</b> for bonus points.": "Vise avec ta tourelle et abats <b>seulement la lettre cible</b>. Laisse les sosies atterrir — ils courront vers le <b>camion de secours</b> pour des points bonus.",
+      "Let <b>4</b> bad troopers pile up on one side, or let one hit a rescue truck, and your base is gone.": "Laisse <b>4</b> mauvais parachutistes s’empiler d’un côté, ou laisse l’un d’eux toucher un camion de secours, et ta base est perdue.",
       "Algebra deduction": "Déduction algébrique",
       "Hop to the answer": "Saute vers la réponse",
       "Hop the pyramid": "Saute la pyramide",
@@ -271,6 +282,17 @@
       'Next briefing incoming': 'Prochaine mission'
     },
     es: {
+      "Settings": "Ajustes", "Pace": "Ritmo", "CALM": "CALMA", "FAST": "RÁPIDO",
+      "how fast paratroopers arrive": "qué tan rápido llegan los paracaidistas",
+      "Color cues": "Colores",
+      "off = read the letter, not the color": "no = lee la letra, no el color",
+      "Sky": "Cielo", "DAY": "DÍA", "DUSK": "NOCHE",
+      "spot the look-alike letter · b d p q": "encuentra la letra parecida · b d p q",
+      "Look-alike mistakes": "Errores de parecidas",
+      "Times you fired on the mirror letter (b↔d, p↔q) instead of the target. Fewer is sharper.": "Cuántas veces disparaste a la letra espejo (b↔d, p↔q) en vez del objetivo. Menos = más preciso.",
+      "<span class=\"acc\">BASE</span> DESTROYED": "<span class=\"acc\">BASE</span> DESTRUIDA",
+      "Aim your turret and shoot down <b>only the target letter</b>. Let the look-alikes land safely — they'll run to the <b>rescue truck</b> for bonus points.": "Apunta con tu torreta y derriba <b>solo la letra objetivo</b>. Deja aterrizar a las parecidas — correrán al <b>camión de rescate</b> para puntos extra.",
+      "Let <b>4</b> bad troopers pile up on one side, or let one hit a rescue truck, and your base is gone.": "Deja que <b>4</b> paracaidistas malos se amontonen en un lado, o que uno golpee un camión de rescate, y tu base se acaba.",
       "Algebra deduction": "Deducción algebraica",
       "Hop to the answer": "Salta a la respuesta",
       "Hop the pyramid": "Salta la pirámide",
