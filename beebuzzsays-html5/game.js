@@ -560,22 +560,27 @@
   }
 
   function saveMetrics() {
+    const m = activePlayer().metrics;
     const summary = {
       date: new Date().toISOString(), lang: LANG, age: TWEAKS.age || null,
-      difficulty: TWEAKS.difficulty, colorCues: colorOn(),
-      level: state.level, score: activePlayer().score,
-      rounds: metrics().rounds, correct: metrics().correct, strikes: activePlayer().strikes,
-      maxSpan: metrics().maxSpan, spanAttempts: metrics().spanAttempts,
-      mirrorConfusions: metrics().mirrorConfusions, wrongTaps: metrics().wrongTaps,
-      reversalRate: metrics().wrongTaps ? +(metrics().mirrorConfusions / metrics().wrongTaps).toFixed(3) : 0,
+      difficulty: TWEAKS.difficulty, colorCues: colorOn(), mode: session.mode,
+      level: session.boardRadius, score: activePlayer().score,
+      rounds: m.rounds, correct: m.correct, strikes: activePlayer().strikes,
+      maxSpan: m.maxSpan, spanAttempts: m.spanAttempts,
+      mirrorConfusions: m.mirrorConfusions, wrongTaps: m.wrongTaps,
+      reversalRate: m.wrongTaps ? +(m.mirrorConfusions / m.wrongTaps).toFixed(3) : 0,
     };
-    try {
-      const key = 'dyslexiaScreening.beebuzzsays';
-      const store = JSON.parse(localStorage.getItem(key) || '{"history":[]}');
-      store.lastSession = summary;
-      store.history = (store.history || []).concat([summary]).slice(-50);
-      localStorage.setItem(key, JSON.stringify(store));
-    } catch (e) { /* storage unavailable — game still playable */ }
+    // Only solo runs feed the dyslexia-screening history — a 2P session is not a
+    // valid single-child sample. Co-op/versus are tagged but not persisted there.
+    if (session.mode === 'solo') {
+      try {
+        const key = 'dyslexiaScreening.beebuzzsays';
+        const store = JSON.parse(localStorage.getItem(key) || '{"history":[]}');
+        store.lastSession = summary;
+        store.history = (store.history || []).concat([summary]).slice(-50);
+        localStorage.setItem(key, JSON.stringify(store));
+      } catch (e) { /* storage unavailable — game still playable */ }
+    }
     return summary;
   }
   window.DyslexiaScreening = window.DyslexiaScreening || {};
