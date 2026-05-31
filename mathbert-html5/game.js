@@ -62,6 +62,7 @@
   // ===== Tweaks =====
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
+    "theme": "night",
     "enemySpeed": 1.0,
     "hints": "on"
   }/*EDITMODE-END*/;
@@ -274,9 +275,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing' && !state.paused) update(dt);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing' && !state.paused) update(dt);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Math*bert loop error:', err); }
     requestAnimationFrame(loop);
   }
   function updateIdle(dt) { state.elapsed += dt * 0.5; }
@@ -601,7 +604,8 @@
   // ===== HUD =====
   function updateHUD() {
     document.getElementById('score').textContent = state.score;
-    document.getElementById('lives').textContent = '♥'.repeat(state.lives);
+    const pips = document.querySelectorAll('#lives .pip');
+    pips.forEach((p, i) => p.classList.toggle('spent', i >= state.lives));
     document.getElementById('level').textContent = state.level;
   }
   function updateBottom() {
@@ -639,22 +643,30 @@
     ctx.restore();
   }
   function drawBackdrop() {
+    const night = TWEAKS.theme !== 'dusk' && TWEAKS.theme !== 'day';
+    const dusk = TWEAKS.theme === 'dusk';
+    const sky = night ? ['#1a1530', '#241b40', '#1a1530']
+              : dusk ? ['#3a2d63', '#7a4a8a', '#ee8a6a']
+              : ['#9fd8f0', '#bfe6f5', '#d8eadf'];
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#1a1530');
-    g.addColorStop(0.6, '#241b40');
-    g.addColorStop(1, '#1a1530');
+    g.addColorStop(0, sky[0]);
+    g.addColorStop(0.6, sky[1]);
+    g.addColorStop(1, sky[2]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    // Stars
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    const seed = 12345;
-    for (let i = 0; i < 60; i++) {
-      const sx = (i * 9973 + seed) % W;
-      const sy = (i * 7919 + seed * 3) % (H * 0.7);
-      const tw = (Math.sin(state.elapsed * 1.5 + i * 0.6) + 1) * 0.5;
-      ctx.globalAlpha = 0.25 + tw * 0.45;
-      ctx.fillRect(sx, sy, 2, 2);
+    // Stars — bright at night, dim at dusk, hidden by day
+    const starAlpha = night ? 1 : dusk ? 0.4 : 0;
+    if (starAlpha > 0) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      const seed = 12345;
+      for (let i = 0; i < 60; i++) {
+        const sx = (i * 9973 + seed) % W;
+        const sy = (i * 7919 + seed * 3) % (H * 0.7);
+        const tw = (Math.sin(state.elapsed * 1.5 + i * 0.6) + 1) * 0.5;
+        ctx.globalAlpha = (0.25 + tw * 0.45) * starAlpha;
+        ctx.fillRect(sx, sy, 2, 2);
+      }
+      ctx.globalAlpha = 1;
     }
-    ctx.globalAlpha = 1;
   }
   function drawPyramid() {
     const m = getMetrics();
@@ -1049,6 +1061,15 @@
         persistTweaks();
       });
     });
+    const themeRow = document.getElementById('theme-row');
+    if (themeRow) themeRow.querySelectorAll('.opt').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.value === TWEAKS.theme);
+      opt.addEventListener('click', () => {
+        TWEAKS.theme = opt.dataset.value;
+        themeRow.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o === opt));
+        persistTweaks();
+      });
+    });
     state.showHints = TWEAKS.hints === 'on';
     const slider = (id, key, valId, fmt) => {
       const el = document.getElementById(id);
@@ -1093,12 +1114,18 @@
   state.player.x = ap.x; state.player.y = ap.y;
   updateHUD();
   updateBottom();
+  draw(); // paint one frame immediately so the pyramid is never blank before rAF starts
   requestAnimationFrame(loop);
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       lastTime = performance.now() - 16;
+      try { draw(); } catch (e) {}
       requestAnimationFrame(loop);
     }
+  });
+  window.addEventListener('focus', () => {
+    lastTime = performance.now() - 16;
+    try { draw(); } catch (e) {}
   });
 })();

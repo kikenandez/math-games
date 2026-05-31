@@ -45,6 +45,7 @@
 
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
+    "theme": "day",
     "trafficSpeed": 1.0,
     "riverSpeed": 1.0,
     "startTime": 60
@@ -310,7 +311,8 @@
 
   function updateHUD() {
     document.getElementById('score').textContent = state.score;
-    document.getElementById('lives').textContent = '❤'.repeat(state.lives);
+    const pips = document.querySelectorAll('#lives .pip');
+    pips.forEach((p, i) => p.classList.toggle('spent', i >= state.lives));
     document.getElementById('round').textContent = state.round;
   }
   function updateCountdownBanner() {
@@ -389,9 +391,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing' && !state.paused) update(dt);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing' && !state.paused) update(dt);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Math Frogger loop error:', err); }
     requestAnimationFrame(loop);
   }
   function updateIdle(dt) {
@@ -778,11 +782,21 @@
     if (state.paused) drawPaused();
     ctx.restore();
   }
+  function themeColors() {
+    if (TWEAKS.theme === 'night') {
+      return { sky: ['#16213f', '#26284e', '#1a3326'], cloud: 'rgba(200,210,235,0.45)', finish: '#2a5a2a', river: '#274a78', median: '#3a6a3a', road: '#26262e', start: '#3a6a3a' };
+    }
+    if (TWEAKS.theme === 'dusk') {
+      return { sky: ['#5a6db0', '#e8a878', '#e8c088'], cloud: 'rgba(255,240,220,0.85)', finish: '#2e6a3a', river: '#3a6a9a', median: '#5a9a52', road: '#2e2e34', start: '#5a9a52' };
+    }
+    return { sky: ['#8acff5', '#a8e0f5', '#cff0d8'], cloud: 'rgba(255,255,255,0.85)', finish: '#3a7a3a', river: '#4a8acf', median: '#6cc26b', road: '#3a3a3e', start: '#6cc26b' };
+  }
   function drawBackdrop() {
+    const tc = themeColors();
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#8acff5'); g.addColorStop(0.5, '#a8e0f5'); g.addColorStop(1, '#cff0d8');
+    g.addColorStop(0, tc.sky[0]); g.addColorStop(0.5, tc.sky[1]); g.addColorStop(1, tc.sky[2]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillStyle = tc.cloud;
     ctx.strokeStyle = '#1c2a18'; ctx.lineWidth = 2;
     const clouds = [{x:80,y:50,s:0.8},{x:360,y:30,s:1},{x:720,y:60,s:0.7},{x:1100,y:40,s:0.9}];
     const drift = (state.elapsed * 8) % 1400;
@@ -801,15 +815,16 @@
   }
   function drawGrid() {
     const m = getMetrics();
+    const tc = themeColors();
     for (let r = 0; r < ROW_COUNT; r++) {
       const type = rowToType(r);
       const y = m.gridY + r * m.rowH;
       let col;
-      if (type === 'finish') col = '#3a7a3a';
-      else if (type === 'river') col = '#4a8acf';
-      else if (type === 'median') col = '#6cc26b';
-      else if (type === 'road') col = '#3a3a3e';
-      else col = '#6cc26b';
+      if (type === 'finish') col = tc.finish;
+      else if (type === 'river') col = tc.river;
+      else if (type === 'median') col = tc.median;
+      else if (type === 'road') col = tc.road;
+      else col = tc.start;
       ctx.fillStyle = col;
       ctx.fillRect(m.gridX, y, m.gridW, m.rowH);
     }
@@ -1214,6 +1229,15 @@
         persistTweaks();
       });
     });
+    const themeRow = document.getElementById('theme-row');
+    if (themeRow) themeRow.querySelectorAll('.opt').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.value === TWEAKS.theme);
+      opt.addEventListener('click', () => {
+        TWEAKS.theme = opt.dataset.value;
+        themeRow.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o === opt));
+        persistTweaks();
+      });
+    });
     const slider = (id, key, valId, fmt) => {
       const el = document.getElementById(id);
       const val = document.getElementById(valId);
@@ -1257,6 +1281,7 @@
   updateHUD();
   updateCountdownBanner();
   updateBottomEq();
+  draw(); // paint one frame immediately so the scene is never blank before rAF starts
   requestAnimationFrame(loop);
 
   setInterval(() => {
@@ -1269,7 +1294,12 @@
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       lastTime = performance.now() - 16;
+      try { draw(); } catch (e) {}
       requestAnimationFrame(loop);
     }
+  });
+  window.addEventListener('focus', () => {
+    lastTime = performance.now() - 16;
+    try { draw(); } catch (e) {}
   });
 })();

@@ -323,7 +323,34 @@
       "type a number · <kbd>↵</kbd> submit · <kbd>P</kbd> pause": "saisissez un nombre · <kbd>↵</kbd> valider · <kbd>P</kbd> pause",
       "Type the answer that matches a flying box, then press <b>Enter</b>!": "Saisissez la réponse qui correspond à une caisse volante, puis appuyez sur <b>Entrée</b> !",
       "Don't let a box hit the ground — each landing costs a <b>life</b>. The truck speeds up as you climb levels. Adjust pace, gravity &amp; difficulty in <b>⚙ Settings</b>.": "Ne laissez pas une caisse toucher le sol — chaque atterrissage coûte une <b>vie</b>. Le camion accélère à mesure que vous montez en niveau. Réglez le rythme, la gravité &amp; la difficulté dans <b>⚙ Réglages</b>.",
-      "Keys — <kbd>0–9</kbd> type · <kbd>−</kbd> negative · <kbd>⌫</kbd> delete · <kbd>↵</kbd> submit · <kbd>P</kbd> pause": "Touches — <kbd>0–9</kbd> saisir · <kbd>−</kbd> négatif · <kbd>⌫</kbd> effacer · <kbd>↵</kbd> valider · <kbd>P</kbd> pause"
+      "Keys — <kbd>0–9</kbd> type · <kbd>−</kbd> negative · <kbd>⌫</kbd> delete · <kbd>↵</kbd> submit · <kbd>P</kbd> pause": "Touches — <kbd>0–9</kbd> saisir · <kbd>−</kbd> négatif · <kbd>⌫</kbd> effacer · <kbd>↵</kbd> valider · <kbd>P</kbd> pause",
+      // Math*bert — redesigned chrome
+      "Visit every tile · balance the math tiles": "Visitez chaque tuile · équilibrez les tuiles mathématiques",
+      "Clear the pyramid": "Terminez la pyramide",
+      "Target hints": "Indices de cible",
+      "hop the pyramid · balance every math tile to zero": "sautez sur la pyramide · ramenez chaque tuile mathématique à zéro",
+      "1 · HOP": "1 · SAUTEZ",
+      "2 · BALANCE": "2 · ÉQUILIBREZ",
+      "3 · DODGE": "3 · ESQUIVEZ",
+      "Land on every tile, Q*bert-style, to light it up.": "Atterrissez sur chaque tuile, façon Q*bert, pour l'allumer.",
+      "Orange tiles hold a value. Hop up −1, down +1 → reach 0.": "Les tuiles orange ont une valeur. Sautez en haut −1, en bas +1 → atteignez 0.",
+      "Red balls tumble down; a snake hatches up top and chases.": "Des boules rouges dévalent ; un serpent éclôt en haut et vous poursuit.",
+      "Clear every tile <b>and</b> zero every math tile to finish the level. Knock a value past zero and it goes <b style=\"color:#ff5c7c\">unbalanced</b> — hop the other way to fix it.": "Terminez chaque tuile <b>et</b> ramenez chaque tuile mathématique à zéro pour finir le niveau. Faites passer une valeur sous zéro et elle devient <b style=\"color:#ff5c7c\">déséquilibrée</b> — sautez dans l'autre sens pour corriger.",
+      "Keys — <kbd>↑</kbd> NE · <kbd>←</kbd> NW · <kbd>→</kbd> SE · <kbd>↓</kbd> SW &nbsp;(or <kbd>WASD</kbd>) · <kbd>P</kbd> pause": "Touches — <kbd>↑</kbd> NE · <kbd>←</kbd> NO · <kbd>→</kbd> SE · <kbd>↓</kbd> SO &nbsp;(ou <kbd>WASD</kbd>) · <kbd>P</kbd> pause",
+      // Math Frogger — redesigned chrome
+      "Time Left": "Temps restant",
+      "Eat the rule · fill the belly": "Mangez selon la règle · remplissez le ventre",
+      "Traffic speed": "Vitesse du trafic",
+      "snack the numbers that fit the rule — beat the clock": "grignotez les nombres qui suivent la règle — battez le chrono",
+      "EAT EVEN": "MANGE PAIRS",
+      "1 · READ": "1 · LISEZ",
+      "2 · HOP": "2 · SAUTEZ",
+      "3 · LEAP": "3 · BONDISSEZ",
+      "Each round sets a rule: even, odd, multiples, primes.": "Chaque manche fixe une règle : pairs, impairs, multiples, premiers.",
+      "Cross road & river to eat matches. Wrong = −2s.": "Traversez route & rivière pour manger les bons nombres. Erreur = −2s.",
+      "Fill the belly, then jump to the lily pad to win.": "Remplissez le ventre, puis sautez sur le nénuphar pour gagner.",
+      "Grab glowing gold <b>clocks</b> for bonus seconds, and stay sharp — the rule <b>swaps mid-round</b>. Cars squash, water drowns. Tune pace &amp; difficulty in <b>⚙ Settings</b>.": "Attrapez les <b>horloges</b> dorées qui brillent pour des secondes bonus, et restez vif — la règle <b>change en pleine manche</b>. Les voitures écrasent, l'eau noie. Réglez le rythme &amp; la difficulté dans <b>⚙ Réglages</b>.",
+      "Keys — <kbd>↑↓←→</kbd> or <kbd>WASD</kbd> hop · <kbd>P</kbd> pause": "Touches — <kbd>↑↓←→</kbd> ou <kbd>WASD</kbd> sauter · <kbd>P</kbd> pause"
     },
     es: {
       "Bonus bubble": "Burbuja bonus", "Meadow": "Pradera",
@@ -640,7 +667,34 @@
       "type a number · <kbd>↵</kbd> submit · <kbd>P</kbd> pause": "escribe un número · <kbd>↵</kbd> enviar · <kbd>P</kbd> pausa",
       "Type the answer that matches a flying box, then press <b>Enter</b>!": "¡Escribe la respuesta que coincida con una caja voladora y pulsa <b>Enter</b>!",
       "Don't let a box hit the ground — each landing costs a <b>life</b>. The truck speeds up as you climb levels. Adjust pace, gravity &amp; difficulty in <b>⚙ Settings</b>.": "No dejes que una caja toque el suelo: cada aterrizaje cuesta una <b>vida</b>. El camión acelera según subes de nivel. Ajusta el ritmo, la gravedad &amp; la dificultad en <b>⚙ Ajustes</b>.",
-      "Keys — <kbd>0–9</kbd> type · <kbd>−</kbd> negative · <kbd>⌫</kbd> delete · <kbd>↵</kbd> submit · <kbd>P</kbd> pause": "Teclas — <kbd>0–9</kbd> escribir · <kbd>−</kbd> negativo · <kbd>⌫</kbd> borrar · <kbd>↵</kbd> enviar · <kbd>P</kbd> pausa"
+      "Keys — <kbd>0–9</kbd> type · <kbd>−</kbd> negative · <kbd>⌫</kbd> delete · <kbd>↵</kbd> submit · <kbd>P</kbd> pause": "Teclas — <kbd>0–9</kbd> escribir · <kbd>−</kbd> negativo · <kbd>⌫</kbd> borrar · <kbd>↵</kbd> enviar · <kbd>P</kbd> pausa",
+      // Math*bert — redesigned chrome
+      "Visit every tile · balance the math tiles": "Visita cada casilla · equilibra las casillas matemáticas",
+      "Clear the pyramid": "Completa la pirámide",
+      "Target hints": "Pistas de objetivo",
+      "hop the pyramid · balance every math tile to zero": "salta por la pirámide · equilibra cada casilla matemática a cero",
+      "1 · HOP": "1 · SALTA",
+      "2 · BALANCE": "2 · EQUILIBRA",
+      "3 · DODGE": "3 · ESQUIVA",
+      "Land on every tile, Q*bert-style, to light it up.": "Aterriza en cada casilla, al estilo Q*bert, para encenderla.",
+      "Orange tiles hold a value. Hop up −1, down +1 → reach 0.": "Las casillas naranjas tienen un valor. Salta arriba −1, abajo +1 → llega a 0.",
+      "Red balls tumble down; a snake hatches up top and chases.": "Bolas rojas caen rodando; una serpiente nace arriba y te persigue.",
+      "Clear every tile <b>and</b> zero every math tile to finish the level. Knock a value past zero and it goes <b style=\"color:#ff5c7c\">unbalanced</b> — hop the other way to fix it.": "Completa cada casilla <b>y</b> pon a cero cada casilla matemática para terminar el nivel. Si pasas un valor por debajo de cero queda <b style=\"color:#ff5c7c\">desequilibrado</b> — salta hacia el otro lado para corregirlo.",
+      "Keys — <kbd>↑</kbd> NE · <kbd>←</kbd> NW · <kbd>→</kbd> SE · <kbd>↓</kbd> SW &nbsp;(or <kbd>WASD</kbd>) · <kbd>P</kbd> pause": "Teclas — <kbd>↑</kbd> NE · <kbd>←</kbd> NO · <kbd>→</kbd> SE · <kbd>↓</kbd> SO &nbsp;(o <kbd>WASD</kbd>) · <kbd>P</kbd> pausa",
+      // Math Frogger — redesigned chrome
+      "Time Left": "Tiempo restante",
+      "Eat the rule · fill the belly": "Come según la regla · llena la barriga",
+      "Traffic speed": "Velocidad del tráfico",
+      "snack the numbers that fit the rule — beat the clock": "picotea los números que cumplen la regla — vence al reloj",
+      "EAT EVEN": "COME PARES",
+      "1 · READ": "1 · LEE",
+      "2 · HOP": "2 · SALTA",
+      "3 · LEAP": "3 · BRINCA",
+      "Each round sets a rule: even, odd, multiples, primes.": "Cada ronda fija una regla: pares, impares, múltiplos, primos.",
+      "Cross road & river to eat matches. Wrong = −2s.": "Cruza la carretera & el río para comer los correctos. Error = −2s.",
+      "Fill the belly, then jump to the lily pad to win.": "Llena la barriga y salta al nenúfar para ganar.",
+      "Grab glowing gold <b>clocks</b> for bonus seconds, and stay sharp — the rule <b>swaps mid-round</b>. Cars squash, water drowns. Tune pace &amp; difficulty in <b>⚙ Settings</b>.": "Agarra los <b>relojes</b> dorados brillantes para segundos extra, y mantente atento — la regla <b>cambia a mitad de ronda</b>. Los coches aplastan, el agua ahoga. Ajusta el ritmo &amp; la dificultad en <b>⚙ Ajustes</b>.",
+      "Keys — <kbd>↑↓←→</kbd> or <kbd>WASD</kbd> hop · <kbd>P</kbd> pause": "Teclas — <kbd>↑↓←→</kbd> o <kbd>WASD</kbd> saltar · <kbd>P</kbd> pausa"
     }
   };
 
