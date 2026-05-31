@@ -40,6 +40,7 @@
       maxLen: 'Best trail', tweaks: 'Tweaks', difficulty: 'Difficulty',
       easy: 'EASY', normal: 'NORMAL', hard: 'HARD', age: 'Child age',
       color: 'Color cues', on: 'ON', off: 'OFF', reversals: 'b/d/p/q',
+      colNone: 'NONE', colFun: 'FUN', colLetters: 'LETTERS',
       players: 'Players', modeSolo: '1 PLAYER', modeCoop: '2P CO-OP', modeVersus: '2P VERSUS', yourTurn: 'YOUR TURN', team: 'Team', pass: 'PASS TO', tap: 'CONTINUE', wins: 'WINS!', draw: "IT'S A DRAW!", toBeat: 'to beat', player: 'Player',
     },
     fr: {
@@ -56,6 +57,7 @@
       maxLen: 'Meilleure série', tweaks: 'Réglages', difficulty: 'Difficulté',
       easy: 'FACILE', normal: 'NORMAL', hard: 'DIFFICILE', age: "Âge de l’enfant",
       color: 'Couleurs', on: 'OUI', off: 'NON', reversals: 'b/d/p/q',
+      colNone: 'AUCUNE', colFun: 'FUN', colLetters: 'LETTRES',
       players: 'Joueurs', modeSolo: '1 JOUEUR', modeCoop: '2J COOP', modeVersus: '2J DUEL', yourTurn: 'À TOI', team: 'Équipe', pass: 'AU TOUR DE', tap: 'CONTINUER', wins: 'GAGNE !', draw: 'ÉGALITÉ !', toBeat: 'à battre', player: 'Joueur',
     },
     es: {
@@ -72,6 +74,7 @@
       maxLen: 'Mejor serie', tweaks: 'Ajustes', difficulty: 'Dificultad',
       easy: 'FÁCIL', normal: 'NORMAL', hard: 'DIFÍCIL', age: 'Edad del niño',
       color: 'Colores', on: 'SÍ', off: 'NO', reversals: 'b/d/p/q',
+      colNone: 'NINGUNO', colFun: 'FUN', colLetters: 'LETRAS',
       players: 'Jugadores', modeSolo: '1 JUGADOR', modeCoop: '2J COOP', modeVersus: '2J DUELO', yourTurn: 'TU TURNO', team: 'Equipo', pass: 'TURNO DE', tap: 'CONTINUAR', wins: '¡GANA!', draw: '¡EMPATE!', toBeat: 'a batir', player: 'Jugador',
     },
   };
@@ -85,7 +88,8 @@
     set('lbl-score', T.score); set('lbl-level', T.level); set('lbl-best', T.best); set('lbl-strikes', T.strikes);
     set('tw-title', T.tweaks); set('tw-diff', T.difficulty);
     set('tw-easy', T.easy); set('tw-normal', T.normal); set('tw-hard', T.hard);
-    set('tw-age', T.age); set('tw-color', T.color); set('tw-color-on', T.on); set('tw-color-off', T.off);
+    set('tw-age', T.age); set('tw-color', T.color);
+    set('tw-color-none', T.colNone); set('tw-color-fun', T.colFun); set('tw-color-letters', T.colLetters);
     set('lbl-mode', T.players);
     set('mode-solo', T.modeSolo); set('mode-coop', T.modeCoop); set('mode-versus', T.modeVersus);
   }
@@ -93,7 +97,7 @@
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "age": "",
-    "colorCues": false
+    "colorMode": "none"
   }/*EDITMODE-END*/;
 
   const rand = (min, max) => Math.random() * (max - min) + min;
@@ -141,17 +145,33 @@
     m.spanAttempts[len] = s;
   }
 
-  function colorOn() { return TWEAKS.colorCues === true || TWEAKS.colorCues === 'on'; }
+  // Colour mode (gear setting):
+  //   'none'    = neutral cream, NO colour cue — the honest b/d/p/q drill (default);
+  //   'fun'     = a random cartoonish accent per step, NOT tied to the letter (engaging);
+  //   'letters' = each letter's fixed colour (strongest aid).
+  function colorMode() {
+    const m = TWEAKS.colorMode;
+    if (m === 'letters' || m === 'fun' || m === 'none') return m;
+    if (TWEAKS.colorCues === true || TWEAKS.colorCues === 'on') return 'letters'; // back-compat
+    return 'none';
+  }
+  function colorOn() { return colorMode() === 'letters'; }
   function letterColor(ch) { return colorOn() ? (C.LETTER_COLOR[ch] || '#ffe0a0') : '#f3d9a6'; }
 
-  // Cartoonish highlight palette used (instead of plain cream) when colour cues are OFF.
-  // A bright accent is assigned per trail step — NOT tied to the letter — so it reinforces
-  // the beat Simon-style without leaking letter identity (keeps the b/d/p/q drill honest).
+  // Cartoonish palette for 'fun' mode — a bright accent assigned per trail step,
+  // NOT tied to the letter, so it never leaks letter identity.
   const CARTOON = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff8fab', '#9b5de5', '#00bbf9', '#ff9f1c', '#2ec4b6', '#f15bb5'];
   function pickCartoon() { return CARTOON[Math.floor((state.rng || Math.random)() * CARTOON.length)]; }
-  // Lit colour for a trail step — shared by honeycomb cell and keypad tile so they
-  // light up in sync: the letter's fixed colour when cues are on, else the step's hue.
-  function stepColor(step) { return step ? (colorOn() ? letterColor(step.letter) : (step.hue || '#fff2c4')) : '#fff2c4'; }
+  // Lit colour for a trail step (honeycomb cell fill): letter colour / step hue / neutral.
+  function stepColor(step) {
+    const m = colorMode();
+    if (m === 'letters') return letterColor(step && step.letter);
+    if (m === 'fun') return (step && step.hue) || '#fff2c4';
+    return '#fff2c4';
+  }
+  // Keypad press-feedback colour: same as the cell, except 'none' uses a bright neutral
+  // (white) pop so a tap is visible without re-introducing a colour cue.
+  function tapColor(step) { return colorMode() === 'none' ? '#ffffff' : stepColor(step); }
   // Readable ink for any lit fill (handles dark cartoon hues like blue/purple).
   function inkOn(hex) {
     const h = String(hex).replace('#', '');
@@ -259,17 +279,11 @@
     ctx.restore();
   }
 
-  // Which keypad tile is lit, and in what colour.
-  // - A tap always lights the pressed tile (both colour modes) — "colour when you hit a key".
-  // - During WATCH the keypad mirrors the flash (Simon) ONLY when colour cues are on; with
-  //   cues off the keypad stays neutral until a key is hit.
+  // The keypad lights a tile ONLY as press feedback (when you hit a key). It never
+  // replays the watch sequence — the honeycomb is the display; the keypad is input only.
   function keypadHighlight() {
     if (state.tapTimer > 0 && state.tapStep) {
-      return { letter: state.tapStep.letter, color: stepColor(state.tapStep) };
-    }
-    if (colorOn() && state.phase === 'watch' && state.flashCell >= 0 && state.watchIndex >= 0 && state.seq[state.watchIndex]) {
-      const step = state.seq[state.watchIndex];
-      return { letter: step.letter, color: stepColor(step) };
+      return { letter: state.tapStep.letter, color: tapColor(state.tapStep) };
     }
     return null;
   }
@@ -609,7 +623,7 @@
     const m = activePlayer().metrics;
     const summary = {
       date: new Date().toISOString(), lang: LANG, age: TWEAKS.age || null,
-      difficulty: TWEAKS.difficulty, colorCues: colorOn(), mode: session.mode,
+      difficulty: TWEAKS.difficulty, colorMode: colorMode(), colorCues: colorOn(), mode: session.mode,
       level: session.boardRadius, score: activePlayer().score,
       rounds: m.rounds, correct: m.correct, strikes: activePlayer().strikes,
       maxSpan: m.maxSpan, spanAttempts: m.spanAttempts,
@@ -731,7 +745,7 @@
     };
     wire('diff-row', 'difficulty', false);
     wire('age-row', 'age', false);
-    wire('color-row', 'colorCues', true);
+    wire('color-row', 'colorMode', false);
     document.getElementById('tweaks-close').addEventListener('click', () => { hideTweaks(); try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {} });
     document.getElementById('gear-btn').addEventListener('click', () => {
       const open = document.getElementById('tweaks').classList.contains('open');
