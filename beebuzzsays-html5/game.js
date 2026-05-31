@@ -103,7 +103,6 @@
   const state = {
     phase: 'title',            // title | watch | input | level_clear | game_over | versus_pass
     best: parseInt(localStorage.getItem('beebuzzsays_best') || '0', 10) || 0,
-    level: 1,
     maxStrikes: 3,
     seq: [],                   // [{letter, cell}]
     typed: [],                 // [letter]
@@ -362,7 +361,6 @@
     const step = C.growTrail(state.seq, state.activeLetters, state.cells.length, state.rng);
     if (step === null) { boardClear(); return; }
     state.seq = state.seq.concat([step]);
-    state.level = state.seq.length;
     if (session.mode === 'coop') session.active = (state.seq.length - 1) % 2; // P1 round1, P2 round2, ...
     updateHUD();
     beginWatch();
@@ -654,6 +652,8 @@
     players: session.players.map(p => ({ id: p.id, score: p.score, strikes: p.strikes })),
   });
 
+  // Title-screen only: there's no path back to the title card from a result card,
+  // so PLAY AGAIN always re-enters the same mode via startGame. Mode changes need a reload.
   function setupModeSelector() {
     const row = document.getElementById('mode-row');
     if (!row) return;
