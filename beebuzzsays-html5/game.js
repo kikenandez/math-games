@@ -82,7 +82,6 @@
     set('title-sub', T.sub);
     document.getElementById('title-p').innerHTML = T.intro;
     set('start-btn', T.start); set('title-note', T.note);
-    set('lcd-label', T.tapWhat); set('lcd-hint', T.hint);
     set('lbl-score', T.score); set('lbl-level', T.level); set('lbl-best', T.best); set('lbl-strikes', T.strikes);
     set('tw-title', T.tweaks); set('tw-diff', T.difficulty);
     set('tw-easy', T.easy); set('tw-normal', T.normal); set('tw-hard', T.hard);
@@ -113,6 +112,7 @@
     hexSize: 40,
     watchIndex: -1, watchTimer: 0, flashCell: -1,
     inputTimer: 0,
+    tapStep: null, tapTimer: 0,   // keypad press-feedback highlight
     floaters: [], particles: [],
     shake: 0, shakeX: 0, shakeY: 0, elapsed: 0,
   };
@@ -143,6 +143,21 @@
 
   function colorOn() { return TWEAKS.colorCues === true || TWEAKS.colorCues === 'on'; }
   function letterColor(ch) { return colorOn() ? (C.LETTER_COLOR[ch] || '#ffe0a0') : '#f3d9a6'; }
+
+  // Cartoonish highlight palette used (instead of plain cream) when colour cues are OFF.
+  // A bright accent is assigned per trail step — NOT tied to the letter — so it reinforces
+  // the beat Simon-style without leaking letter identity (keeps the b/d/p/q drill honest).
+  const CARTOON = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff8fab', '#9b5de5', '#00bbf9', '#ff9f1c', '#2ec4b6', '#f15bb5'];
+  function pickCartoon() { return CARTOON[Math.floor((state.rng || Math.random)() * CARTOON.length)]; }
+  // Lit colour for a trail step — shared by honeycomb cell and keypad tile so they
+  // light up in sync: the letter's fixed colour when cues are on, else the step's hue.
+  function stepColor(step) { return step ? (colorOn() ? letterColor(step.letter) : (step.hue || '#fff2c4')) : '#fff2c4'; }
+  // Readable ink for any lit fill (handles dark cartoon hues like blue/purple).
+  function inkOn(hex) {
+    const h = String(hex).replace('#', '');
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#241500' : '#fff6df';
+  }
 
   function layoutBoard() {
     state.radius = session.boardRadius;
@@ -194,23 +209,25 @@
       // already typed correctly in their honeycomb cells with their order number
       // (most recent wins if a cell repeats). Keeping them through 'level_clear'
       // lets the final letter land in the honey before the round resolves.
-      let revealed = null, revealOrd = -1;
+      let revealed = null, revealOrd = -1, litStep = null;
       if (state.phase === 'input' || state.phase === 'level_clear') {
         for (let k = 0; k < state.typed.length; k++) {
-          if (state.seq[k] && state.seq[k].cell === i) { revealed = state.seq[k].letter; revealOrd = k + 1; }
+          if (state.seq[k] && state.seq[k].cell === i) { revealed = state.seq[k].letter; revealOrd = k + 1; litStep = state.seq[k]; }
         }
       }
+      if (isFlash) litStep = state.seq[state.watchIndex];
       const letter = isFlash ? state.seq[state.watchIndex].letter : revealed;
       const lit = isFlash || revealed !== null;
+      const fill = lit ? stepColor(litStep) : '#caa44e';
       hexPath(cell.x, cell.y, state.hexSize * 0.94);
-      ctx.fillStyle = lit ? (colorOn() ? letterColor(letter) : '#fff2c4') : '#caa44e';
+      ctx.fillStyle = fill;
       ctx.fill();
       ctx.lineWidth = 4; ctx.strokeStyle = '#7a531a'; ctx.stroke();
       // waxy inner ring
       hexPath(cell.x, cell.y, state.hexSize * 0.72);
       ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(122,83,26,0.35)'; ctx.stroke();
       if (lit) {
-        ctx.fillStyle = colorOn() ? '#241500' : '#3a2410';
+        ctx.fillStyle = inkOn(fill);
         ctx.font = `bold ${Math.round(state.hexSize * 1.0)}px "Lilita One", sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(letter, cell.x, cell.y + 2);
@@ -242,18 +259,38 @@
     ctx.restore();
   }
 
+  // Which keypad tile is currently lit, and in what colour — synced with the honeycomb.
+  // During WATCH it mirrors the flashed step (Simon-style); during INPUT it's brief tap feedback.
+  function keypadHighlight() {
+    if (state.phase === 'watch' && state.flashCell >= 0 && state.watchIndex >= 0 && state.seq[state.watchIndex]) {
+      const step = state.seq[state.watchIndex];
+      return { letter: step.letter, color: stepColor(step) };
+    }
+    if (state.tapTimer > 0 && state.tapStep) {
+      return { letter: state.tapStep.letter, color: stepColor(state.tapStep) };
+    }
+    return null;
+  }
+
   function drawKeypad() {
     const active = state.phase === 'input';
+    const hi = keypadHighlight();
     for (const t of state.keypad) {
+      const isHi = !!hi && t.letter === hi.letter;
+      const baseFill = colorOn() ? letterColor(t.letter) : '#fff2c4';
+      const fill = isHi ? hi.color : baseFill;
+      const alpha = isHi || active ? 1 : 0.5;
       const r = 10;
+      ctx.save();
+      if (isHi) { ctx.shadowColor = hi.color; ctx.shadowBlur = 20; }
       roundRect(t.x, t.y, t.w, t.h, r);
-      ctx.fillStyle = colorOn() ? letterColor(t.letter) : '#fff2c4';
-      ctx.globalAlpha = active ? 1 : 0.5; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.lineWidth = 3; ctx.strokeStyle = '#7a531a'; ctx.stroke();
-      ctx.fillStyle = colorOn() ? '#241500' : '#3a2410';
+      ctx.globalAlpha = alpha; ctx.fillStyle = fill; ctx.fill();
+      ctx.restore();
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = isHi ? 4 : 3; ctx.strokeStyle = isHi ? '#fff6df' : '#7a531a'; ctx.stroke();
+      ctx.fillStyle = isHi ? inkOn(fill) : (colorOn() ? '#241500' : '#3a2410');
       ctx.font = `bold ${Math.round(t.h * 0.6)}px "Lilita One", sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.globalAlpha = active ? 1 : 0.5;
       ctx.fillText(t.letter, t.x + t.w / 2, t.y + t.h / 2 + 2);
       ctx.globalAlpha = 1;
     }
@@ -296,6 +333,7 @@
     state.particles = state.particles.filter(p => p.life > 0);
     if (state.shake > 0) { state.shake = Math.max(0, state.shake - dt * 3); state.shakeX = (Math.random() - 0.5) * state.shake * 12; state.shakeY = (Math.random() - 0.5) * state.shake * 12; }
     else { state.shakeX = state.shakeY = 0; }
+    if (state.tapTimer > 0) state.tapTimer = Math.max(0, state.tapTimer - dt);
     updatePhase(dt);
   }
   // ----- timing helpers (scale with difficulty + age) -----
@@ -360,6 +398,7 @@
   function growAndWatch() {
     const step = C.growTrail(state.seq, state.activeLetters, state.cells.length, state.rng);
     if (step === null) { boardClear(); return; }
+    step.hue = pickCartoon(); // stable cartoonish highlight for this step (used when colour cues off)
     state.seq = state.seq.concat([step]);
     if (session.mode === 'coop') session.active = (state.seq.length - 1) % 2; // P1 round1, P2 round2, ...
     updateHUD();
@@ -369,7 +408,7 @@
   function beginWatch() {
     state.phase = 'watch'; state.typed = [];
     state.watchIndex = -1; state.flashCell = -1; state.watchTimer = 0.4;
-    updateAnswerDisplay();
+    state.tapStep = null; state.tapTimer = 0;
     showFloater(T.watch, '#3a2410', -H * 0.30);
   }
 
@@ -412,9 +451,9 @@
       registerMiss('wrong');
       return;
     }
+    state.tapStep = state.seq[idx]; state.tapTimer = 0.4; // light the pressed tile (synced colour)
     state.typed.push(ch);
     state.inputTimer = inputBudget();
-    updateAnswerDisplay();
     flashTile(ch, '#5cd97a');
     if (C.isComplete(state.seq, state.typed)) resolveCorrect();
   }
@@ -587,11 +626,6 @@
     catch (e) { return null; }
   };
 
-  function updateAnswerDisplay() {
-    const el = document.getElementById('ans-val');
-    if (!state.typed.length) { el.classList.add('empty'); el.innerHTML = '<span class="cursor">_</span>'; }
-    else { el.classList.remove('empty'); el.innerHTML = `${state.typed.join(' ')}<span class="cursor">|</span>`; }
-  }
   function showFloater(text, color, dy) { state.floaters.push({ x: W / 2, y: H * 0.5 + (dy || 0), text, color, t: 0, dur: 1.2 }); }
   function burst(x, y, color) {
     for (let i = 0; i < 14; i++) {
