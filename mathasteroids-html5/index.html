@@ -5,396 +5,201 @@
 <title>Math Asteroids</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Fredoka:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
   :root {
     --ink: #050614;
+    --ink-soft: rgba(232, 236, 255, 0.58);
     --paper: #e8ecff;
     --cyan: #5cd9ff;
-    --hot: #ff5c7c;
+    --gold: #ffd24d;
     --good: #5cd97a;
-    --accent: #ffd24d;
-    --rock: #b6a98a;
+    --hot: #ff5c7c;
+    --panel: rgba(10, 12, 30, 0.9);
+    --panel-solid: #0a0c1e;
+    --shadow: rgba(0, 0, 0, 0.6);
   }
   *, *::before, *::after { box-sizing: border-box; }
   html, body {
-    margin: 0; padding: 0;
-    width: 100%; height: 100%;
-    overflow: hidden;
-    background: #030410;
-    font-family: 'Fredoka', sans-serif;
-    color: var(--paper);
-    user-select: none;
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background: #030410; font-family: 'Fredoka', sans-serif; color: var(--paper);
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
   }
   #game-wrap { position: fixed; inset: 0; overflow: hidden; }
   canvas#game { display: block; width: 100%; height: 100%; }
 
+  /* ============================ HUD ============================ */
   #hud {
-    position: absolute; top: 14px; left: 14px; right: 70px;
-    display: flex; justify-content: space-between; align-items: flex-start;
-    gap: 12px;
-    pointer-events: none;
-    font-family: 'Lilita One', sans-serif;
-    z-index: 5;
+    position: absolute; top: 14px; left: 14px; right: 66px;
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+    pointer-events: none; z-index: 5;
   }
-  .hud-group { display: flex; gap: 10px; }
+  .hud-group { display: flex; gap: 9px; }
   .badge {
-    background: rgba(10, 12, 30, 0.85);
-    border: 3px solid var(--paper);
-    border-radius: 10px;
-    padding: 7px 12px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
-    display: flex; align-items: center; gap: 8px;
-    font-size: 18px;
-    color: var(--paper);
-    line-height: 1;
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 13px;
+    padding: 6px 13px 7px; box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.08);
+    display: flex; flex-direction: column; align-items: flex-start; line-height: 1; min-width: 50px;
   }
-  .badge .label {
-    font-size: 10px;
-    color: rgba(232, 236, 255, 0.55);
-    letter-spacing: 0.2em;
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  .badge .val { font-size: 20px; min-width: 1ch; }
-  .badge.score .val { color: var(--accent); }
-  .badge.lives .val { color: var(--hot); }
+  .badge .label { font-size: 9px; color: var(--ink-soft); letter-spacing: 0.16em; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; white-space: nowrap; }
+  .badge .val { font-family: 'Lilita One', sans-serif; font-size: 22px; color: var(--paper); }
+  .badge.score .val { color: var(--gold); }
   .badge.level .val { color: var(--cyan); }
-  .badge.shield .val { color: var(--good); letter-spacing: 0.05em; }
+  .pips-row { display: flex; gap: 4px; align-items: center; height: 22px; }
+  .pip { width: 16px; height: 16px; border-radius: 5px; flex: 0 0 auto; border: 2.5px solid var(--paper); box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.25); transition: opacity .2s, transform .2s, background .2s; }
+  .pip.life { background: var(--hot); }
+  .pip.shield { background: var(--good); }
+  .pip.spent { background: rgba(255,255,255,0.12); opacity: 0.45; transform: scale(0.8); box-shadow: none; }
 
-  /* Target chip — big, centered top */
+  .icon-btn {
+    position: absolute; top: 14px; right: 14px; pointer-events: auto; width: 40px; height: 40px;
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 12px;
+    box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.08);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 19px; color: var(--paper); padding: 0; transition: transform 0.1s; z-index: 25;
+  }
+  .icon-btn:hover { transform: translateY(-1px); }
+  .icon-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--shadow); }
+
+  /* Target chip */
   #target {
-    position: absolute;
-    top: 14px; left: 50%; transform: translateX(-50%);
-    background: rgba(10, 12, 30, 0.92);
-    border: 3px solid var(--cyan);
-    border-radius: 14px;
-    padding: 8px 26px 10px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 0 6px rgba(92, 217, 255, 0.12);
-    z-index: 6;
-    pointer-events: none;
-    text-align: center;
-    font-family: 'Lilita One', sans-serif;
-    min-width: 200px;
+    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 2.5px solid var(--cyan); border-radius: 14px;
+    padding: 7px 26px 9px; box-shadow: 0 4px 0 var(--shadow), 0 0 0 4px rgba(92, 217, 255, 0.14), inset 0 1.5px 0 rgba(255,255,255,0.08);
+    z-index: 6; pointer-events: none; text-align: center; font-family: 'Lilita One', sans-serif; min-width: 200px;
   }
-  #target .label {
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    font-size: 10px;
-    letter-spacing: 0.32em;
-    color: rgba(232, 236, 255, 0.55);
-    text-transform: uppercase;
-    margin-bottom: 2px;
-  }
-  #target .eq {
-    font-size: 36px;
-    letter-spacing: 0.04em;
-    color: var(--paper);
-  }
-  #target .eq .val { color: var(--accent); }
-  #target .match-line {
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    font-size: 11px;
-    letter-spacing: 0.22em;
-    color: rgba(232, 236, 255, 0.65);
-    text-transform: uppercase;
-    margin-top: 4px;
-  }
-  #target .match-line span { color: var(--good); font-family: 'Lilita One', sans-serif; font-size: 14px; }
-  #target #target-timer {
-    margin-top: 6px;
-    height: 6px;
-    background: rgba(0,0,0,0.55);
-    border-radius: 3px;
-    overflow: hidden;
-    border: 1px solid rgba(232, 236, 255, 0.35);
-  }
-  #target #target-timer-fill {
-    height: 100%;
-    width: 100%;
-    background: var(--good);
-    transition: width 0.15s linear, background-color 0.2s;
-  }
-  #target.warn #target-timer-fill {
-    background: var(--hot);
-  }
+  #target .label { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.28em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 2px; }
+  #target .eq { font-size: 34px; letter-spacing: 0.04em; color: var(--paper); }
+  #target .eq .val { color: var(--gold); }
+  #target .match-line { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 10px; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-top: 4px; }
+  #target .match-line span { color: var(--good); font-family: 'Lilita One', sans-serif; font-size: 13px; }
+  #target #target-timer { margin-top: 6px; height: 6px; background: rgba(0,0,0,0.55); border-radius: 3px; overflow: hidden; border: 1px solid rgba(232, 236, 255, 0.35); }
+  #target #target-timer-fill { height: 100%; width: 100%; background: var(--good); transition: width 0.15s linear, background-color 0.2s; }
+  #target.warn #target-timer-fill { background: var(--hot); }
   #target.warn { animation: warnPulse 0.6s ease-in-out infinite alternate; }
-  @keyframes warnPulse {
-    to { box-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 0 6px rgba(255, 92, 124, 0.6); border-color: var(--hot); }
-  }
+  @keyframes warnPulse { to { box-shadow: 0 4px 0 var(--shadow), 0 0 0 5px rgba(255, 92, 124, 0.6); border-color: var(--hot); } }
 
-  /* Progress bar under target */
-  #progress {
-    position: absolute;
-    top: 88px; left: 50%; transform: translateX(-50%);
-    width: 240px; height: 8px;
-    background: rgba(10, 12, 30, 0.7);
-    border: 2px solid var(--paper);
-    border-radius: 4px;
-    z-index: 5;
-    overflow: hidden;
-  }
-  #progress .fill {
-    height: 100%;
-    width: 0%;
-    background: var(--good);
-    transition: width 0.25s;
-  }
+  /* Progress bar */
+  #progress { position: absolute; top: 92px; left: 50%; transform: translateX(-50%); width: 240px; height: 8px; background: var(--panel); border: 2px solid var(--paper); border-radius: 4px; z-index: 5; overflow: hidden; }
+  #progress .fill { height: 100%; width: 0%; background: var(--good); transition: width 0.25s; }
 
-  /* Bottom hint banner */
+  /* Hint banner */
   #hint {
-    position: absolute;
-    bottom: 90px; left: 50%; transform: translateX(-50%);
-    background: rgba(10, 12, 30, 0.85);
-    border: 2px solid rgba(232, 236, 255, 0.3);
-    border-radius: 10px;
-    padding: 6px 16px;
-    z-index: 5;
-    pointer-events: none;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 0.12em;
-    color: rgba(232, 236, 255, 0.7);
-    text-align: center;
+    position: absolute; bottom: 88px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 2px solid rgba(232, 236, 255, 0.3); border-radius: 12px;
+    padding: 7px 16px; z-index: 5; pointer-events: none;
+    font-family: 'Fredoka', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-soft); text-align: center;
   }
-  #hint b { color: var(--cyan); }
-  #hint .kbd {
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(232, 236, 255, 0.4);
-    border-radius: 4px;
-    padding: 1px 6px;
-    font-family: 'Lilita One', sans-serif;
-    font-size: 11px;
-    color: var(--paper);
-    margin: 0 2px;
-  }
+  #hint .kbd { background: rgba(0,0,0,0.4); border: 1.5px solid rgba(232, 236, 255, 0.4); border-radius: 4px; padding: 1px 6px; font-family: 'Lilita One', sans-serif; font-size: 11px; color: var(--paper); margin: 0 2px; }
 
-  #gear-btn {
-    position: absolute; top: 14px; right: 14px;
-    width: 42px; height: 42px;
-    background: rgba(10, 12, 30, 0.85);
-    border: 3px solid var(--paper);
-    border-radius: 10px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    z-index: 25;
-    font-family: 'Lilita One', sans-serif;
-    font-size: 20px;
-    color: var(--paper);
-    padding: 0;
-  }
-
+  /* ============================ SETTINGS ============================ */
   #tweaks {
-    position: absolute; top: 68px; right: 14px;
-    width: 260px;
-    background: rgba(10, 12, 30, 0.96);
-    border: 3px solid var(--paper);
-    border-radius: 12px;
-    box-shadow: 0 6px 0 rgba(0,0,0,0.6);
-    padding: 12px 14px 14px;
-    z-index: 30;
-    display: none;
-    color: var(--paper);
+    position: absolute; top: 62px; right: 14px; width: 256px; pointer-events: auto;
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 16px;
+    box-shadow: 0 8px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.08);
+    padding: 13px 15px 15px; z-index: 30; display: none; color: var(--paper);
   }
   #tweaks.open { display: block; }
-  #tweaks h3 {
-    font-family: 'Lilita One', sans-serif;
-    font-size: 17px;
-    margin: 0 0 10px;
-    letter-spacing: 0.06em;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  #tweaks .close {
-    background: none; border: none; cursor: pointer;
-    color: rgba(232,236,255,0.7); font-size: 20px;
-    font-family: 'Lilita One', sans-serif;
-  }
-  .tweak-row { margin: 0 0 10px; }
-  .tweak-row .lbl {
-    display: flex; justify-content: space-between;
-    font-size: 10px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.12em;
-    color: rgba(232, 236, 255, 0.6);
-    margin-bottom: 3px;
-  }
+  #tweaks h3 { font-family: 'Lilita One', sans-serif; font-size: 16px; margin: 0 0 12px; letter-spacing: 0.04em; display: flex; align-items: center; justify-content: space-between; }
+  #tweaks .close { background: none; border: none; cursor: pointer; color: var(--ink-soft); font-size: 21px; font-family: 'Lilita One', sans-serif; line-height: 1; }
+  .tweak-row { margin: 0 0 11px; }
+  .tweak-row:last-child { margin-bottom: 0; }
+  .tweak-row .lbl { display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-soft); margin-bottom: 5px; }
   .tweak-row input[type=range] { width: 100%; accent-color: var(--cyan); }
   .tweak-row .opts { display: flex; gap: 5px; }
   .tweak-row .opt {
-    padding: 5px 9px;
-    border: 2px solid var(--paper);
-    border-radius: 8px;
-    background: rgba(0,0,0,0.4);
-    color: var(--paper);
-    font-family: 'Lilita One', sans-serif;
-    font-size: 11px;
-    cursor: pointer;
-    box-shadow: 0 2px 0 rgba(0,0,0,0.6);
+    flex: 1; text-align: center; padding: 6px 4px; border: 2px solid rgba(232,236,255,0.5); border-radius: 9px;
+    background: rgba(0,0,0,0.4); color: var(--paper); font-family: 'Lilita One', sans-serif; font-size: 11px;
+    cursor: pointer; transition: all 0.12s;
   }
-  .tweak-row .opt.active { background: var(--cyan); color: var(--ink); border-color: var(--cyan); }
+  .tweak-row .opt.active { background: var(--cyan); color: var(--ink); border-color: var(--cyan); box-shadow: 0 2px 0 var(--shadow); }
 
-  /* Mobile thumb-pad — 5 buttons: rotate L/R, thrust, fire, hyperspace */
-  #mobile-controls {
-    position: absolute;
-    bottom: 8px; left: 0; right: 0;
-    display: none;
-    justify-content: space-between;
-    padding: 0 12px;
-    z-index: 6;
-  }
+  /* Mobile thumb-pad */
+  #mobile-controls { position: absolute; bottom: 8px; left: 0; right: 0; display: none; justify-content: space-between; padding: 0 12px; z-index: 6; }
   #mobile-controls.show { display: flex; }
   .mc-cluster { display: grid; grid-template-columns: 56px 56px; gap: 6px; }
   .mc-cluster.right { grid-template-columns: 76px; }
   .mc-btn {
-    border: 3px solid var(--paper);
-    background: rgba(10, 12, 30, 0.85);
-    color: var(--paper);
-    border-radius: 12px;
-    font-family: 'Lilita One', sans-serif;
-    font-size: 22px;
-    cursor: pointer;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
-    height: 56px;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
+    border: 2.5px solid var(--paper); background: var(--panel); color: var(--paper); border-radius: 13px;
+    font-family: 'Lilita One', sans-serif; font-size: 22px; cursor: pointer; box-shadow: 0 4px 0 var(--shadow); height: 56px;
+    -webkit-user-select: none; user-select: none; touch-action: manipulation;
   }
   .mc-btn.big { height: 76px; }
-  .mc-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.55); }
+  .mc-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--shadow); }
   .mc-btn.fire { background: var(--hot); color: var(--ink); border-color: var(--hot); }
 
-  /* Overlay */
+  /* ============================ OVERLAY ============================ */
   .overlay {
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, rgba(10, 12, 30, 0.55), rgba(0,0,0,0.88));
-    display: flex; align-items: center; justify-content: center;
-    z-index: 20;
-    opacity: 1;
-    transition: opacity 0.25s;
+    position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 18px;
+    background: radial-gradient(ellipse at 50% 40%, rgba(10,12,30,0.55), rgba(0,0,0,0.92));
   }
-  .overlay.hidden { opacity: 0; pointer-events: none; }
+  .overlay.hidden { display: none !important; }
   .card {
-    background: rgba(10, 12, 30, 0.96);
-    border: 4px solid var(--paper);
-    border-radius: 20px;
-    box-shadow: 0 8px 0 rgba(0,0,0,0.6);
-    padding: 32px 38px;
-    text-align: center;
-    max-width: 560px;
+    position: relative; background: var(--panel-solid); border: 3px solid var(--paper); border-radius: 24px;
+    box-shadow: 0 14px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.08);
+    padding: 30px 36px 32px; text-align: center; width: min(600px, calc(100vw - 28px));
+    max-height: calc(100vh - 32px); overflow-y: auto;
   }
-  .card h1 {
-    font-family: 'Lilita One', sans-serif;
-    font-size: clamp(40px, 7.5vw, 60px);
-    line-height: 1.05;
-    margin: 0 0 6px;
-    color: var(--paper);
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-  }
+  .card::-webkit-scrollbar { width: 0; }
+  .card h1 { font-family: 'Lilita One', sans-serif; font-size: clamp(34px, 5.4vw, 48px); line-height: 1.05; margin: 0; color: var(--paper); letter-spacing: 0.01em; text-shadow: 0 3px 0 var(--shadow); white-space: nowrap; }
   .card h1 .acc { color: var(--cyan); }
-  .card .sub {
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    color: rgba(232, 236, 255, 0.7);
-    font-size: 15px;
-    margin: 4px 0 18px;
-  }
-  .card p {
-    font-family: 'Fredoka', sans-serif;
-    font-size: 14px;
-    line-height: 1.55;
-    color: rgba(232, 236, 255, 0.85);
-    margin: 0 0 18px;
-  }
+  .card .sub { font-family: 'Fredoka', sans-serif; font-weight: 600; color: var(--ink-soft); font-size: 14px; margin: 11px 0 0; }
+  .card p { font-family: 'Fredoka', sans-serif; font-size: 13px; line-height: 1.55; color: rgba(232,236,255,0.84); margin: 18px 0 0; }
   .card p b { color: var(--paper); }
-  .card .keys {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 5px 14px;
-    text-align: left;
-    font-family: 'Fredoka', sans-serif;
-    font-size: 13px;
-    margin: 0 auto 20px;
-    width: max-content;
-  }
-  .key {
-    background: rgba(0,0,0,0.4);
-    border: 2px solid var(--paper);
-    border-radius: 6px;
-    padding: 2px 8px;
-    font-family: 'Lilita One', sans-serif;
-    font-size: 12px;
-    box-shadow: 0 2px 0 rgba(0,0,0,0.7);
-    text-align: center;
-    min-width: 1.5em;
-    color: var(--paper);
-  }
-  .key-desc { align-self: center; color: rgba(232, 236, 255, 0.75); }
+
+  /* How-to strip */
+  .how { display: flex; gap: 9px; justify-content: center; margin: 24px 0 2px; }
+  .how .step { flex: 1; background: rgba(0,0,0,0.26); border: 2px solid rgba(232,236,255,0.3); border-radius: 16px; padding: 14px 10px 13px; }
+  .how .step.s1 { border-color: rgba(255,210,77,0.5); } .how .step.s2 { border-color: rgba(92,217,255,0.5); } .how .step.s3 { border-color: rgba(255,92,124,0.55); }
+  .how .step .demo { display: flex; gap: 5px; justify-content: center; align-items: center; margin-bottom: 11px; height: 40px; }
+  .how .step .t { font-family: 'Lilita One', sans-serif; font-size: 13px; letter-spacing: 0.04em; }
+  .how .step.s1 .t { color: var(--gold); } .how .step.s2 .t { color: var(--cyan); } .how .step.s3 .t { color: var(--hot); }
+  .how .step .d { font-size: 11px; line-height: 1.35; color: var(--ink-soft); margin-top: 5px; }
+
+  .tgt-chip { font-family: 'Lilita One', sans-serif; font-size: 15px; padding: 5px 12px; border-radius: 9px; background: rgba(0,0,0,0.4); border: 2.5px solid var(--cyan); color: var(--gold); }
+  .rock-chip { width: 36px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #bdb094, #6a6253); border: 2.5px solid var(--ink); display: grid; place-items: center; font-family: 'Lilita One', sans-serif; font-size: 12px; color: var(--paper); }
+  .shield-demo { display: flex; gap: 3px; } .shield-demo span { width: 12px; height: 16px; border-radius: 4px; background: var(--good); border: 2px solid var(--ink); } .shield-demo span.x { background: rgba(255,255,255,0.12); }
+
+  .keys-note { font-size: 11px; color: var(--ink-soft); margin-top: 14px; }
+  .keys-note kbd { font-family: 'Lilita One', sans-serif; background: rgba(0,0,0,0.4); border: 1.5px solid rgba(232,236,255,0.4); border-radius: 5px; padding: 1px 6px; font-size: 11px; color: var(--paper); }
+
   .big-btn {
-    font-family: 'Lilita One', sans-serif;
-    font-size: 26px;
-    letter-spacing: 0.05em;
-    background: var(--cyan);
-    color: var(--ink);
-    border: 3px solid var(--paper);
-    border-radius: 12px;
-    padding: 10px 30px;
-    box-shadow: 0 5px 0 rgba(0,0,0,0.6);
-    cursor: pointer;
-    white-space: nowrap;
+    font-family: 'Lilita One', sans-serif; font-size: 25px; letter-spacing: 0.05em;
+    background: linear-gradient(180deg, #8ae6ff, var(--cyan)); color: var(--ink);
+    border: 3px solid var(--paper); border-radius: 14px; padding: 12px 44px; margin-top: 24px;
+    box-shadow: 0 6px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.4); cursor: pointer; white-space: nowrap;
+    transition: transform 0.1s, box-shadow 0.1s;
   }
-  .big-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 0 rgba(0,0,0,0.6); }
-  .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.6); }
-  .stats-row {
-    display: flex; gap: 8px; justify-content: center; margin: 0 0 16px;
-    flex-wrap: wrap;
+  .big-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.4); }
+  .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.4); }
+
+  .stats-row { display: flex; gap: 9px; justify-content: center; margin: 22px 0 0; flex-wrap: wrap; }
+  .stat-chip { flex: 1; min-width: 90px; background: rgba(0,0,0,0.28); border: 2px solid rgba(232,236,255,0.4); border-radius: 14px; padding: 12px 8px; }
+  .stat-chip .stat-label { font-size: 9px; color: var(--ink-soft); letter-spacing: 0.13em; font-weight: 600; text-transform: uppercase; }
+  .stat-chip .stat-val { font-family: 'Lilita One', sans-serif; font-size: 26px; color: var(--paper); margin-top: 4px; }
+  .stat-chip.hi { background: rgba(255,210,77,0.15); border-color: var(--gold); }
+  .stat-chip.hi .stat-val { color: var(--gold); }
+
+  @media (max-width: 640px) {
+    .card { padding: 22px 18px 24px; }
+    .how .step .d { display: none; }
+    #target .eq { font-size: 26px; }
   }
-  .stat-chip {
-    background: rgba(0,0,0,0.4);
-    border: 2px solid var(--paper);
-    border-radius: 10px;
-    padding: 6px 12px;
-    font-family: 'Lilita One', sans-serif;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.7);
-    min-width: 70px;
-  }
-  .stat-chip .stat-label {
-    font-size: 9px; color: rgba(232, 236, 255, 0.6);
-    letter-spacing: 0.16em;
-    font-family: 'Fredoka', sans-serif; font-weight: 600;
-    text-transform: uppercase;
-  }
-  .stat-chip .stat-val { font-size: 22px; color: var(--paper); }
-  .stat-chip.hi .stat-val { color: var(--accent); }
 </style>
 </head>
 <body>
 <div id="game-wrap">
   <canvas id="game"></canvas>
 
+  <!-- HUD -->
   <div id="hud">
     <div class="hud-group">
-      <div class="badge score">
-        <span class="label">Score</span>
-        <span class="val" id="score">0</span>
-      </div>
-      <div class="badge level">
-        <span class="label">Level</span>
-        <span class="val" id="level">1</span>
-      </div>
-      <div class="badge shield">
-        <span class="label">Shield</span>
-        <span class="val" id="shield">▮▮▮</span>
-      </div>
+      <div class="badge score"><span class="label">Score</span><span class="val" id="score">0</span></div>
+      <div class="badge level"><span class="label">Level</span><span class="val" id="level">1</span></div>
+      <div class="badge"><span class="label">Shield</span><span class="pips-row" id="shield"><span class="pip shield"></span><span class="pip shield"></span><span class="pip shield"></span></span></div>
     </div>
     <div class="hud-group">
-      <div class="badge lives">
-        <span class="label">Lives</span>
-        <span class="val" id="lives">3</span>
-      </div>
+      <div class="badge"><span class="label">Lives</span><span class="pips-row" id="lives"><span class="pip life"></span><span class="pip life"></span><span class="pip life"></span></span></div>
     </div>
   </div>
 
@@ -406,13 +211,10 @@
   </div>
   <div id="progress"><div class="fill" id="progress-fill"></div></div>
 
-  <button id="gear-btn" title="Tweaks">⚙</button>
+  <button class="icon-btn" id="gear-btn" title="Settings">⚙</button>
 
   <div id="hint">
-    <span class="kbd">↑</span> thrust &nbsp;
-    <span class="kbd">←</span><span class="kbd">→</span> rotate &nbsp;
-    <span class="kbd">SPACE</span> fire &nbsp;
-    <span class="kbd">↓</span> hyperspace
+    <span class="kbd">↑</span> thrust &nbsp; <span class="kbd">←</span><span class="kbd">→</span> rotate &nbsp; <span class="kbd">SPACE</span> fire &nbsp; <span class="kbd">↓</span> hyperspace
   </div>
 
   <div id="mobile-controls">
@@ -429,14 +231,23 @@
     </div>
   </div>
 
+  <!-- Settings -->
   <div id="tweaks">
-    <h3>Tweaks <button class="close" id="tweaks-close">×</button></h3>
+    <h3><span>Settings</span> <button class="close" id="tweaks-close">×</button></h3>
     <div class="tweak-row">
       <div class="lbl"><span>Difficulty</span></div>
       <div class="opts" id="diff-row">
         <div class="opt" data-value="easy">EASY</div>
         <div class="opt active" data-value="normal">NORMAL</div>
         <div class="opt" data-value="hard">HARD</div>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <div class="lbl"><span>Nebula</span></div>
+      <div class="opts" id="theme-row">
+        <div class="opt active" data-value="blue">BLUE</div>
+        <div class="opt" data-value="violet">VIOLET</div>
+        <div class="opt" data-value="aurora">AURORA</div>
       </div>
     </div>
     <div class="tweak-row">
@@ -459,18 +270,33 @@
     </div>
   </div>
 
+  <!-- Title -->
   <div class="overlay" id="overlay">
     <div class="card" id="title-card">
       <h1><span class="acc">MATH</span> ASTEROIDS</h1>
-      <div class="sub">shoot only the rocks that match the target answer</div>
-      <p>Drift through space and gun down asteroids stamped with arithmetic expressions. The HUD shows a <b style="color:#ffd24d">target answer</b>. Shoot only the rocks whose expression evaluates to that number. Each correct hit rolls a new target. Wrong shots cost <b style="color:#5cd97a">shield</b> — lose all shield and you lose a <b style="color:#ff5c7c">life</b>. Survive long enough to clear the level.</p>
-      <div class="keys">
-        <span class="key">↑ / W</span><span class="key-desc">thrust forward</span>
-        <span class="key">← →</span><span class="key-desc">rotate ship</span>
-        <span class="key">SPACE</span><span class="key-desc">fire bullet</span>
-        <span class="key">↓ / S</span><span class="key-desc">hyperspace jump</span>
-        <span class="key">P</span><span class="key-desc">pause</span>
+      <div class="sub">gun down only the rocks that hit the target</div>
+
+      <div class="how">
+        <div class="step s1">
+          <div class="demo"><span class="tgt-chip">= 12</span></div>
+          <div class="t">1 · LOCK</div>
+          <div class="d">The HUD shows a target answer each round.</div>
+        </div>
+        <div class="step s2">
+          <div class="demo"><span class="rock-chip">8+4</span></div>
+          <div class="t">2 · BLAST</div>
+          <div class="d">Shoot only rocks whose math equals the target.</div>
+        </div>
+        <div class="step s3">
+          <div class="demo"><span class="shield-demo"><span></span><span></span><span class="x"></span></span></div>
+          <div class="t">3 · SURVIVE</div>
+          <div class="d">Wrong shots &amp; timeouts drain shield → then a life.</div>
+        </div>
       </div>
+
+      <p>Watch for <b style="color:#ffd24d">★ bonus</b> rocks and <b style="color:#ff5c7c">overloaded</b> chains — defuse them for big points. Drift, rotate, and use <b>hyperspace</b> to escape a tight squeeze.</p>
+      <div class="keys-note">Keys — <kbd>↑</kbd> thrust · <kbd>←→</kbd> rotate · <kbd>Space</kbd> fire · <kbd>↓</kbd> hyperspace · <kbd>P</kbd> pause</div>
+
       <button class="big-btn" id="start-btn">LAUNCH</button>
     </div>
   </div>

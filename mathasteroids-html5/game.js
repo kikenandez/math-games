@@ -24,6 +24,7 @@
 
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
+    "theme": "blue",
     "aim": "rotate",
     "speed": 1.0,
     "ops": "all"
@@ -320,9 +321,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing' && !state.paused) update(dt);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing' && !state.paused) update(dt);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Math Asteroids loop error:', err); }
     requestAnimationFrame(loop);
   }
   function updateIdle(dt) {
@@ -757,9 +760,11 @@
   // ===== HUD =====
   function updateHUD() {
     document.getElementById('score').textContent = state.score;
-    document.getElementById('lives').textContent = '♥'.repeat(state.lives);
+    const lifePips = document.querySelectorAll('#lives .pip');
+    lifePips.forEach((p, i) => p.classList.toggle('spent', i >= state.lives));
     document.getElementById('level').textContent = state.level;
-    document.getElementById('shield').textContent = '▮'.repeat(state.shield) + '▯'.repeat(Math.max(0, 3 - state.shield));
+    const shieldPips = document.querySelectorAll('#shield .pip');
+    shieldPips.forEach((p, i) => p.classList.toggle('spent', i >= state.shield));
     updateProgress();
   }
   function updateTargetHUD() {
@@ -784,10 +789,15 @@
     ctx.restore();
   }
   function drawBackdrop() {
+    const tc = TWEAKS.theme === 'violet'
+      ? { core: '#1c0e34', mid: '#120822', edge: '#080414', star: '#d0b8ff' }
+      : TWEAKS.theme === 'aurora'
+      ? { core: '#0a2630', mid: '#06161e', edge: '#030c10', star: '#a8f0d8' }
+      : { core: '#0c1230', mid: '#070a1c', edge: '#03040e', star: '#a5cdf2' };
     const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) / 1.2);
-    g.addColorStop(0, '#0c1230');
-    g.addColorStop(0.6, '#070a1c');
-    g.addColorStop(1, '#03040e');
+    g.addColorStop(0, tc.core);
+    g.addColorStop(0.6, tc.mid);
+    g.addColorStop(1, tc.edge);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     // Stars (parallax-ish, drift very slowly with time)
     for (let layer = 0; layer < 2; layer++) {
@@ -801,7 +811,7 @@
         const tw = (Math.sin(state.elapsed * 1.5 + i * 0.4) + 1) * 0.5;
         const sx = (baseX - drift + W) % W;
         ctx.globalAlpha = alpha * (0.4 + tw * 0.6);
-        ctx.fillStyle = layer === 0 ? '#a5cdf2' : '#fff';
+        ctx.fillStyle = layer === 0 ? tc.star : '#fff';
         ctx.fillRect(sx, baseY, size, size);
       }
     }
@@ -1136,6 +1146,7 @@
       });
     };
     setRow('diff-row', 'difficulty');
+    setRow('theme-row', 'theme');
     setRow('aim-row', 'aim');
     setRow('ops-row', 'ops');
     const sp = document.getElementById('speed');
@@ -1181,12 +1192,18 @@
   }
   pickTarget();
   updateHUD();
+  draw(); // paint one frame immediately so the scene is never blank before rAF starts
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       lastTime = performance.now() - 16;
+      try { draw(); } catch (e) {}
       requestAnimationFrame(loop);
     }
+  });
+  window.addEventListener('focus', () => {
+    lastTime = performance.now() - 16;
+    try { draw(); } catch (e) {}
   });
   requestAnimationFrame(loop);
 })();

@@ -98,6 +98,7 @@
 
   // ---------- Tweaks ----------
   const TWEAKS = /*EDITMODE-BEGIN*/{
+    "theme": "slate",
     "fallSpeed": 1.0,
     "spawnRate": 1.0,
     "ruleSpeed": 1.0,
@@ -354,9 +355,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing') update(dt);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing') update(dt);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Mathris loop error:', err); }
     requestAnimationFrame(loop);
   }
 
@@ -905,11 +908,16 @@
   }
 
   function drawFactoryBg() {
-    // Dark factory gradient + scrolling grid lines
+    // Dark factory gradient + scrolling grid lines (theme-tinted)
+    const sky = TWEAKS.theme === 'rust'
+      ? ['#1a1010', '#291a16', '#1a1010']
+      : TWEAKS.theme === 'void'
+      ? ['#0a0814', '#140e22', '#0a0814']
+      : ['#0e1118', '#161b29', '#0e1118'];
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#0e1118');
-    g.addColorStop(0.5, '#161b29');
-    g.addColorStop(1, '#0e1118');
+    g.addColorStop(0, sky[0]);
+    g.addColorStop(0.5, sky[1]);
+    g.addColorStop(1, sky[2]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
     // Subtle grid
@@ -1346,6 +1354,15 @@
   // TWEAKS
   // =====================================================================
   function setupTweaks() {
+    const themeRow = document.getElementById('theme-row');
+    if (themeRow) themeRow.querySelectorAll('.opt').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.value === TWEAKS.theme);
+      opt.addEventListener('click', () => {
+        TWEAKS.theme = opt.dataset.value;
+        themeRow.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o === opt));
+        persistTweaks();
+      });
+    });
     const slider = (id, key, valId, fmt) => {
       const el = document.getElementById(id);
       const val = document.getElementById(valId);
@@ -1394,6 +1411,7 @@
   updateAnswerDisplay();
   state.activeRule = choice(RULES);
   updateRuleBanner();
+  draw(); // paint one frame immediately so the scene is never blank before rAF starts
   requestAnimationFrame(loop);
 
   // Throttle fallback (preview pane sometimes throttles RAF)
@@ -1407,7 +1425,12 @@
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       lastTime = performance.now() - 16;
+      try { draw(); } catch (e) {}
       requestAnimationFrame(loop);
     }
+  });
+  window.addEventListener('focus', () => {
+    lastTime = performance.now() - 16;
+    try { draw(); } catch (e) {}
   });
 })();
