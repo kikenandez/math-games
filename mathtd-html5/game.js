@@ -122,6 +122,14 @@
     { id: 'sub5', op: '−5', delta: -5, divide: false, range: 1.0, cost: 130, color: '#e36ce0' },
   ];
 
+  // ===== Tweaks (Settings panel + hub edit-mode) =====
+  const TWEAKS = /*EDITMODE-BEGIN*/{
+    "difficulty": "normal",
+    "theme": "day"
+  }/*EDITMODE-END*/;
+  const DIFF = { easy: { gold: 150, hp: 25 }, normal: { gold: 100, hp: 20 }, hard: { gold: 70, hp: 15 } };
+  function diffCfg() { return DIFF[TWEAKS.difficulty] || DIFF.normal; }
+
   // ===== State =====
   const state = {
     phase: 'title',
@@ -134,6 +142,7 @@
     waveSpawnQueue: [],
     waveSpawnTimer: 0,
     hp: 20,
+    maxHp: 20,
     gold: 100,
     selectedTower: 'sub1',
     // One selection per gate. Default to MID everywhere (the fastest path).
@@ -192,11 +201,13 @@
 
   // ===== Game flow =====
   function startGame() {
+    const cfg = diffCfg();
     state.phase = 'playing';
     state.level = 1;
     state.wave = 1;
-    state.hp = 20;
-    state.gold = 100;
+    state.maxHp = cfg.hp;
+    state.hp = cfg.hp;
+    state.gold = cfg.gold;
     state.score = 0;
     state.enemies = [];
     state.towers = [];
@@ -425,9 +436,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing' && !state.paused) update(dt * state.speedMultiplier);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing' && !state.paused) update(dt * state.speedMultiplier);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Math TD loop error:', err); }
     requestAnimationFrame(loop);
   }
   function updateIdle(dt) { state.elapsed += dt * 0.5; }
@@ -497,7 +510,7 @@
         if (isPerfect && isBonus) {
           // Both rewards stack — a single floater communicates the combined payout.
           state.gold += 15;
-          state.hp = Math.min(20, state.hp + 1);
+          state.hp = Math.min(state.maxHp, state.hp + 1);
           state.score += 200;
           showFloaterCenter(`PERFECT + BONUS  +1♥ +15g`, '#5cd97a');
           flashHUD('rule');
@@ -507,7 +520,7 @@
           showFloaterCenter(`PERFECT  +10g`, '#5cd97a');
         } else if (isBonus) {
           state.gold += 5;
-          state.hp = Math.min(20, state.hp + 1);
+          state.hp = Math.min(state.maxHp, state.hp + 1);
           state.score += 100;
           showFloaterCenter(`BONUS  ${rule.label}  +1♥ +5g`, '#ffd24d');
           flashHUD('rule');
@@ -615,7 +628,7 @@
   }
 
   function updateHUD() {
-    document.getElementById('hp').textContent = '♥'.repeat(Math.min(20, state.hp));
+    document.getElementById('hp').textContent = state.hp;
     document.getElementById('gold').textContent = state.gold;
     document.getElementById('level').textContent = state.level;
     document.getElementById('wave').textContent = `${state.wave}/${state.wavesPerLevel}`;
@@ -698,23 +711,30 @@
     if (state.paused) drawPaused();
     ctx.restore();
   }
+  function themeColors() {
+    return TWEAKS.theme === 'dusk'
+      ? { bg0: '#2a2350', bg1: '#46407e', bg2: '#2e2a55', cellA: '#4a5474', cellB: '#3c4264', path: '#8a7550', grid: 'rgba(0,0,0,0.30)' }
+      : { bg0: '#3a7a3a', bg1: '#5cb85c', bg2: '#2e8a3e', cellA: '#4ba14b', cellB: '#3a8a3a', path: '#b8884a', grid: 'rgba(0,0,0,0.18)' };
+  }
   function drawBg() {
+    const tc = themeColors();
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#3a7a3a');
-    g.addColorStop(0.7, '#5cb85c');
-    g.addColorStop(1, '#2e8a3e');
+    g.addColorStop(0, tc.bg0);
+    g.addColorStop(0.7, tc.bg1);
+    g.addColorStop(1, tc.bg2);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   function drawGrid() {
     const m = getMetrics();
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    const tc = themeColors();
+    ctx.fillStyle = tc.grid;
     ctx.fillRect(m.x0 - 6, m.y0 - 6, m.gridW + 12, m.gridH + 12);
     ctx.strokeStyle = '#1a1a14'; ctx.lineWidth = 4;
     ctx.strokeRect(m.x0 - 6, m.y0 - 6, m.gridW + 12, m.gridH + 12);
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (PATH_SET.has(`${c},${r}`)) continue;
-        ctx.fillStyle = ((r + c) % 2 === 0) ? '#4ba14b' : '#3a8a3a';
+        ctx.fillStyle = ((r + c) % 2 === 0) ? tc.cellA : tc.cellB;
         ctx.fillRect(m.x0 + c * m.cell, m.y0 + r * m.cell, m.cell, m.cell);
         ctx.fillStyle = 'rgba(255,255,255,0.06)';
         ctx.fillRect(m.x0 + c * m.cell + 4, m.y0 + r * m.cell + 4, 2, 2);
@@ -726,7 +746,7 @@
     // Every path cell shares the same dirt color — no active/inactive shading,
     // so the layout reads as one map. Routing intent is communicated by the
     // gate / selector visuals, not by tinting cells.
-    ctx.fillStyle = '#b8884a';
+    ctx.fillStyle = themeColors().path;
     for (const key of PATH_SET) {
       const [c, r] = key.split(',').map(Number);
       ctx.fillRect(m.x0 + c * m.cell - 1, m.y0 + r * m.cell - 1, m.cell + 2, m.cell + 2);
@@ -1203,8 +1223,47 @@
     ctx.closePath();
   }
 
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) lastTime = performance.now() - 16;
+  // ===== Settings panel (gear) + hub edit-mode protocol =====
+  function setupTweaks() {
+    const wire = (rowId, key) => {
+      const row = document.getElementById(rowId);
+      if (!row) return;
+      row.querySelectorAll('.opt').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.value === String(TWEAKS[key]));
+        opt.addEventListener('click', () => {
+          TWEAKS[key] = opt.dataset.value;
+          row.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o.dataset.value === String(TWEAKS[key])));
+          persistTweaks();
+          draw();
+        });
+      });
+    };
+    wire('diff-row', 'difficulty');
+    wire('theme-row', 'theme');
+    const gear = document.getElementById('gear-btn');
+    const close = document.getElementById('tweaks-close');
+    if (gear) gear.addEventListener('click', () => {
+      const open = document.getElementById('tweaks').classList.contains('open');
+      if (open) { hideTweaks(); notifyDismiss(); } else showTweaks();
+    });
+    if (close) close.addEventListener('click', () => { hideTweaks(); notifyDismiss(); });
+  }
+  function persistTweaks() { try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {} }
+  function notifyDismiss() { try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {} }
+  function showTweaks() { const el = document.getElementById('tweaks'); if (el) el.classList.add('open'); }
+  function hideTweaks() { const el = document.getElementById('tweaks'); if (el) el.classList.remove('open'); }
+  window.addEventListener('message', (e) => {
+    const d = e.data; if (!d || typeof d !== 'object') return;
+    if (d.type === '__activate_edit_mode') showTweaks();
+    if (d.type === '__deactivate_edit_mode') hideTweaks();
   });
+  setupTweaks();
+  try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (e) {}
+
+  draw(); // paint one frame immediately so the map is never blank before rAF starts
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { lastTime = performance.now() - 16; draw(); }
+  });
+  window.addEventListener('focus', () => { lastTime = performance.now() - 16; draw(); });
   requestAnimationFrame(loop);
 })();
