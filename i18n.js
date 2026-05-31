@@ -9,6 +9,27 @@
 
   const map = {
     fr: {
+      "Algebra deduction": "Déduction algébrique",
+      "Hop to the answer": "Saute vers la réponse",
+      "Hop the pyramid": "Saute la pyramide",
+      "Defend 6 cities": "Défendez 6 villes",
+      "Target the right rock": "Visez le bon rocher",
+      "Slither & snack": "Rampe et grignote",
+      "Bonk only the right ones": "Tape seulement les bonnes",
+      "Swap to clear lines": "Échangez pour aligner",
+      "Letter recognition": "Reconnaissance des lettres",
+      "Sequence memory": "Mémoire des séquences",
+      "Each clue is a balance: shapes on the left weigh as much as the number on the right. Deduce every shape's hidden value across 8 levels of clever puzzles.": "Chaque indice est une balance : les formes à gauche pèsent autant que le nombre à droite. Déduisez la valeur cachée de chaque forme à travers 8 niveaux de puzzles malins.",
+      "A cute frog dodges cars and rides logs across the river. The catch: only the lily pad with the right answer to the target equation is safe. Wrong pad costs a life.": "Une mignonne grenouille évite les voitures et chevauche les troncs pour traverser la rivière. Le piège : seul le nénuphar avec la bonne réponse à l’équation cible est sûr. Un mauvais nénuphar coûte une vie.",
+      "An isometric pyramid puzzle. Visit every tile, then balance the orange math tiles to <b>0</b>: descending hops add <b>+1</b>, ascending hops subtract <b>−1</b>. Dodge tumbling red balls and the snake that chases you.": "Un puzzle de pyramide isométrique. Visitez chaque tuile, puis ramenez les tuiles mathématiques orange à <b>0</b> : les sauts descendants ajoutent <b>+1</b>, les sauts ascendants retirent <b>−1</b>. Évitez les boules rouges qui dévalent et le serpent qui vous poursuit.",
+      "Friendly cities under siege from a meteor swarm. Click to fire from the nearest silo. Chain blasts and perfect hits multiply your score.": "Des villes amies assiégées par un essaim de météores. Cliquez pour tirer depuis le silo le plus proche. Les explosions en chaîne et les tirs parfaits multiplient votre score.",
+      "Drift in space and gun down asteroids stamped with arithmetic expressions. Only shoot the rocks that match the <b>target answer</b>. Wrong shots cost shield. Hyperspace if you get cornered.": "Dérivez dans l’espace et abattez les astéroïdes marqués d’expressions arithmétiques. Tirez seulement sur les rochers qui correspondent à la <b>réponse cible</b>. Les mauvais tirs coûtent du bouclier. Utilisez l’hyperespace si vous êtes coincé.",
+      "Classic snake with a math hook — only eat apples that match the active rule (evens, primes, multiples, ascending order…). Wrong apple shrinks you. Walls and self bites end the run.": "Le serpent classique avec une touche mathématique — mangez seulement les pommes qui respectent la règle active (pairs, premiers, multiples, ordre croissant…). Une mauvaise pomme vous raccourcit. Les murs et vous mordre vous-même terminent la partie.",
+      "Moles pop up with numbers. Whack only the ones matching the rule — evens, primes, multiples. Decoys cost you a miss. Three misses or the timer ends the run.": "Des taupes surgissent avec des nombres. Tapez seulement celles qui respectent la règle — pairs, premiers, multiples. Les leurres coûtent un raté. Trois ratés ou la fin du chrono terminent la partie.",
+      "Swap adjacent tiles to make a line of 3+ that all satisfy the active rule. Cascading drops chain into combo multipliers. Limited moves per level.": "Échangez des tuiles adjacentes pour former une ligne de 3+ respectant toutes la règle active. Les chutes en cascade enchaînent des multiplicateurs de combo. Coups limités par niveau.",
+      "Letters pop up from the holes. Tap only the target letter and ignore look-alikes like b, d, p, and q before three misses end the round.": "Des lettres surgissent des trous. Tapez seulement la lettre cible et ignorez les sosies comme b, d, p et q avant que trois ratés terminent la manche.",
+      "A circus cargo crate of letters opens briefly, snaps shut, and falls. Type the letters back in the correct order before it lands.": "Une caisse de cirque pleine de lettres s’ouvre brièvement, se referme d’un coup et tombe. Retapez les lettres dans le bon ordre avant qu’elle touche le sol.",
+      "Watch the bee buzz a trail of letters across the honeycomb, then tap them back in order on the keypad. Each letter has its own buzz; the trail grows every round. A playful memory + b/d/p/q drill.": "Regardez l’abeille tracer un chemin de lettres sur le rayon de miel, puis retapez-les dans l’ordre sur le clavier. Chaque lettre a son propre bourdonnement ; le chemin s’allonge à chaque manche. Un exercice ludique de mémoire et de b/d/p/q.",
       'Math Arcade · Hub': 'Math Arcade · Accueil',
       'A handcrafted collection of browser-native math arcade games. Cartoon aliens, friendly defenders, falling cargo, and a meteor swarm — all keyboard & mouse, no installs.': 'Une collection artisanale de jeux d’arcade mathématiques jouables dans le navigateur. Aliens cartoon, défenseurs amicaux, cargaison qui tombe et essaim de météores : clavier et souris, sans installation.',
       'click a card to': 'cliquez sur une carte pour',
@@ -250,6 +271,27 @@
       'Next briefing incoming': 'Prochaine mission'
     },
     es: {
+      "Algebra deduction": "Deducción algebraica",
+      "Hop to the answer": "Salta a la respuesta",
+      "Hop the pyramid": "Salta la pirámide",
+      "Defend 6 cities": "Defiende 6 ciudades",
+      "Target the right rock": "Apunta a la roca correcta",
+      "Slither & snack": "Repta y come",
+      "Bonk only the right ones": "Golpea solo las correctas",
+      "Swap to clear lines": "Intercambia para alinear",
+      "Letter recognition": "Reconocimiento de letras",
+      "Sequence memory": "Memoria de secuencias",
+      "Each clue is a balance: shapes on the left weigh as much as the number on the right. Deduce every shape's hidden value across 8 levels of clever puzzles.": "Cada pista es una balanza: las formas de la izquierda pesan lo mismo que el número de la derecha. Deduce el valor oculto de cada forma a lo largo de 8 niveles de ingeniosos puzzles.",
+      "A cute frog dodges cars and rides logs across the river. The catch: only the lily pad with the right answer to the target equation is safe. Wrong pad costs a life.": "Una linda rana esquiva coches y se monta en troncos para cruzar el río. La trampa: solo es seguro el nenúfar con la respuesta correcta a la ecuación objetivo. Un nenúfar equivocado cuesta una vida.",
+      "An isometric pyramid puzzle. Visit every tile, then balance the orange math tiles to <b>0</b>: descending hops add <b>+1</b>, ascending hops subtract <b>−1</b>. Dodge tumbling red balls and the snake that chases you.": "Un puzzle de pirámide isométrica. Visita cada casilla y luego equilibra las casillas matemáticas naranjas a <b>0</b>: los saltos descendentes suman <b>+1</b>, los ascendentes restan <b>−1</b>. Esquiva las bolas rojas que caen y la serpiente que te persigue.",
+      "Friendly cities under siege from a meteor swarm. Click to fire from the nearest silo. Chain blasts and perfect hits multiply your score.": "Ciudades amigas asediadas por una lluvia de meteoritos. Haz clic para disparar desde el silo más cercano. Las explosiones en cadena y los impactos perfectos multiplican tu puntuación.",
+      "Drift in space and gun down asteroids stamped with arithmetic expressions. Only shoot the rocks that match the <b>target answer</b>. Wrong shots cost shield. Hyperspace if you get cornered.": "Navega por el espacio y derriba asteroides marcados con expresiones aritméticas. Dispara solo a las rocas que coinciden con la <b>respuesta objetivo</b>. Los disparos fallidos cuestan escudo. Usa el hiperespacio si te acorralan.",
+      "Classic snake with a math hook — only eat apples that match the active rule (evens, primes, multiples, ascending order…). Wrong apple shrinks you. Walls and self bites end the run.": "La serpiente clásica con un giro matemático: come solo las manzanas que cumplen la regla activa (pares, primos, múltiplos, orden ascendente…). Una manzana equivocada te encoge. Los muros y morderte a ti mismo terminan la partida.",
+      "Moles pop up with numbers. Whack only the ones matching the rule — evens, primes, multiples. Decoys cost you a miss. Three misses or the timer ends the run.": "Los topos asoman con números. Golpea solo los que cumplen la regla: pares, primos, múltiplos. Los señuelos te cuestan un fallo. Tres fallos o el fin del tiempo terminan la partida.",
+      "Swap adjacent tiles to make a line of 3+ that all satisfy the active rule. Cascading drops chain into combo multipliers. Limited moves per level.": "Intercambia fichas adyacentes para formar una línea de 3+ que cumplan todas la regla activa. Las caídas en cascada encadenan multiplicadores de combo. Movimientos limitados por nivel.",
+      "Letters pop up from the holes. Tap only the target letter and ignore look-alikes like b, d, p, and q before three misses end the round.": "Las letras asoman por los agujeros. Toca solo la letra objetivo e ignora las parecidas como b, d, p y q antes de que tres fallos terminen la ronda.",
+      "A circus cargo crate of letters opens briefly, snaps shut, and falls. Type the letters back in the correct order before it lands.": "Una caja de circo llena de letras se abre un instante, se cierra de golpe y cae. Reescribe las letras en el orden correcto antes de que aterrice.",
+      "Watch the bee buzz a trail of letters across the honeycomb, then tap them back in order on the keypad. Each letter has its own buzz; the trail grows every round. A playful memory + b/d/p/q drill.": "Observa a la abeja trazar un camino de letras por el panal y luego tócalas en orden en el teclado. Cada letra tiene su propio zumbido; el camino crece en cada ronda. Un divertido ejercicio de memoria y de b/d/p/q.",
       'Math Arcade · Hub': 'Math Arcade · Inicio',
       'A handcrafted collection of browser-native math arcade games. Cartoon aliens, friendly defenders, falling cargo, and a meteor swarm — all keyboard & mouse, no installs.': 'Una colección artesanal de juegos arcade de matemáticas para el navegador. Aliens de dibujos, defensores amistosos, carga que cae y una lluvia de meteoritos: teclado y ratón, sin instalar nada.',
       'click a card to': 'haz clic en una tarjeta para',
@@ -844,6 +886,24 @@
     document.body.appendChild(wrap);
   }
 
+  // The language switcher belongs on the hub and on a game's title / intro / result
+  // screens — but NOT during active play. On a game page (has <canvas id="game">),
+  // show it only while an .overlay is visible (title, briefing, game-over). The hub
+  // has no game canvas, so the switcher is always shown there. Games without an
+  // .overlay fall back to always-shown (no regression).
+  function updateSwitcherVisibility() {
+    const sw = document.querySelector('.lang-switcher');
+    if (!sw) return;
+    const onGamePage = !!document.querySelector('canvas#game');
+    let show = true;
+    if (onGamePage) {
+      const overlays = document.querySelectorAll('.overlay');
+      show = overlays.length === 0 || Array.from(overlays).some((o) => !o.classList.contains('hidden'));
+    }
+    const display = show ? '' : 'none';
+    if (sw.style.display !== display) sw.style.display = display;
+  }
+
   let translating = false;
   function applyTranslations() {
     if (translating) return;
@@ -857,7 +917,12 @@
   document.addEventListener('DOMContentLoaded', () => {
     addSwitcher();
     applyTranslations();
+    updateSwitcherVisibility();
     const observer = new MutationObserver(() => applyTranslations());
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    // Cheap, separate observer: re-evaluate switcher visibility when overlays show/hide
+    // (a class change on the .overlay) so it disappears during play and returns at game-over.
+    const visObserver = new MutationObserver(updateSwitcherVisibility);
+    visObserver.observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
   });
 })();
