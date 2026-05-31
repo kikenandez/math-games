@@ -323,9 +323,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing') update(dt);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing') update(dt);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Missile Command loop error:', err); }
     requestAnimationFrame(loop);
   }
   function updateIdle(dt) {
@@ -1267,6 +1269,7 @@
   // ---------- Kick off ----------
   setupBase();
   updateHUD();
+  draw(); // paint one frame immediately so the scene is never blank before rAF starts
   requestAnimationFrame(loop);
 
   setInterval(() => {
@@ -1279,7 +1282,12 @@
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       lastTime = performance.now() - 16;
+      try { draw(); } catch (e) {}
       requestAnimationFrame(loop);
     }
+  });
+  window.addEventListener('focus', () => {
+    lastTime = performance.now() - 16;
+    try { draw(); } catch (e) {}
   });
 })();

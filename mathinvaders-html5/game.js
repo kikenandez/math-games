@@ -52,6 +52,7 @@
   // ---------- Tweaks ----------
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "inferno",
+    "theme": "void",
     "formSpeed": 1.0,
     "ufoFreq": 1.0,
     "bgSpeed": 1.0,
@@ -289,10 +290,12 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing') update(dt);
-    else if (state.phase === 'wave_clear') updateWaveClear(dt);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing') update(dt);
+      else if (state.phase === 'wave_clear') updateWaveClear(dt);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Math Invaders loop error:', err); }
     requestAnimationFrame(loop);
   }
 
@@ -756,10 +759,15 @@
 
   // ---------- Space background ----------
   function drawSpace() {
+    const sky = TWEAKS.theme === 'nebula'
+      ? ['#100420', '#241038', '#0a0518']
+      : TWEAKS.theme === 'aurora'
+      ? ['#04140f', '#0a2630', '#04101a']
+      : ['#040414', '#0a0e26', '#04050f'];
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#040414');
-    g.addColorStop(0.5, '#0a0e26');
-    g.addColorStop(1, '#04050f');
+    g.addColorStop(0, sky[0]);
+    g.addColorStop(0.5, sky[1]);
+    g.addColorStop(1, sky[2]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
   }
@@ -767,7 +775,17 @@
   function drawNebula() {
     // Drifting nebula blobs
     const t = state.elapsed * 5 * TWEAKS.bgSpeed;
-    const blobs = [
+    const blobs = TWEAKS.theme === 'nebula' ? [
+      { x: W * 0.2, y: H * 0.35, r: 260, c: 'rgba(200, 70, 180, 0.20)' },
+      { x: W * 0.7, y: H * 0.55, r: 300, c: 'rgba(120, 60, 220, 0.18)' },
+      { x: W * 0.85, y: H * 0.25, r: 220, c: 'rgba(230, 110, 210, 0.15)' },
+      { x: W * 0.15, y: H * 0.7, r: 240, c: 'rgba(150, 80, 230, 0.14)' },
+    ] : TWEAKS.theme === 'aurora' ? [
+      { x: W * 0.2, y: H * 0.35, r: 260, c: 'rgba(60, 200, 160, 0.18)' },
+      { x: W * 0.7, y: H * 0.55, r: 300, c: 'rgba(60, 150, 220, 0.16)' },
+      { x: W * 0.85, y: H * 0.25, r: 220, c: 'rgba(120, 230, 180, 0.14)' },
+      { x: W * 0.15, y: H * 0.7, r: 240, c: 'rgba(80, 200, 220, 0.13)' },
+    ] : [
       { x: W * 0.2, y: H * 0.35, r: 240, c: 'rgba(120, 60, 180, 0.18)' },
       { x: W * 0.7, y: H * 0.55, r: 280, c: 'rgba(60, 80, 200, 0.16)' },
       { x: W * 0.85, y: H * 0.25, r: 200, c: 'rgba(220, 100, 200, 0.13)' },
@@ -1287,6 +1305,16 @@
         persistTweaks();
       });
     });
+    // Deep-space theme
+    const themeRow = document.getElementById('theme-row');
+    if (themeRow) themeRow.querySelectorAll('.opt').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.value === TWEAKS.theme);
+      opt.addEventListener('click', () => {
+        TWEAKS.theme = opt.dataset.value;
+        themeRow.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o === opt));
+        persistTweaks();
+      });
+    });
     // Sliders
     const slider = (id, key, fmt) => {
       const el = document.getElementById(id);
@@ -1344,6 +1372,7 @@
   // ---------- Kick off ----------
   updateHUD();
   updateAnswerDisplay();
+  draw(); // paint one frame immediately so the scene is never blank before rAF starts
   requestAnimationFrame(loop);
 
   // Visibility-aware fallback: if RAF stops firing (hidden tab / throttled
@@ -1359,7 +1388,12 @@
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       lastTime = performance.now() - 16;
+      try { draw(); } catch (e) {}
       requestAnimationFrame(loop);
     }
+  });
+  window.addEventListener('focus', () => {
+    lastTime = performance.now() - 16;
+    try { draw(); } catch (e) {}
   });
 })();

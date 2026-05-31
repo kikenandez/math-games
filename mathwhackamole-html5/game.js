@@ -37,6 +37,7 @@
 
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
+    "theme": "day",
     "speed": 1.0
   }/*EDITMODE-END*/;
 
@@ -204,9 +205,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing' && !state.paused) update(dt);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing' && !state.paused) update(dt);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Math Whack-a-Mole loop error:', err); }
     requestAnimationFrame(loop);
   }
   function updateIdle(dt) { state.elapsed += dt * 0.5; }
@@ -347,8 +350,8 @@
     document.getElementById('score').textContent = state.score;
     document.getElementById('level').textContent = state.level;
     document.getElementById('time').textContent = Math.ceil(state.timeLeft);
-    const m = document.getElementById('misses');
-    m.textContent = '✕'.repeat(state.misses) + '○'.repeat(Math.max(0, state.maxMisses - state.misses));
+    const pips = document.querySelectorAll('#misses .pip');
+    pips.forEach((p, i) => p.classList.toggle('spent', i < state.misses));
   }
   function updateRuleHUD() {
     document.getElementById('rule-text').textContent = state.rule.label;
@@ -368,11 +371,17 @@
     ctx.restore();
   }
   function drawBg() {
-    // Grassy field
+    // Grassy field — theme-tinted
+    const field = TWEAKS.theme === 'night'
+      ? ['#1e2e22', '#2a3e2e', '#16261a']
+      : TWEAKS.theme === 'dusk'
+      ? ['#6a5226', '#9a7a3a', '#4a5a2e']
+      : ['#3a7a3a', '#5cb85c', '#2e8a3e'];
+    const sunAlpha = TWEAKS.theme === 'night' ? 0.015 : TWEAKS.theme === 'dusk' ? 0.09 : 0.05;
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#3a7a3a');
-    g.addColorStop(0.7, '#5cb85c');
-    g.addColorStop(1, '#2e8a3e');
+    g.addColorStop(0, field[0]);
+    g.addColorStop(0.7, field[1]);
+    g.addColorStop(1, field[2]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
     // Subtle grass blades
@@ -387,7 +396,7 @@
       ctx.stroke();
     }
     // Sun rays from top center
-    ctx.fillStyle = 'rgba(255, 240, 180, 0.05)';
+    ctx.fillStyle = `rgba(255, 240, 180, ${sunAlpha})`;
     for (let i = 0; i < 8; i++) {
       ctx.save();
       ctx.translate(W / 2, -40);
@@ -626,6 +635,15 @@
         persistTweaks();
       });
     });
+    const themeRow = document.getElementById('theme-row');
+    if (themeRow) themeRow.querySelectorAll('.opt').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.value === TWEAKS.theme);
+      opt.addEventListener('click', () => {
+        TWEAKS.theme = opt.dataset.value;
+        themeRow.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o === opt));
+        persistTweaks();
+      });
+    });
     const sp = document.getElementById('speed');
     const spVal = document.getElementById('speed-val');
     sp.value = TWEAKS.speed;
@@ -672,9 +690,11 @@
   state.rule = RULES[0];
   updateHUD();
   updateRuleHUD();
+  draw(); // paint one frame immediately so the field is never blank before rAF starts
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) lastTime = performance.now() - 16;
+    if (!document.hidden) { lastTime = performance.now() - 16; try { draw(); } catch (e) {} }
   });
+  window.addEventListener('focus', () => { lastTime = performance.now() - 16; try { draw(); } catch (e) {} });
   requestAnimationFrame(loop);
 })();
