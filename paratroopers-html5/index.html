@@ -2,236 +2,207 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Paratroopers</title>
+<title>Paratroopers — Redesign</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Fredoka:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #101426;
-    --paper: #fff4dc;
-    --sky: #7ad1ff;
-    --sky-dark: #3aa8ff;
-    --grass: #5cb85c;
-    --accent: #ff8a3d;
-    --accent-2: #ffd24d;
-    --good: #5cd97a;
-    --hot: #ff5c7c;
+    --ink: #12182e;
+    --ink-soft: rgba(255,244,224,0.6);
+    --paper: #fff4e6;
+    --accent: #ff7a3d;   /* orange */
+    --gold: #ffce4d;
+    --good: #5cd97a;     /* save / friendly */
+    --hot: #ff5d6c;      /* shoot / danger */
     --cool: #5cd9ff;
+    --panel: rgba(18, 24, 46, 0.92);
+    --panel-solid: #161d38;
+    --shadow: rgba(6, 9, 24, 0.55);
+    --radius: 14px;
   }
   *, *::before, *::after { box-sizing: border-box; }
   html, body {
-    margin: 0; padding: 0;
-    width: 100%; height: 100%;
-    overflow: hidden;
-    background: #050614;
-    font-family: 'Fredoka', sans-serif;
-    color: var(--paper);
-    user-select: none;
-    -webkit-user-select: none;
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background: #050614; font-family: 'Fredoka', sans-serif; color: var(--paper);
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
   }
   #game-wrap { position: fixed; inset: 0; overflow: hidden; }
   canvas#game { display: block; width: 100%; height: 100%; cursor: crosshair; }
 
-  /* HUD */
+  /* ============================ HUD ============================ */
   #hud {
-    position: absolute; top: 16px; left: 16px; right: 16px;
-    display: flex; justify-content: center; align-items: flex-start;
-    gap: 12px; pointer-events: none;
-    font-family: 'Lilita One', sans-serif;
-    z-index: 5;
+    position: absolute; top: 14px; left: 14px; right: 14px;
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+    pointer-events: none; z-index: 5;
   }
-  .hud-group {
-    display: grid;
-    grid-template-columns: repeat(4, max-content) minmax(180px, 360px);
-    justify-content: center;
-    gap: 10px;
-    max-width: calc(100vw - 32px);
+  .hud-cluster { display: flex; gap: 8px; align-items: stretch; }
+  .chip {
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 12px;
+    padding: 6px 12px 7px; box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.1);
+    display: flex; flex-direction: column; align-items: flex-start; line-height: 1; min-width: 52px;
   }
-  .badge {
-    background: rgba(16, 20, 38, 0.92);
-    border: 3px solid var(--paper);
-    border-radius: 10px;
-    padding: 8px 12px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
-    display: flex; align-items: center; gap: 10px;
-    font-size: 18px; line-height: 1;
-    min-width: 0;
-  }
-  .badge .label {
-    font-size: 10px; color: rgba(255, 244, 220, 0.55);
-    letter-spacing: 0.2em; font-family: 'Fredoka', sans-serif;
-    font-weight: 600; text-transform: uppercase;
-  }
-  .badge .val { font-size: 20px; min-width: 1ch; }
-  .badge.hp .val { color: var(--hot); }
-  .badge.score .val { color: var(--accent-2); }
-  .badge.level .val { color: var(--good); }
-  .badge.paras .val { color: var(--accent); }
-  .badge.rule .val { color: var(--cool); font-size: 16px; white-space: nowrap; text-transform: uppercase; }
-  .badge.rule { max-width: min(360px, 100%); }
-  .badge.rule .val { overflow: hidden; text-overflow: ellipsis; }
+  .chip .label { font-size: 9px; color: var(--ink-soft); letter-spacing: 0.16em; font-weight: 600; text-transform: uppercase; margin-bottom: 3px; }
+  .chip .val { font-family: 'Lilita One', sans-serif; font-size: 21px; }
+  .chip.score .val { color: var(--gold); }
+  .chip.level .val { color: var(--good); }
+  .chip.targets .val { color: var(--accent); }
+  .chip.lives { align-items: center; justify-content: center; }
+  .chip.lives .hearts { font-family: 'Lilita One'; font-size: 19px; color: var(--hot); letter-spacing: 2px; }
 
-  @media (max-width: 760px) {
-    #hud { top: 8px; left: 8px; right: 8px; }
-    .hud-group { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%; }
-    .badge { border-width: 2px; border-radius: 8px; padding: 6px 6px; gap: 5px; justify-content: center; }
-    .badge .label { font-size: 8px; letter-spacing: 0.12em; }
-    .badge .val { font-size: 16px; }
-    .badge.rule {
-      grid-column: 1 / -1;
-      justify-content: center;
-      justify-self: stretch;
-      max-width: none;
-    }
-    .badge.rule .val { font-size: 14px; }
+  .icon-btn {
+    pointer-events: auto; width: 40px; height: 40px; flex: 0 0 auto;
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 12px;
+    box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.1);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--paper); padding: 0; transition: transform 0.1s;
   }
+  .icon-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--shadow); }
 
-  /* Overlays */
-  .overlay {
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, rgba(16, 20, 38, 0.55), rgba(5, 6, 20, 0.92));
-    display: flex; align-items: center; justify-content: center;
-    padding: 18px;
-    overflow: hidden;
-    z-index: 20; opacity: 1; transition: opacity 0.25s;
+  /* ===== Mission legend (replaces the truncated RULE badge) ===== */
+  #mission {
+    position: absolute; top: 66px; left: 50%; transform: translateX(-50%);
+    display: none; align-items: center; gap: 12px; z-index: 5; pointer-events: none;
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 14px;
+    padding: 7px 14px; box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.1);
+    max-width: calc(100vw - 28px);
   }
-  .overlay.hidden { opacity: 0; pointer-events: none; }
-  .card {
-    background: rgba(16, 20, 38, 0.96);
-    border: 4px solid var(--paper);
-    border-radius: 20px;
-    box-shadow: 0 8px 0 rgba(0,0,0,0.6);
-    padding: 32px 38px;
-    text-align: center;
-    width: calc(100vw - 36px);
-    max-width: 560px;
-    min-width: 0;
-    max-height: calc(100vh - 36px);
-    overflow: auto;
+  #mission.show { display: flex; }
+  .m-grp { display: flex; align-items: center; gap: 8px; }
+  .m-verb { font-family: 'Lilita One', sans-serif; font-size: 12px; letter-spacing: 0.08em; }
+  .m-grp.shoot .m-verb { color: var(--hot); }
+  .m-grp.save .m-verb { color: var(--good); }
+  .m-div { width: 2px; height: 26px; background: rgba(255,244,224,0.18); border-radius: 2px; }
+  .glyph {
+    width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+    font-family: 'Lilita One', sans-serif; font-size: 18px; border: 2.5px solid var(--ink);
+    box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.3); position: relative;
   }
-  .card h1 {
-    font-family: 'Lilita One', sans-serif;
-    font-size: clamp(36px, 7.5vw, 56px);
-    line-height: 1.05; margin: 0 0 6px;
-    color: var(--paper);
-    letter-spacing: 0.02em;
+  .glyph.shoot { background: var(--hot); color: #fff; }
+  .glyph.save  { background: var(--good); color: var(--ink); }
+  .glyph.heli::after, .glyph.para::after {
+    content: ''; position: absolute; font-size: 9px;
   }
-  .card h1 .acc { color: var(--accent); }
-  .card .sub {
-    font-family: 'Fredoka', sans-serif; font-weight: 600;
-    color: rgba(255, 244, 220, 0.7);
-    font-size: 15px; margin: 4px 0 18px;
-  }
-  .card p {
-    font-family: 'Fredoka', sans-serif;
-    font-size: 14px; line-height: 1.55;
-    color: rgba(255, 244, 220, 0.85);
-    margin: 0 0 20px;
-  }
-  .card p b { color: var(--paper); }
-  
-  .big-btn {
-    font-family: 'Lilita One', sans-serif;
-    font-size: 26px; letter-spacing: 0.05em;
-    background: var(--accent); color: #fff;
-    border: 3px solid var(--paper); border-radius: 12px;
-    padding: 10px 30px;
-    box-shadow: 0 5px 0 rgba(0,0,0,0.6);
-    cursor: pointer; white-space: nowrap;
-    transition: transform 0.08s;
-  }
-  .big-btn:hover { transform: scale(1.04); }
-  .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.6); }
+  .glyph-wrap { display: flex; align-items: center; gap: 5px; }
+  .glyph-tag { font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); }
 
-  .stats-row { display: flex; gap: 8px; justify-content: center; margin: 0 0 18px; flex-wrap: wrap; }
-  .stat-chip {
-    background: rgba(0,0,0,0.4);
-    border: 2px solid var(--paper);
-    border-radius: 10px; padding: 6px 12px;
-    font-family: 'Lilita One', sans-serif;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.7);
-    min-width: 80px;
-  }
-  .stat-chip .stat-label { font-size: 9px; color: rgba(255, 244, 220, 0.6); letter-spacing: 0.16em; font-family: 'Fredoka', sans-serif; font-weight: 600; text-transform: uppercase; }
-  .stat-chip .stat-val { font-size: 22px; color: var(--paper); }
-  .stat-chip.hi .stat-val { color: var(--accent-2); }
-
-  /* Letter visual rule banner on rules card */
-  .rule-box {
-    background: #050614;
-    border: 3px dashed var(--accent-2);
-    border-radius: 14px;
-    padding: 16px;
-    margin: 18px 0;
-    font-family: 'Lilita One', sans-serif;
-    font-size: 24px;
-    color: #fff;
-    text-shadow: 2px 2px 0 #1a1a14;
-    text-transform: uppercase;
-    overflow-wrap: anywhere;
-  }
-
-  @media (max-width: 560px), (max-height: 560px) {
-    .card { padding: 22px 18px; border-radius: 14px; }
-    .card h1 { font-size: clamp(28px, 9vw, 40px); overflow-wrap: anywhere; }
-    .card p { font-size: 13px; line-height: 1.42; margin-bottom: 14px; }
-    .rule-box { font-size: 18px; padding: 12px; margin: 12px 0; }
-    .big-btn { font-size: 22px; padding: 9px 22px; }
-  }
-
-  @media (max-width: 560px) {
-    .hud-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .badge.rule { grid-column: 1 / -1; }
-  }
-
-  /* Tweaks (gear) panel */
-  #gear-btn {
-    position: absolute; top: 16px; right: 16px; width: 42px; height: 42px;
-    background: rgba(16, 20, 38, 0.92); border: 3px solid var(--paper); border-radius: 10px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.55); cursor: pointer; display: flex; align-items: center; justify-content: center;
-    z-index: 25; font-family: 'Lilita One', sans-serif; font-size: 20px; color: var(--paper); padding: 0;
-  }
+  /* ============================ SETTINGS ============================ */
   #tweaks {
-    position: absolute; top: 68px; right: 16px; width: 240px;
-    background: rgba(16, 20, 38, 0.96); border: 3px solid var(--paper); border-radius: 12px;
-    box-shadow: 0 6px 0 rgba(0,0,0,0.6); padding: 12px 14px 14px; z-index: 30; display: none; color: var(--paper);
+    position: absolute; top: 62px; right: 14px; width: 244px; pointer-events: auto;
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 16px;
+    box-shadow: 0 8px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.1);
+    padding: 13px 15px 15px; z-index: 30; display: none;
   }
   #tweaks.open { display: block; }
-  #tweaks h3 { font-family: 'Lilita One', sans-serif; font-size: 17px; margin: 0 0 10px; letter-spacing: 0.06em; display: flex; align-items: center; justify-content: space-between; }
-  #tweaks .close { background: none; border: none; cursor: pointer; color: rgba(255,244,220,0.7); font-size: 20px; font-family: 'Lilita One', sans-serif; }
-  .tweak-row { margin: 0 0 10px; }
-  .tweak-row .lbl { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,244,220,0.6); margin-bottom: 4px; }
-  .tweak-row .opts { display: flex; gap: 5px; flex-wrap: wrap; }
+  #tweaks h3 { font-family: 'Lilita One', sans-serif; font-size: 16px; margin: 0 0 11px; letter-spacing: 0.04em; display: flex; align-items: center; justify-content: space-between; }
+  #tweaks .close { background: none; border: none; cursor: pointer; color: var(--ink-soft); font-size: 21px; font-family: 'Lilita One', sans-serif; line-height: 1; }
+  .tweak-row { margin: 0 0 11px; }
+  .tweak-row:last-child { margin-bottom: 0; }
+  .tweak-row .lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.13em; color: var(--ink-soft); margin-bottom: 5px; }
+  .tweak-row .opts { display: flex; gap: 5px; }
   .tweak-row .opt {
-    padding: 5px 10px; border: 2px solid var(--paper); border-radius: 8px; background: rgba(0,0,0,0.4); color: var(--paper);
-    font-family: 'Lilita One', sans-serif; font-size: 11px; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,0.55);
+    flex: 1; text-align: center; padding: 6px 4px; border: 2px solid rgba(255,244,224,0.5); border-radius: 9px;
+    background: rgba(0,0,0,0.25); color: var(--paper); font-family: 'Lilita One', sans-serif; font-size: 11px;
+    cursor: pointer; transition: all 0.12s; white-space: nowrap;
   }
-  .tweak-row .opt.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .tweak-row .hint { font-size: 10px; color: rgba(255,244,220,0.45); margin-top: 3px; font-family: 'Fredoka', sans-serif; }
+  .tweak-row .opt.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 0 var(--shadow); }
+  .tweak-row .hint { font-size: 10px; color: rgba(255,244,224,0.42); margin-top: 4px; font-family: 'Fredoka', sans-serif; }
+
+  /* ============================ OVERLAYS ============================ */
+  .overlay {
+    position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 18px;
+    background: radial-gradient(ellipse at 50% 38%, rgba(18,24,46,0.5), rgba(5,6,20,0.9));
+  }
+  .overlay.hidden { display: none !important; }
+  .card {
+    position: relative; background: var(--panel-solid); border: 3px solid var(--paper); border-radius: 24px;
+    box-shadow: 0 14px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.12);
+    padding: 30px 36px 32px; text-align: center; width: min(560px, calc(100vw - 28px));
+    max-height: calc(100vh - 32px); overflow-y: auto;
+  }
+  .card::-webkit-scrollbar { width: 0; }
+  .card h1 { font-family: 'Lilita One', sans-serif; font-size: clamp(30px, 6vw, 46px); line-height: 1.06; margin: 0; color: var(--paper); letter-spacing: 0.02em; text-shadow: 0 3px 0 var(--shadow); }
+  .card h1 .acc { color: var(--accent); }
+  .card .sub { font-family: 'Fredoka', sans-serif; font-weight: 600; color: var(--ink-soft); font-size: 14px; margin: 10px 0 0; }
+  .card p { font-family: 'Fredoka', sans-serif; font-size: 14px; line-height: 1.5; color: rgba(255,244,224,0.85); margin: 16px 0 0; }
+  .card p b { color: var(--paper); }
+
+  /* Big legend on title/briefing — teaches the letterforms */
+  .legend {
+    display: flex; gap: 10px; justify-content: center; margin: 22px 0 2px; flex-wrap: wrap;
+  }
+  .legend .lcol {
+    flex: 1; min-width: 150px; background: rgba(0,0,0,0.26); border: 2px solid rgba(255,244,224,0.35);
+    border-radius: 16px; padding: 14px 12px;
+  }
+  .legend .lcol.shoot { border-color: rgba(255,93,108,0.6); }
+  .legend .lcol.save { border-color: rgba(92,217,122,0.55); }
+  .legend .lhead { font-family: 'Lilita One', sans-serif; font-size: 13px; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .legend .lcol.shoot .lhead { color: var(--hot); }
+  .legend .lcol.save .lhead { color: var(--good); }
+  .legend .ltokens { display: flex; gap: 12px; justify-content: center; align-items: center; }
+  .legend .lbig { width: 46px; height: 46px; font-size: 26px; }
+  .legend .ldesc { font-size: 11px; color: var(--ink-soft); margin-top: 9px; line-height: 1.35; }
+
+  .big-btn {
+    font-family: 'Lilita One', sans-serif; font-size: 25px; letter-spacing: 0.05em;
+    background: linear-gradient(180deg, #ff985c, var(--accent)); color: #fff;
+    border: 3px solid var(--paper); border-radius: 14px; padding: 12px 40px; margin-top: 24px;
+    box-shadow: 0 6px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.3); cursor: pointer; white-space: nowrap;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .big-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.3); }
+  .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.3); }
+
+  .stats-row { display: flex; gap: 9px; justify-content: center; margin: 22px 0 0; flex-wrap: wrap; }
+  .stat-chip { flex: 1; min-width: 84px; background: rgba(0,0,0,0.28); border: 2px solid rgba(255,244,224,0.4); border-radius: 14px; padding: 11px 8px; }
+  .stat-chip .stat-label { font-size: 9px; color: var(--ink-soft); letter-spacing: 0.13em; font-weight: 600; text-transform: uppercase; }
+  .stat-chip .stat-val { font-family: 'Lilita One', sans-serif; font-size: 26px; color: var(--paper); margin-top: 4px; }
+  .stat-chip.hi { background: rgba(255,206,77,0.15); border-color: var(--gold); }
+  .stat-chip.hi .stat-val { color: var(--gold); }
+
+  /* Look-alike insight panel (parent/teacher facing) */
+  .insight { margin-top: 18px; background: rgba(0,0,0,0.26); border: 2px solid rgba(255,244,224,0.32); border-radius: 16px; padding: 14px 16px; text-align: left; }
+  .insight .ih { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+  .insight .ih .t { font-family: 'Lilita One', sans-serif; font-size: 13px; letter-spacing: 0.03em; }
+  .insight .ih .pct { font-family: 'Lilita One', sans-serif; font-size: 15px; color: var(--hot); }
+  .insight .bar { height: 9px; border-radius: 99px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .insight .bar > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--good), var(--hot)); transition: width 0.6s ease; }
+  .insight .cap { font-size: 11px; line-height: 1.4; color: var(--ink-soft); margin-top: 9px; }
+
+  @media (max-width: 560px), (max-height: 560px) {
+    .card { padding: 22px 18px 24px; border-radius: 18px; }
+    .legend .lcol { min-width: 0; }
+    .chip .val { font-size: 18px; }
+  }
 </style>
 </head>
 <body>
 <div id="game-wrap">
   <canvas id="game"></canvas>
 
+  <!-- HUD -->
   <div id="hud">
-    <div class="hud-group">
-      <div class="badge hp"><span class="label">Lives</span><span class="val" id="hp">♥♥♥</span></div>
-      <div class="badge score"><span class="label">Score</span><span class="val" id="score">0</span></div>
-      <div class="badge level"><span class="label">Level</span><span class="val" id="level">1</span></div>
-      <div class="badge paras"><span class="label">Targets</span><span class="val" id="paras-left">0</span></div>
-      <div class="badge rule"><span class="label">Rule</span><span class="val" id="rule">READY</span></div>
+    <div class="hud-cluster">
+      <div class="chip score"><span class="label">Score</span><span class="val" id="score">0</span></div>
+      <div class="chip level"><span class="label">Level</span><span class="val" id="level">1</span></div>
+      <div class="chip targets"><span class="label">Targets</span><span class="val" id="paras-left">0</span></div>
+    </div>
+    <div class="hud-cluster">
+      <div class="chip lives"><span class="label">Lives</span><span class="hearts" id="hp">♥♥♥</span></div>
+      <button class="icon-btn" id="gear-btn" title="Settings">⚙</button>
     </div>
   </div>
 
-  <button id="gear-btn" title="Settings">⚙</button>
+  <!-- Mission legend (in-play) -->
+  <div id="mission"></div>
 
+  <!-- Settings -->
   <div id="tweaks">
     <h3><span>Settings</span> <button class="close" id="tweaks-close">×</button></h3>
     <div class="tweak-row">
-      <div class="lbl"><span>Pace</span></div>
+      <div class="lbl">Pace</div>
       <div class="opts" id="pace-row">
         <div class="opt" data-value="relaxed">CALM</div>
         <div class="opt active" data-value="normal">NORMAL</div>
@@ -240,46 +211,58 @@
       <div class="hint">how fast paratroopers arrive</div>
     </div>
     <div class="tweak-row">
-      <div class="lbl"><span>Color cues</span></div>
+      <div class="lbl">Color cues</div>
       <div class="opts" id="color-row">
         <div class="opt" data-value="off">OFF</div>
         <div class="opt active" data-value="on">ON</div>
       </div>
-      <div class="hint">color shows good vs bad (off = read the letter)</div>
+      <div class="hint">off = read the letter, not the color</div>
+    </div>
+    <div class="tweak-row">
+      <div class="lbl">Sky</div>
+      <div class="opts" id="theme-row">
+        <div class="opt active" data-value="day">DAY</div>
+        <div class="opt" data-value="dusk">DUSK</div>
+      </div>
     </div>
   </div>
 
-  <!-- Start Title Overlay -->
+  <!-- Title -->
   <div class="overlay" id="overlay-title">
     <div class="card">
       <h1><span class="acc">PARA</span>TROOPERS</h1>
-      <div class="sub">visual action training · distinguish letter reversals</div>
-      <p>Aim and fire your base turret! Helicopters fly across the sky, dropping paratroopers. At each level, you must shoot down <b>only the target letters</b> while letting the friendly ones land safely so they can run into the <b>Rescue Truck</b>!</p>
-      <p style="font-size: 13px; color: rgba(255,244,220,0.65)">⚠️ <b>SABOTAGE STACKING:</b> Landing 4 bad paratroopers on either side of the turret will blow you up! And if a bad paratrooper lands on a <b>Rescue Truck</b>, it explodes — game over!</p>
+      <div class="sub">spot the look-alike letter · b d p q</div>
+      <p>Aim your turret and shoot down <b>only the target letter</b>. Let the look-alikes land safely — they'll run to the <b>rescue truck</b> for bonus points.</p>
+      <div class="legend" id="title-legend"></div>
+      <p style="font-size:12px; color:var(--ink-soft); margin-top:14px;">Let <b>4</b> bad troopers pile up on one side, or let one hit a rescue truck, and your base is gone.</p>
       <button class="big-btn" id="start-btn">DEFEND</button>
     </div>
   </div>
 
-  <!-- Intermediate Level Rule Overlay -->
+  <!-- Briefing -->
   <div class="overlay hidden" id="overlay-rule">
     <div class="card">
       <h1>LEVEL <span id="rule-level-num">1</span></h1>
       <div class="sub">mission briefing</div>
-      <div class="rule-box" id="rule-text">SHOOT ONLY "p"</div>
-      <p data-i18n="paratroopers-briefing-help">Zap bad targets to defend your base and score points! Avoid shooting good ones — they must land safely and escape in the <b>Rescue Truck</b> to reward you bonus points.</p>
+      <div class="legend" id="rule-legend"></div>
       <button class="big-btn" id="rule-btn">COMMENCE</button>
     </div>
   </div>
 
-  <!-- Game Over Overlay -->
+  <!-- Game Over -->
   <div class="overlay hidden" id="overlay-over">
     <div class="card">
       <h1><span class="acc">BASE</span> DESTROYED</h1>
       <div class="sub" id="over-reason">Defenders overrun!</div>
       <div class="stats-row">
-        <div class="stat-chip"><div class="stat-label">Score</div><div class="val stat-val" id="over-score">0</div></div>
-        <div class="stat-chip"><div class="stat-label">Level</div><div class="val stat-val" id="over-level">1</div></div>
-        <div class="stat-chip hi"><div class="stat-label">Best</div><div class="val stat-val" id="over-best">0</div></div>
+        <div class="stat-chip"><div class="stat-label">Score</div><div class="stat-val" id="over-score">0</div></div>
+        <div class="stat-chip"><div class="stat-label">Level</div><div class="stat-val" id="over-level">1</div></div>
+        <div class="stat-chip hi"><div class="stat-label">Best</div><div class="stat-val" id="over-best">0</div></div>
+      </div>
+      <div class="insight" id="over-insight">
+        <div class="ih"><span class="t">Look-alike mistakes</span><span class="pct" id="over-mix">0</span></div>
+        <div class="bar"><i id="over-mix-bar" style="width:0%"></i></div>
+        <div class="cap" id="over-cap">Times you fired on the mirror letter (b↔d, p↔q) instead of the target. Fewer is sharper.</div>
       </div>
       <button class="big-btn" id="restart-btn">DEFEND AGAIN</button>
     </div>
