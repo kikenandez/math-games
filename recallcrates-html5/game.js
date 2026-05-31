@@ -44,6 +44,11 @@
       gameAcc: 'SHOW', gameRest: ' OVER', tooMany: 'too many crates dropped!',
       maxLen: 'Best length', tweaks: 'Tweaks', difficulty: 'Difficulty',
       easy: 'EASY', normal: 'NORMAL', hard: 'HARD', age: 'Child age',
+      bigTop: 'Big top', day: 'DAY', night: 'NIGHT',
+      ht1: 'PEEK', hd1: 'A crate opens for a moment.',
+      ht2: 'SHUT', hd2: 'It snaps closed and falls.',
+      ht3: 'TYPE', hd3: 'Type them back, in order.',
+      warn: "Watch for tricky look-alikes like <b>b d p q</b>. Three crates dropped and the show's over.",
     },
     fr: {
       titleAcc: 'RAPPELLE', titleRest: '-CAISSES',
@@ -57,6 +62,11 @@
       gameAcc: 'FIN', gameRest: ' DU SPECTACLE', tooMany: 'trop de caisses tombées !',
       maxLen: 'Longueur max', tweaks: 'Réglages', difficulty: 'Difficulté',
       easy: 'FACILE', normal: 'NORMAL', hard: 'DIFFICILE', age: "Âge de l'enfant",
+      bigTop: 'Chapiteau', day: 'JOUR', night: 'NUIT',
+      ht1: 'REGARDE', hd1: 'Une caisse s’ouvre un instant.',
+      ht2: 'FERME', hd2: 'Elle se referme et tombe.',
+      ht3: 'TAPE', hd3: 'Retape-les dans l’ordre.',
+      warn: "Attention aux sosies comme <b>b d p q</b>. Trois caisses tombées et le spectacle est fini.",
     },
     es: {
       titleAcc: 'RECUERDA', titleRest: ' CAJAS',
@@ -70,6 +80,11 @@
       gameAcc: 'FIN', gameRest: ' DEL JUEGO', tooMany: '¡demasiadas cajas caídas!',
       maxLen: 'Longitud máx', tweaks: 'Ajustes', difficulty: 'Dificultad',
       easy: 'FÁCIL', normal: 'NORMAL', hard: 'DIFÍCIL', age: 'Edad del niño',
+      bigTop: 'Carpa', day: 'DÍA', night: 'NOCHE',
+      ht1: 'MIRA', hd1: 'Una caja se abre un instante.',
+      ht2: 'CIERRA', hd2: 'Se cierra de golpe y cae.',
+      ht3: 'ESCRIBE', hd3: 'Reescríbelas en orden.',
+      warn: "Cuidado con las parecidas como <b>b d p q</b>. Tres cajas caídas y se acabó el espectáculo.",
     },
   };
   const T = STR[LANG];
@@ -77,7 +92,6 @@
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     document.getElementById('title-h1').innerHTML = `<span class="acc">${T.titleAcc}</span>${T.titleRest}`;
     set('title-sub', T.sub);
-    document.getElementById('title-p').innerHTML = T.intro;
     set('start-btn', T.start);
     set('title-note', T.note);
     set('lcd-label', T.typeWhat); set('lcd-hint', T.hint);
@@ -86,11 +100,17 @@
     set('tw-title', T.tweaks); set('tw-diff', T.difficulty);
     set('tw-easy', T.easy); set('tw-normal', T.normal); set('tw-hard', T.hard);
     set('tw-age', T.age);
+    set('tw-bigtop', T.bigTop); set('tw-day', T.day); set('tw-night', T.night);
+    set('how1-t', T.ht1); set('how1-d', T.hd1);
+    set('how2-t', T.ht2); set('how2-d', T.hd2);
+    set('how3-t', T.ht3); set('how3-d', T.hd3);
+    const tp = document.getElementById('title-p'); if (tp) tp.innerHTML = T.warn;
   }
 
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
-    "age": ""
+    "age": "",
+    "theme": "day"
   }/*EDITMODE-END*/;
 
   // ===== Letter pool (reversal-prone letters seeded in for the dyslexia signal) =====
@@ -330,14 +350,16 @@
   // taps to keep the sequencing signal clean.
 
   function updateAnswerDisplay() {
-    const el = document.getElementById('ans-val');
-    if (!state.typed.length) {
-      el.classList.add('empty');
-      el.innerHTML = '<span class="cursor">_</span>';
-    } else {
-      el.classList.remove('empty');
-      el.innerHTML = `${state.typed.join(' ')}<span class="cursor">|</span>`;
+    const wrap = document.getElementById('ans-slots');
+    if (!wrap) return;
+    const n = (state.seq && state.seq.length) || state.span || 0;
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      const ch = state.typed[i];
+      const active = state.phase === 'recall' && i === state.typed.length;
+      html += `<span class="slot${ch ? ' filled' : ''}${active ? ' active' : ''}">${ch || ''}</span>`;
     }
+    wrap.innerHTML = html;
   }
 
   // ===== Loop =====
@@ -346,8 +368,9 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    update(dt);
-    draw();
+    // Resilience: one bad frame should never kill the whole game loop.
+    try { update(dt); draw(); }
+    catch (err) { console.error('Recall Crates loop error:', err); }
     requestAnimationFrame(loop);
   }
 
@@ -390,7 +413,7 @@
     overlay.querySelector('.card')?.remove();
     const card = document.createElement('div');
     card.className = 'card';
-    const tpPct = summary.rounds ? Math.round(summary.transpositionRate * 100) : 0;
+    const orderPct = summary.rounds ? Math.round((summary.orderErrors / summary.rounds) * 100) : 0;
     card.innerHTML = `
       <h1><span class="acc">${T.gameAcc}</span>${T.gameRest}</h1>
       <div class="sub">${reason}</div>
@@ -399,8 +422,10 @@
         <div class="stat-chip hi"><div class="stat-label">${T.maxLen}</div><div class="stat-val">${summary.maxSpan}</div></div>
         <div class="stat-chip"><div class="stat-label">${T.best}</div><div class="stat-val">${state.best}</div></div>
       </div>
-      <div class="stats-row">
-        <div class="stat-chip"><div class="stat-label">b/d/p/q</div><div class="stat-val">${tpPct}%</div></div>
+      <div class="insight">
+        <div class="ih"><span class="t">Order mix-ups</span><span class="pct">${orderPct}%</span></div>
+        <div class="bar"><i style="width:${orderPct}%"></i></div>
+        <div class="cap">Rounds with the right letters in the wrong order — the was&#8596;saw sequencing signature. ${summary.maxSpan} letters held at best. Lower is steadier.</div>
       </div>
       <button class="big-btn" id="restart-btn">${T.playAgain}</button>
       <div class="note">${T.note}</div>
@@ -431,8 +456,8 @@
     document.getElementById('score').textContent = state.score;
     document.getElementById('level').textContent = state.level;
     document.getElementById('span').textContent = state.span;
-    document.getElementById('misses').textContent =
-      '✕'.repeat(state.misses) + '○'.repeat(Math.max(0, state.maxMisses - state.misses));
+    const pips = document.querySelectorAll('#lives .miss-pip');
+    pips.forEach((pip, i) => pip.classList.toggle('spent', i < state.misses));
   }
 
   // ===== Drawing =====
@@ -448,11 +473,19 @@
   }
 
   function drawBg() {
+    const night = TWEAKS.theme === 'night';
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#7a1230');
-    g.addColorStop(0.45, '#b5223a');
-    g.addColorStop(0.55, '#d8b27a');
-    g.addColorStop(1, '#c79a5e');
+    if (night) {
+      g.addColorStop(0, '#2a1a5e');
+      g.addColorStop(0.45, '#3d2a7a');
+      g.addColorStop(0.55, '#6b5a3a');
+      g.addColorStop(1, '#4a3a26');
+    } else {
+      g.addColorStop(0, '#7a1230');
+      g.addColorStop(0.45, '#b5223a');
+      g.addColorStop(0.55, '#d8b27a');
+      g.addColorStop(1, '#c79a5e');
+    }
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
@@ -466,7 +499,7 @@
       const a0 = (i / panels) * Math.PI - Math.PI / 2;
       const a1 = ((i + 1) / panels) * Math.PI - Math.PI / 2;
       const R = H * 1.6;
-      ctx.fillStyle = 'rgba(255, 244, 224, 0.30)';
+      ctx.fillStyle = night ? 'rgba(180, 200, 255, 0.16)' : 'rgba(255, 244, 224, 0.30)';
       ctx.beginPath();
       ctx.moveTo(apexX, apexY);
       ctx.lineTo(apexX + Math.cos(a0) * R, apexY + Math.sin(a0) * R);
@@ -627,6 +660,17 @@
         persistTweaks();
       });
     });
+    const themeRow = document.getElementById('theme-row');
+    if (themeRow) {
+      themeRow.querySelectorAll('.opt').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.value === TWEAKS.theme);
+        opt.addEventListener('click', () => {
+          TWEAKS.theme = opt.dataset.value;
+          themeRow.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o.dataset.value === TWEAKS.theme));
+          persistTweaks();
+        });
+      });
+    }
     document.getElementById('tweaks-close').addEventListener('click', () => {
       hideTweaks();
       try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {}
@@ -659,9 +703,11 @@
   state.seq = ['b', 'd', 'p'];
   updateHUD();
   updateAnswerDisplay();
+  draw(); // paint one frame immediately so the scene is never blank before rAF starts
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) lastTime = performance.now() - 16;
+    if (!document.hidden) { lastTime = performance.now() - 16; draw(); }
   });
+  window.addEventListener('focus', () => { lastTime = performance.now() - 16; draw(); });
   requestAnimationFrame(loop);
 })();
