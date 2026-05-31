@@ -101,7 +101,7 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const state = {
-    phase: 'title',            // title | watch | input | resolve | level_clear | game_over
+    phase: 'title',            // title | watch | input | level_clear | game_over | versus_pass
     best: parseInt(localStorage.getItem('beebuzzsays_best') || '0', 10) || 0,
     level: 1,
     maxStrikes: 3,
@@ -338,7 +338,9 @@
       <button class="big-btn" id="pass-btn">${T.tap}</button>`;
     overlay.appendChild(card); overlay.classList.remove('hidden');
     document.getElementById('pass-btn').addEventListener('click', () => { startVersusRun(); });
-    state.phase = 'versus_pass'; // freeze input until CONTINUE (no handler acts on this phase)
+    // Freeze input until CONTINUE: no handler acts on 'versus_pass', and any pending
+    // level_clear timeout is silenced (it guards on phase === 'level_clear').
+    state.phase = 'versus_pass';
   }
 
   function startGame() {
@@ -348,7 +350,7 @@
     session.versusRun = 0;
     session.boardRadius = 1;
     session.seed = (Math.floor(Math.random() * 0x7fffffff)) || 1;
-    if (session.mode === 'versus') { session.versusRun = 0; startVersusRun(); return; }
+    if (session.mode === 'versus') { startVersusRun(); return; }
     state.rng = newRng();
     state.seq = []; state.typed = [];
     layoutBoard();
@@ -496,6 +498,13 @@
     document.getElementById('restart-btn').addEventListener('click', startGame);
   }
 
+  // Versus result: 0 = draw, 1 = player 1, 2 = player 2. Primary key score, tiebreak max trail.
+  function versusWinner(a, b) {
+    if (a.score !== b.score) return a.score > b.score ? 1 : 2;
+    if (a.metrics.maxSpan !== b.metrics.maxSpan) return a.metrics.maxSpan > b.metrics.maxSpan ? 1 : 2;
+    return 0;
+  }
+
   function gameOver(reason) {
     if (session.mode === 'coop') {
       const team = session.players.reduce((a, x) => a + x.score, 0);
@@ -521,9 +530,7 @@
       }
       // Both runs done — decide winner (score; tiebreak max trail; else draw) and show scoreboard.
       const [a, b] = session.players;
-      const winner = a.score === b.score
-        ? (a.metrics.maxSpan === b.metrics.maxSpan ? 0 : (a.metrics.maxSpan > b.metrics.maxSpan ? 1 : 2))
-        : (a.score > b.score ? 1 : 2);
+      const winner = versusWinner(a, b); // 0 = draw, 1 = P1, 2 = P2
       const best = Math.max(a.score, b.score);
       if (best > state.best) { state.best = best; localStorage.setItem('beebuzzsays_best', String(state.best)); }
       const headline = winner === 0 ? T.draw : `${T.player} ${winner} ${T.wins}`;
