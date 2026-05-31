@@ -626,7 +626,7 @@
       return;
     }
     wrap.classList.remove('cleared');
-    txt.innerHTML = `Math <span class="accent">${balanced}/${math.length}</span> &nbsp;·&nbsp; Tiles <span class="ok">${cleared}/${total}</span>`;
+    txt.innerHTML = `<span data-i18n="Math">Math</span> <span class="accent">${balanced}/${math.length}</span> &nbsp;·&nbsp; <span data-i18n="Tiles">Tiles</span> <span class="ok">${cleared}/${total}</span>`;
     if (sub) sub.textContent = `L${state.level}: ${describeRule(rule)}`;
   }
 

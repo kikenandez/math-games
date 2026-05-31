@@ -37,6 +37,7 @@
 
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
+    "theme": "violet",
     "minLine": 3
   }/*EDITMODE-END*/;
 
@@ -428,9 +429,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing' && !state.paused) update(dt);
-    else updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing' && !state.paused) update(dt);
+      else updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Math Match-3 loop error:', err); }
     requestAnimationFrame(loop);
   }
   function updateIdle(dt) { state.elapsed += dt * 0.5; }
@@ -744,10 +747,15 @@
     ctx.restore();
   }
   function drawBg() {
+    const tc = TWEAKS.theme === 'ocean'
+      ? ['#163a4a', '#0e2436', '#08141f']
+      : TWEAKS.theme === 'ember'
+      ? ['#3a1c2a', '#281422', '#1a0c16']
+      : ['#26204a', '#1a1428', '#0f0820'];
     const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) / 1.4);
-    g.addColorStop(0, '#26204a');
-    g.addColorStop(0.6, '#1a1428');
-    g.addColorStop(1, '#0f0820');
+    g.addColorStop(0, tc[0]);
+    g.addColorStop(0.6, tc[1]);
+    g.addColorStop(1, tc[2]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     // Stars
     for (let i = 0; i < 50; i++) {
@@ -985,6 +993,7 @@
       });
     };
     setRow('diff-row', 'difficulty');
+    setRow('theme-row', 'theme');
     setRow('min-row', 'minLine', () => updateRuleHUD());
     document.getElementById('tweaks-close').addEventListener('click', () => {
       hideTweaks();
@@ -1015,8 +1024,10 @@
   state.grid = newGrid();
   updateHUD();
   updateRuleHUD();
+  draw(); // paint one frame immediately so the board is never blank before rAF starts
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) lastTime = performance.now() - 16;
+    if (!document.hidden) { lastTime = performance.now() - 16; try { draw(); } catch (e) {} }
   });
+  window.addEventListener('focus', () => { lastTime = performance.now() - 16; try { draw(); } catch (e) {} });
   requestAnimationFrame(loop);
 })();

@@ -350,7 +350,25 @@
       "Cross road & river to eat matches. Wrong = −2s.": "Traversez route & rivière pour manger les bons nombres. Erreur = −2s.",
       "Fill the belly, then jump to the lily pad to win.": "Remplissez le ventre, puis sautez sur le nénuphar pour gagner.",
       "Grab glowing gold <b>clocks</b> for bonus seconds, and stay sharp — the rule <b>swaps mid-round</b>. Cars squash, water drowns. Tune pace &amp; difficulty in <b>⚙ Settings</b>.": "Attrapez les <b>horloges</b> dorées qui brillent pour des secondes bonus, et restez vif — la règle <b>change en pleine manche</b>. Les voitures écrasent, l'eau noie. Réglez le rythme &amp; la difficulté dans <b>⚙ Réglages</b>.",
-      "Keys — <kbd>↑↓←→</kbd> or <kbd>WASD</kbd> hop · <kbd>P</kbd> pause": "Touches — <kbd>↑↓←→</kbd> ou <kbd>WASD</kbd> sauter · <kbd>P</kbd> pause"
+      "Keys — <kbd>↑↓←→</kbd> or <kbd>WASD</kbd> hop · <kbd>P</kbd> pause": "Touches — <kbd>↑↓←→</kbd> ou <kbd>WASD</kbd> sauter · <kbd>P</kbd> pause",
+      // Math Match-3 — redesigned chrome
+      "Hint (−1 move)": "Indice (−1 coup)",
+      "Backdrop": "Décor",
+      "VIOLET": "VIOLET",
+      "OCEAN": "OCÉAN",
+      "EMBER": "BRAISE",
+      "swap tiles · clear lines that fit the rule": "échangez des tuiles · éliminez les lignes qui suivent la règle",
+      "1 · SWAP": "1 · ÉCHANGEZ",
+      "2 · MATCH": "2 · ALIGNEZ",
+      "3 · CLEAR": "3 · ÉLIMINEZ",
+      "Drag a tile onto a neighbor — or tap two in a row.": "Glissez une tuile sur une voisine — ou touchez-en deux à la suite.",
+      "Line up 3+ whose values all fit the rule (e.g. all even).": "Alignez-en 3+ dont les valeurs suivent toutes la règle (p. ex. tous pairs).",
+      "The line pops & cascades. Hit the target score.": "La ligne éclate & déclenche des cascades. Atteignez le score cible.",
+      "Beat the <b>target</b> before <b>moves</b> run out to level up — each level brings a new rule. The <b>?</b> button reveals one playable swap for <b style=\"color:#5cd9ff\">1 move</b>. Right-click a tile to leave a cue mark (<b style=\"color:#ff5c7c\">−25</b>).": "Battez la <b>cible</b> avant d'épuiser les <b>coups</b> pour passer au niveau suivant — chaque niveau apporte une nouvelle règle. Le bouton <b>?</b> révèle un échange jouable pour <b style=\"color:#5cd9ff\">1 coup</b>. Clic droit sur une tuile pour laisser un repère (<b style=\"color:#ff5c7c\">−25</b>).",
+      "Drag or tap to swap · <kbd>H</kbd> hint · <kbd>P</kbd> pause": "Glissez ou touchez pour échanger · <kbd>H</kbd> indice · <kbd>P</kbd> pause",
+      // Math*bert — dynamic bottom-eq labels
+      "Math": "Maths",
+      "Tiles": "Tuiles"
     },
     es: {
       "Bonus bubble": "Burbuja bonus", "Meadow": "Pradera",
@@ -694,7 +712,25 @@
       "Cross road & river to eat matches. Wrong = −2s.": "Cruza la carretera & el río para comer los correctos. Error = −2s.",
       "Fill the belly, then jump to the lily pad to win.": "Llena la barriga y salta al nenúfar para ganar.",
       "Grab glowing gold <b>clocks</b> for bonus seconds, and stay sharp — the rule <b>swaps mid-round</b>. Cars squash, water drowns. Tune pace &amp; difficulty in <b>⚙ Settings</b>.": "Agarra los <b>relojes</b> dorados brillantes para segundos extra, y mantente atento — la regla <b>cambia a mitad de ronda</b>. Los coches aplastan, el agua ahoga. Ajusta el ritmo &amp; la dificultad en <b>⚙ Ajustes</b>.",
-      "Keys — <kbd>↑↓←→</kbd> or <kbd>WASD</kbd> hop · <kbd>P</kbd> pause": "Teclas — <kbd>↑↓←→</kbd> o <kbd>WASD</kbd> saltar · <kbd>P</kbd> pausa"
+      "Keys — <kbd>↑↓←→</kbd> or <kbd>WASD</kbd> hop · <kbd>P</kbd> pause": "Teclas — <kbd>↑↓←→</kbd> o <kbd>WASD</kbd> saltar · <kbd>P</kbd> pausa",
+      // Math Match-3 — redesigned chrome
+      "Hint (−1 move)": "Pista (−1 movimiento)",
+      "Backdrop": "Fondo",
+      "VIOLET": "VIOLETA",
+      "OCEAN": "OCÉANO",
+      "EMBER": "BRASA",
+      "swap tiles · clear lines that fit the rule": "intercambia fichas · elimina líneas que cumplen la regla",
+      "1 · SWAP": "1 · INTERCAMBIA",
+      "2 · MATCH": "2 · ALINEA",
+      "3 · CLEAR": "3 · ELIMINA",
+      "Drag a tile onto a neighbor — or tap two in a row.": "Arrastra una ficha sobre una vecina — o toca dos seguidas.",
+      "Line up 3+ whose values all fit the rule (e.g. all even).": "Alinea 3+ cuyos valores cumplan todos la regla (p. ej. todos pares).",
+      "The line pops & cascades. Hit the target score.": "La línea estalla & cae en cascada. Alcanza la puntuación objetivo.",
+      "Beat the <b>target</b> before <b>moves</b> run out to level up — each level brings a new rule. The <b>?</b> button reveals one playable swap for <b style=\"color:#5cd9ff\">1 move</b>. Right-click a tile to leave a cue mark (<b style=\"color:#ff5c7c\">−25</b>).": "Supera el <b>objetivo</b> antes de quedarte sin <b>movimientos</b> para subir de nivel — cada nivel trae una regla nueva. El botón <b>?</b> revela un intercambio jugable por <b style=\"color:#5cd9ff\">1 movimiento</b>. Clic derecho en una ficha para dejar una marca (<b style=\"color:#ff5c7c\">−25</b>).",
+      "Drag or tap to swap · <kbd>H</kbd> hint · <kbd>P</kbd> pause": "Arrastra o toca para intercambiar · <kbd>H</kbd> pista · <kbd>P</kbd> pausa",
+      // Math*bert — dynamic bottom-eq labels
+      "Math": "Mates",
+      "Tiles": "Casillas"
     }
   };
 

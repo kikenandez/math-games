@@ -5,293 +5,191 @@
 <title>Math Match-3</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Fredoka:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #1a1428;
+    --ink: #0f0820;
+    --ink-soft: rgba(244, 236, 255, 0.58);
     --paper: #f4ecff;
-    --bg-1: #1a1428;
-    --bg-2: #2a1d4a;
-    --accent: #ffd24d;
-    --hot: #ff5c7c;
+    --gold: #ffd24d;
     --good: #5cd97a;
     --cool: #5cd9ff;
+    --hot: #ff5c7c;
     --magenta: #e36ce0;
+    --panel: rgba(26, 20, 40, 0.92);
+    --panel-solid: #211a36;
+    --shadow: rgba(0, 0, 0, 0.6);
   }
   *, *::before, *::after { box-sizing: border-box; }
   html, body {
-    margin: 0; padding: 0;
-    width: 100%; height: 100%;
-    overflow: hidden;
-    background: #0f0820;
-    font-family: 'Fredoka', sans-serif;
-    color: var(--paper);
-    user-select: none;
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background: #0f0820; font-family: 'Fredoka', sans-serif; color: var(--paper);
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
   }
   #game-wrap { position: fixed; inset: 0; overflow: hidden; }
   canvas#game { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
   canvas#game:active { cursor: grabbing; }
 
+  /* ============================ HUD ============================ */
   #hud {
     position: absolute; top: 14px; left: 14px; right: 118px;
-    display: flex; justify-content: space-between; align-items: flex-start;
-    gap: 12px;
-    pointer-events: none;
-    font-family: 'Lilita One', sans-serif;
-    z-index: 5;
+    display: flex; align-items: flex-start; gap: 9px; pointer-events: none; z-index: 5;
   }
-  .hud-group { display: flex; gap: 10px; }
   .badge {
-    background: rgba(26, 20, 40, 0.92);
-    border: 3px solid var(--paper);
-    border-radius: 10px;
-    padding: 7px 12px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
-    display: flex; align-items: center; gap: 8px;
-    font-size: 18px;
-    color: var(--paper);
-    line-height: 1;
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 13px;
+    padding: 6px 13px 7px; box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.1);
+    display: flex; flex-direction: column; align-items: flex-start; line-height: 1; min-width: 50px;
   }
-  .badge .label {
-    font-size: 10px;
-    color: rgba(244, 236, 255, 0.55);
-    letter-spacing: 0.2em;
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  .badge .val { font-size: 20px; min-width: 1ch; }
-  .badge.score .val { color: var(--accent); }
+  .badge .label { font-size: 9px; color: var(--ink-soft); letter-spacing: 0.16em; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; white-space: nowrap; }
+  .badge .val { font-family: 'Lilita One', sans-serif; font-size: 22px; color: var(--paper); }
+  .badge.score .val { color: var(--gold); }
   .badge.level .val { color: var(--good); }
   .badge.moves .val { color: var(--cool); }
 
+  /* Rule target banner */
   #target {
-    position: absolute;
-    top: 14px; left: 50%; transform: translateX(-50%);
-    background: rgba(26, 20, 40, 0.92);
-    border: 3px solid var(--accent);
-    border-radius: 14px;
-    padding: 8px 26px 10px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.6), 0 0 0 5px rgba(255, 210, 77, 0.18);
-    z-index: 6;
-    pointer-events: none;
-    text-align: center;
-    font-family: 'Lilita One', sans-serif;
-    min-width: 240px;
+    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 2.5px solid var(--gold); border-radius: 14px;
+    padding: 7px 24px 9px; box-shadow: 0 4px 0 var(--shadow), 0 0 0 4px rgba(255, 210, 77, 0.16), inset 0 1.5px 0 rgba(255,255,255,0.1);
+    z-index: 6; pointer-events: none; text-align: center; font-family: 'Lilita One', sans-serif; min-width: 230px;
   }
-  #target .label {
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    font-size: 10px;
-    letter-spacing: 0.3em;
-    color: rgba(244, 236, 255, 0.55);
-    text-transform: uppercase;
-    margin-bottom: 2px;
-  }
-  #target .rule { font-size: 26px; color: var(--paper); }
-  #target .rule .acc { color: var(--accent); }
-  #target .progress {
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    color: rgba(244, 236, 255, 0.7);
-    text-transform: uppercase;
-    margin-top: 3px;
-  }
+  #target .label { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.24em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 3px; }
+  #target .rule { font-size: 24px; color: var(--paper); white-space: nowrap; }
+  #target .rule .acc { color: var(--gold); }
+  #target .progress { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.14em; color: var(--ink-soft); text-transform: uppercase; margin-top: 4px; }
 
-  #gear-btn, #hint-btn {
-    position: absolute; top: 14px; right: 14px;
-    width: 42px; height: 42px;
-    background: rgba(26, 20, 40, 0.92);
-    border: 3px solid var(--paper);
-    border-radius: 10px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    z-index: 25;
+  .icon-btn {
+    position: absolute; top: 14px; pointer-events: auto; width: 40px; height: 40px;
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 12px;
+    box-shadow: 0 4px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.1);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 19px; color: var(--paper); padding: 0; transition: transform 0.1s; z-index: 25;
     font-family: 'Lilita One', sans-serif;
-    font-size: 20px;
-    color: var(--paper);
-    padding: 0;
   }
-  #hint-btn {
-    right: 64px;
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  #hint-btn:hover, #gear-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 0 rgba(0,0,0,0.55);
-  }
+  .icon-btn:hover { transform: translateY(-1px); }
+  .icon-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--shadow); }
+  #gear-btn { right: 14px; }
+  #hint-btn { right: 62px; border-color: var(--gold); color: var(--gold); }
 
+  /* ============================ SETTINGS ============================ */
   #tweaks {
-    position: absolute; top: 68px; right: 14px;
-    width: 260px;
-    background: rgba(26, 20, 40, 0.96);
-    border: 3px solid var(--paper);
-    border-radius: 12px;
-    box-shadow: 0 6px 0 rgba(0,0,0,0.6);
-    padding: 12px 14px 14px;
-    z-index: 30;
-    display: none;
-    color: var(--paper);
+    position: absolute; top: 62px; right: 14px; width: 256px; pointer-events: auto;
+    background: var(--panel); border: 2.5px solid var(--paper); border-radius: 16px;
+    box-shadow: 0 8px 0 var(--shadow), inset 0 1.5px 0 rgba(255,255,255,0.1);
+    padding: 13px 15px 15px; z-index: 30; display: none; color: var(--paper);
   }
   #tweaks.open { display: block; }
-  #tweaks h3 {
-    font-family: 'Lilita One', sans-serif;
-    font-size: 17px;
-    margin: 0 0 10px;
-    letter-spacing: 0.06em;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  #tweaks .close {
-    background: none; border: none; cursor: pointer;
-    color: rgba(244,236,255,0.7); font-size: 20px;
-    font-family: 'Lilita One', sans-serif;
-  }
-  .tweak-row { margin: 0 0 10px; }
-  .tweak-row .lbl {
-    display: flex; justify-content: space-between;
-    font-size: 10px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.12em;
-    color: rgba(244, 236, 255, 0.6);
-    margin-bottom: 3px;
-  }
+  #tweaks h3 { font-family: 'Lilita One', sans-serif; font-size: 16px; margin: 0 0 12px; letter-spacing: 0.04em; display: flex; align-items: center; justify-content: space-between; }
+  #tweaks .close { background: none; border: none; cursor: pointer; color: var(--ink-soft); font-size: 21px; font-family: 'Lilita One', sans-serif; line-height: 1; }
+  .tweak-row { margin: 0 0 11px; }
+  .tweak-row:last-child { margin-bottom: 0; }
+  .tweak-row .lbl { display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-soft); margin-bottom: 5px; }
   .tweak-row .opts { display: flex; gap: 5px; }
   .tweak-row .opt {
-    padding: 5px 9px;
-    border: 2px solid var(--paper);
-    border-radius: 8px;
-    background: rgba(0,0,0,0.4);
-    color: var(--paper);
-    font-family: 'Lilita One', sans-serif;
-    font-size: 11px;
-    cursor: pointer;
-    box-shadow: 0 2px 0 rgba(0,0,0,0.6);
+    flex: 1; text-align: center; padding: 6px 4px; border: 2px solid rgba(244,236,255,0.5); border-radius: 9px;
+    background: rgba(0,0,0,0.3); color: var(--paper); font-family: 'Lilita One', sans-serif; font-size: 11px;
+    cursor: pointer; transition: all 0.12s;
   }
-  .tweak-row .opt.active { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+  .tweak-row .opt.active { background: var(--gold); color: var(--ink); border-color: var(--gold); box-shadow: 0 2px 0 var(--shadow); }
 
+  /* ============================ OVERLAY ============================ */
   .overlay {
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, rgba(26, 20, 40, 0.55), rgba(0,0,0,0.88));
-    display: flex; align-items: center; justify-content: center;
-    z-index: 20;
-    opacity: 1;
-    transition: opacity 0.25s;
+    position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 18px;
+    background: radial-gradient(ellipse at 50% 40%, rgba(26,20,40,0.55), rgba(0,0,0,0.9));
   }
-  .overlay.hidden { opacity: 0; pointer-events: none; }
+  .overlay.hidden { display: none !important; }
   .card {
-    background: rgba(26, 20, 40, 0.96);
-    border: 4px solid var(--paper);
-    border-radius: 20px;
-    box-shadow: 0 8px 0 rgba(0,0,0,0.6);
-    padding: 32px 38px;
-    text-align: center;
-    max-width: 560px;
+    position: relative; background: var(--panel-solid); border: 3px solid var(--paper); border-radius: 24px;
+    box-shadow: 0 14px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.12);
+    padding: 30px 36px 32px; text-align: center; width: min(620px, calc(100vw - 28px));
+    max-height: calc(100vh - 32px); overflow-y: auto;
   }
-  .card h1 {
-    font-family: 'Lilita One', sans-serif;
-    font-size: clamp(40px, 7.5vw, 60px);
-    line-height: 1.05;
-    margin: 0 0 6px;
-    color: var(--paper);
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-  }
-  .card h1 .acc { color: var(--accent); }
-  .card .sub {
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    color: rgba(244, 236, 255, 0.7);
-    font-size: 15px;
-    margin: 4px 0 18px;
-  }
-  .card p {
-    font-family: 'Fredoka', sans-serif;
-    font-size: 14px;
-    line-height: 1.55;
-    color: rgba(244, 236, 255, 0.85);
-    margin: 0 0 18px;
-  }
+  .card::-webkit-scrollbar { width: 0; }
+  .card h1 { font-family: 'Lilita One', sans-serif; font-size: clamp(36px, 5.6vw, 50px); line-height: 1.05; margin: 0; color: var(--paper); letter-spacing: 0.01em; text-shadow: 0 3px 0 var(--shadow); white-space: nowrap; }
+  .card h1 .acc { color: var(--gold); }
+  .card .sub { font-family: 'Fredoka', sans-serif; font-weight: 600; color: var(--ink-soft); font-size: 14px; margin: 11px 0 0; }
+  .card p { font-family: 'Fredoka', sans-serif; font-size: 13px; line-height: 1.55; color: rgba(244,236,255,0.84); margin: 18px 0 0; }
   .card p b { color: var(--paper); }
+
+  /* How-to strip */
+  .how { display: flex; gap: 9px; justify-content: center; margin: 24px 0 2px; }
+  .how .step { flex: 1; background: rgba(0,0,0,0.26); border: 2px solid rgba(244,236,255,0.3); border-radius: 16px; padding: 14px 10px 13px; }
+  .how .step.s1 { border-color: rgba(92,217,255,0.5); } .how .step.s2 { border-color: rgba(255,210,77,0.5); } .how .step.s3 { border-color: rgba(92,217,122,0.55); }
+  .how .step .demo { display: flex; gap: 4px; justify-content: center; align-items: center; margin-bottom: 11px; height: 40px; }
+  .how .step .t { font-family: 'Lilita One', sans-serif; font-size: 13px; letter-spacing: 0.04em; }
+  .how .step.s1 .t { color: var(--cool); } .how .step.s2 .t { color: var(--gold); } .how .step.s3 .t { color: var(--good); }
+  .how .step .d { font-size: 11px; line-height: 1.35; color: var(--ink-soft); margin-top: 5px; }
+
+  .gem { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; font-family: 'Lilita One', sans-serif; font-size: 16px; color: #fff; background: linear-gradient(180deg, #8a83b0, #3e3858); border: 2px solid var(--ink); }
+  .gem.lit { background: linear-gradient(180deg, #7be59a, var(--good)); color: var(--ink); }
+  .swap-arrows { font-family: 'Lilita One', sans-serif; font-size: 18px; color: var(--cool); }
+
+  .keys-note { font-size: 11px; color: var(--ink-soft); margin-top: 14px; }
+  .keys-note kbd { font-family: 'Lilita One', sans-serif; background: rgba(0,0,0,0.4); border: 1.5px solid rgba(244,236,255,0.4); border-radius: 5px; padding: 1px 6px; font-size: 11px; color: var(--paper); }
+
   .big-btn {
-    font-family: 'Lilita One', sans-serif;
-    font-size: 26px;
-    letter-spacing: 0.05em;
-    background: var(--accent);
-    color: var(--ink);
-    border: 3px solid var(--paper);
-    border-radius: 12px;
-    padding: 10px 30px;
-    box-shadow: 0 5px 0 rgba(0,0,0,0.6);
-    cursor: pointer;
-    white-space: nowrap;
+    font-family: 'Lilita One', sans-serif; font-size: 25px; letter-spacing: 0.05em;
+    background: linear-gradient(180deg, #ffe07a, var(--gold)); color: var(--ink);
+    border: 3px solid var(--paper); border-radius: 14px; padding: 12px 44px; margin-top: 24px;
+    box-shadow: 0 6px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.4); cursor: pointer; white-space: nowrap;
+    transition: transform 0.1s, box-shadow 0.1s;
   }
-  .big-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 0 rgba(0,0,0,0.6); }
-  .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.6); }
-  .stats-row {
-    display: flex; gap: 8px; justify-content: center; margin: 0 0 16px;
-    flex-wrap: wrap;
+  .big-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.4); }
+  .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--shadow), inset 0 2px 0 rgba(255,255,255,0.4); }
+
+  .stats-row { display: flex; gap: 9px; justify-content: center; margin: 22px 0 0; flex-wrap: wrap; }
+  .stat-chip { flex: 1; min-width: 90px; background: rgba(0,0,0,0.28); border: 2px solid rgba(244,236,255,0.4); border-radius: 14px; padding: 12px 8px; }
+  .stat-chip .stat-label { font-size: 9px; color: var(--ink-soft); letter-spacing: 0.13em; font-weight: 600; text-transform: uppercase; }
+  .stat-chip .stat-val { font-family: 'Lilita One', sans-serif; font-size: 26px; color: var(--paper); margin-top: 4px; }
+  .stat-chip.hi { background: rgba(255,210,77,0.15); border-color: var(--gold); }
+  .stat-chip.hi .stat-val { color: var(--gold); }
+
+  @media (max-width: 640px) {
+    .card { padding: 22px 18px 24px; }
+    .how .step .d { display: none; }
+    #target { min-width: 0; padding: 6px 14px 8px; }
+    #target .rule { font-size: 19px; }
   }
-  .stat-chip {
-    background: rgba(0,0,0,0.4);
-    border: 2px solid var(--paper);
-    border-radius: 10px;
-    padding: 6px 12px;
-    font-family: 'Lilita One', sans-serif;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.7);
-    min-width: 70px;
-  }
-  .stat-chip .stat-label {
-    font-size: 9px; color: rgba(244, 236, 255, 0.6);
-    letter-spacing: 0.16em;
-    font-family: 'Fredoka', sans-serif; font-weight: 600;
-    text-transform: uppercase;
-  }
-  .stat-chip .stat-val { font-size: 22px; color: var(--paper); }
-  .stat-chip.hi .stat-val { color: var(--accent); }
 </style>
 </head>
 <body>
 <div id="game-wrap">
   <canvas id="game"></canvas>
 
+  <!-- HUD -->
   <div id="hud">
-    <div class="hud-group">
-      <div class="badge score">
-        <span class="label">Score</span>
-        <span class="val" id="score">0</span>
-      </div>
-      <div class="badge level">
-        <span class="label">Level</span>
-        <span class="val" id="level">1</span>
-      </div>
-      <div class="badge moves">
-        <span class="label">Moves</span>
-        <span class="val" id="moves">20</span>
-      </div>
-    </div>
+    <div class="badge score"><span class="label">Score</span><span class="val" id="score">0</span></div>
+    <div class="badge level"><span class="label">Level</span><span class="val" id="level">1</span></div>
+    <div class="badge moves"><span class="label">Moves</span><span class="val" id="moves">20</span></div>
   </div>
 
   <div id="target">
     <div class="label">Match a line of</div>
     <div class="rule" id="rule-text">3+ EVEN NUMBERS</div>
-    <div class="progress" id="progress-text">target 500</div>
+    <div class="progress" id="progress-text">0 / 500</div>
   </div>
 
-  <button id="hint-btn" title="Hint (-1 move)">?</button>
-  <button id="gear-btn" title="Tweaks">⚙</button>
+  <button class="icon-btn" id="hint-btn" title="Hint (−1 move)">?</button>
+  <button class="icon-btn" id="gear-btn" title="Settings">⚙</button>
 
+  <!-- Settings -->
   <div id="tweaks">
-    <h3>Tweaks <button class="close" id="tweaks-close">×</button></h3>
+    <h3><span>Settings</span> <button class="close" id="tweaks-close">×</button></h3>
     <div class="tweak-row">
       <div class="lbl"><span>Difficulty</span></div>
       <div class="opts" id="diff-row">
         <div class="opt" data-value="easy">EASY</div>
         <div class="opt active" data-value="normal">NORMAL</div>
         <div class="opt" data-value="hard">HARD</div>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <div class="lbl"><span>Backdrop</span></div>
+      <div class="opts" id="theme-row">
+        <div class="opt active" data-value="violet">VIOLET</div>
+        <div class="opt" data-value="ocean">OCEAN</div>
+        <div class="opt" data-value="ember">EMBER</div>
       </div>
     </div>
     <div class="tweak-row">
@@ -303,11 +201,33 @@
     </div>
   </div>
 
+  <!-- Title -->
   <div class="overlay" id="overlay">
     <div class="card" id="title-card">
       <h1><span class="acc">MATH</span> MATCH-3</h1>
-      <div class="sub">swap adjacent tiles · clear lines that match the rule</div>
-      <p><b>Drag</b> a tile toward a neighbor to slice it over and swap, or <b>tap</b> a tile and then tap an adjacent one. A line of <b>3+ tiles in a row or column</b> whose values <b>all match the active rule</b> clears and scores. <b>Right-click</b> a cell to toggle a cue mark for <b style="color:#ff5c7c">-25 points</b>. The <b>hint</b> button shows one playable swap and costs <b style="color:#5cd9ff">1 move</b>.</p>
+      <div class="sub">swap tiles · clear lines that fit the rule</div>
+
+      <div class="how">
+        <div class="step s1">
+          <div class="demo"><span class="gem">6</span><span class="swap-arrows">⇄</span><span class="gem">4</span></div>
+          <div class="t">1 · SWAP</div>
+          <div class="d">Drag a tile onto a neighbor — or tap two in a row.</div>
+        </div>
+        <div class="step s2">
+          <div class="demo"><span class="gem">2</span><span class="gem">8</span><span class="gem">6</span></div>
+          <div class="t">2 · MATCH</div>
+          <div class="d">Line up 3+ whose values all fit the rule (e.g. all even).</div>
+        </div>
+        <div class="step s3">
+          <div class="demo"><span class="gem lit">✦</span><span class="gem lit">✦</span><span class="gem lit">✦</span></div>
+          <div class="t">3 · CLEAR</div>
+          <div class="d">The line pops &amp; cascades. Hit the target score.</div>
+        </div>
+      </div>
+
+      <p>Beat the <b>target</b> before <b>moves</b> run out to level up — each level brings a new rule. The <b>?</b> button reveals one playable swap for <b style="color:#5cd9ff">1 move</b>. Right-click a tile to leave a cue mark (<b style="color:#ff5c7c">−25</b>).</p>
+      <div class="keys-note">Drag or tap to swap · <kbd>H</kbd> hint · <kbd>P</kbd> pause</div>
+
       <button class="big-btn" id="start-btn">START</button>
     </div>
   </div>
