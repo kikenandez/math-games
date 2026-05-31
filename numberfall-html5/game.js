@@ -330,9 +330,11 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
-    if (state.phase === 'playing') update(dt);
-    if (state.phase === 'paused' || state.phase === 'title' || state.phase === 'gameover') updateIdle(dt);
-    draw();
+    try {
+      if (state.phase === 'playing') update(dt);
+      if (state.phase === 'paused' || state.phase === 'title' || state.phase === 'gameover') updateIdle(dt);
+      draw();
+    } catch (err) { console.error('Numberfall loop error:', err); }
     requestAnimationFrame(loop);
   }
 
@@ -1851,6 +1853,11 @@
   // ---------- Kick off ----------
   updateHUD();
   updateAnswerDisplay();
+  draw(); // paint one frame immediately so the scene is never blank before rAF starts
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { lastTime = performance.now() - 16; try { draw(); } catch (e) {} }
+  });
+  window.addEventListener('focus', () => { lastTime = performance.now() - 16; try { draw(); } catch (e) {} });
   requestAnimationFrame(loop);
 
 })();

@@ -248,6 +248,7 @@
 
   // ---------- Tweaks ----------
   const TWEAKS = /*EDITMODE-BEGIN*/{
+    "theme": "day",
     "showClueTotals": true,
     "autoAdvance": true
   }/*EDITMODE-END*/;
@@ -643,7 +644,7 @@
       p.life -= dt;
     }
     state.particles = state.particles.filter(p => p.life > 0);
-    draw();
+    try { draw(); } catch (err) { console.error('Balance Scale loop error:', err); }
     requestAnimationFrame(loop);
   }
 
@@ -653,22 +654,33 @@
     drawParticles();
   }
 
+  function themeColors() {
+    if (TWEAKS.theme === 'night') {
+      return { sky: ['#141d3e', '#2a2c54', '#3a3560'], glow: 'rgba(180,200,255,0.30)', grid: 'rgba(180,200,255,0.06)', dotA: 'rgba(120,150,255,0.10)', dotB: 'rgba(255,210,120,0.10)' };
+    }
+    if (TWEAKS.theme === 'dusk') {
+      return { sky: ['#5d6fb2', '#f0a878', '#e8884a'], glow: 'rgba(255,240,200,0.55)', grid: 'rgba(90,50,40,0.08)', dotA: 'rgba(255,150,90,0.12)', dotB: 'rgba(120,110,180,0.12)' };
+    }
+    return { sky: ['#88d8ff', '#fff0b8', '#f1bf4d'], glow: 'rgba(255,255,255,0.75)', grid: 'rgba(123,84,41,0.08)', dotA: 'rgba(255,138,61,0.09)', dotB: 'rgba(77,184,216,0.10)' };
+  }
+
   function drawBg() {
+    const tc = themeColors();
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#88d8ff');
-    g.addColorStop(0.5, '#fff0b8');
-    g.addColorStop(1, '#f1bf4d');
+    g.addColorStop(0, tc.sky[0]);
+    g.addColorStop(0.5, tc.sky[1]);
+    g.addColorStop(1, tc.sky[2]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
     const rg = ctx.createRadialGradient(W * 0.22, H * 0.08, 0, W * 0.22, H * 0.08, Math.max(W, H) * 0.6);
-    rg.addColorStop(0, 'rgba(255, 255, 255, 0.75)');
+    rg.addColorStop(0, tc.glow);
     rg.addColorStop(0.35, 'rgba(255, 255, 255, 0.16)');
     rg.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = rg;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.strokeStyle = 'rgba(123, 84, 41, 0.08)';
+    ctx.strokeStyle = tc.grid;
     ctx.lineWidth = 1;
     const step = 46;
     for (let x = -step; x < W + step; x += step) {
@@ -689,7 +701,7 @@
       const x = (i * 173) % W;
       const y = (i * 109) % H;
       const r = 5 + (i % 4) * 2;
-      ctx.fillStyle = i % 2 ? 'rgba(255, 138, 61, 0.09)' : 'rgba(77, 184, 216, 0.10)';
+      ctx.fillStyle = i % 2 ? tc.dotA : tc.dotB;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill();
@@ -739,7 +751,7 @@
 
     // Balance indicator on right side
     const sum = clueLeftSum(clue);
-    if (sum != null) {
+    if (sum != null && TWEAKS.showClueTotals) {
       const balanced = sum === rightVal;
       ctx.fillStyle = balanced ? '#5d9a5d' : '#c87543';
       ctx.font = 'bold 14px "Lilita One", sans-serif';
@@ -1223,6 +1235,18 @@
 
   // ---------- Tweaks panel ----------
   function setupTweaks() {
+    // Theme segmented control
+    const themeRow = document.getElementById('theme-row');
+    if (themeRow) {
+      themeRow.querySelectorAll('.opt').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.value === TWEAKS.theme);
+        opt.addEventListener('click', () => {
+          TWEAKS.theme = opt.dataset.value;
+          themeRow.querySelectorAll('.opt').forEach(o => o.classList.toggle('active', o === opt));
+          persistTweaks();
+        });
+      });
+    }
     // Level select
     const sel = document.getElementById('level-select');
     sel.innerHTML = '';
@@ -1275,6 +1299,7 @@
   // Kick off
   setupLevel(state.levelIdx);
   updateHUD();
+  draw(); // paint one frame immediately so the scene is never blank before rAF starts
   requestAnimationFrame(loop);
 
   setInterval(() => {
@@ -1287,7 +1312,12 @@
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       lastTime = performance.now() - 16;
+      try { draw(); } catch (e) {}
       requestAnimationFrame(loop);
     }
+  });
+  window.addEventListener('focus', () => {
+    lastTime = performance.now() - 16;
+    try { draw(); } catch (e) {}
   });
 })();
