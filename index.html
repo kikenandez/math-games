@@ -365,7 +365,8 @@
     flex-wrap: wrap;
     margin: 18px 0 10px;
   }
-  .save-tools button {
+  .save-tools button,
+  .save-tools .report-link {
     font-family: 'Fredoka', sans-serif;
     font-weight: 700;
     font-size: 12px;
@@ -378,8 +379,10 @@
     padding: 8px 12px;
     cursor: pointer;
     box-shadow: 0 4px 0 rgba(0,0,0,0.35);
+    text-decoration: none;
   }
-  .save-tools button:hover {
+  .save-tools button:hover,
+  .save-tools .report-link:hover {
     border-color: var(--accent-2);
     color: var(--accent-2);
   }
@@ -1471,6 +1474,7 @@
     <div class="save-tools" aria-label="Save data tools">
       <button type="button" id="export-saves">Export Saves</button>
       <button type="button" id="import-saves">Import Saves</button>
+      <a class="report-link" href="report.html">View Report</a>
       <input type="file" id="save-file" accept="application/json,.json" hidden>
       <div id="save-status" aria-live="polite"></div>
     </div>

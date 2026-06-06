@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Math Arcade · Local Report</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Fredoka:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0e1e;
+    --paper: #fff4dc;
+    --muted: rgba(255,244,220,0.68);
+    --line: rgba(255,244,220,0.18);
+    --accent: #ff8a3d;
+    --cool: #7ad1ff;
+    --good: #5cd97a;
+    --hot: #ff6b9d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(122,209,255,0.16), transparent 45%),
+      radial-gradient(ellipse at 80% 80%, rgba(255,107,157,0.13), transparent 50%),
+      #050614;
+    color: var(--paper);
+    font-family: 'Fredoka', sans-serif;
+  }
+  main {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 42px 22px 64px;
+  }
+  header {
+    display: flex;
+    gap: 18px;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(42px, 7vw, 72px);
+    line-height: 0.95;
+    margin: 0 0 8px;
+    text-shadow: 0 5px 0 rgba(0,0,0,0.42);
+  }
+  .lead {
+    max-width: 720px;
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  a.back {
+    color: var(--ink);
+    background: var(--cool);
+    border: 2px solid var(--paper);
+    border-radius: 10px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.45);
+    font-family: 'Lilita One', sans-serif;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    padding: 9px 14px;
+    white-space: nowrap;
+  }
+  .notice {
+    border: 1px solid rgba(255,210,77,0.45);
+    background: rgba(255,210,77,0.1);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: rgba(255,244,220,0.78);
+    margin-bottom: 22px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: rgba(20,24,46,0.86);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.35);
+  }
+  .card h2 {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 27px;
+    margin: 0 0 12px;
+  }
+  .empty {
+    color: var(--muted);
+    line-height: 1.45;
+  }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .metric {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .metric span {
+    display: block;
+    color: rgba(255,244,220,0.55);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .metric b {
+    display: block;
+    margin-top: 3px;
+    font-size: 22px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 4px;
+    text-align: left;
+  }
+  th {
+    color: rgba(255,244,220,0.52);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  td {
+    color: rgba(255,244,220,0.82);
+  }
+  footer {
+    margin-top: 24px;
+    color: rgba(255,244,220,0.45);
+    font-size: 12px;
+    text-align: center;
+  }
+  @media print {
+    body { background: white; color: #111; }
+    main { max-width: none; padding: 0; }
+    a.back { display: none; }
+    .card, .notice { box-shadow: none; background: white; border-color: #ccc; color: #111; }
+    .lead, .empty, footer, td, .metric span { color: #333; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Local Progress Report</h1>
+      <p class="lead">A browser-only summary of letter recognition and memory practice data saved on this device.</p>
+    </div>
+    <a class="back" href="index.html">Back to Arcade</a>
+  </header>
+
+  <div class="notice">
+    This report is local practice data, not a diagnosis. It can help spot patterns to discuss with a teacher, tutor, or clinician.
+  </div>
+
+  <section class="grid" id="report-grid"></section>
+
+  <footer>
+    Data stays in this browser unless you use the hub's export button.
+  </footer>
+</main>
+<script src="report.js"></script>
+</body>
+</html>
