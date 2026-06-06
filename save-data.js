@@ -77,7 +77,7 @@
           count++;
         });
 
-        setStatus('Imported ' + count + ' save entries. Refreshing...');
+        setStatus(count ? 'Save data imported. Refreshing...' : 'No save data found.');
         setTimeout(() => window.location.reload(), 650);
       } catch (e) {
         setStatus('Import failed: invalid save file.');
