@@ -1,0 +1,10 @@
+{
+  "name": "Math Arcade",
+  "short_name": "Math Arcade",
+  "description": "A static browser-native math and letter arcade.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#050614",
+  "theme_color": "#050614"
+}
