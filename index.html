@@ -357,6 +357,38 @@
     box-shadow: 0 2px 0 rgba(0,0,0,0.55);
   }
   .patreon-btn .heart { color: var(--ink); font-size: 16px; line-height: 1; }
+  .save-tools {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 18px 0 10px;
+  }
+  .save-tools button {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,244,220,0.45);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.35);
+  }
+  .save-tools button:hover {
+    border-color: var(--accent-2);
+    color: var(--accent-2);
+  }
+  #save-status {
+    width: 100%;
+    min-height: 18px;
+    color: rgba(255,244,220,0.48);
+    font-size: 12px;
+  }
   .footer-fine {
     color: rgba(255, 244, 220, 0.35);
     font-size: 12px;
@@ -1436,12 +1468,19 @@
     <a class="patreon-btn" href="https://www.patreon.com/c/kikenandez" target="_blank" rel="noopener">
       <span class="heart">♥</span> SUPPORT ON PATREON
     </a>
+    <div class="save-tools" aria-label="Save data tools">
+      <button type="button" id="export-saves">Export Saves</button>
+      <button type="button" id="import-saves">Import Saves</button>
+      <input type="file" id="save-file" accept="application/json,.json" hidden>
+      <div id="save-status" aria-live="polite"></div>
+    </div>
     <p class="footer-fine">Built with HTML5 canvas · static files · runs entirely in your browser · no installs · no tracking · <a href="LICENSE">CC BY-NC-SA 4.0</a></p>
   </footer>
 </main>
 <script src="i18n.js"></script>
 <script src="games-registry.js"></script>
 <script src="hub-progress.js"></script>
+<script src="save-data.js"></script>
 <script src="audio.js"></script>
 </body>
 </html>
