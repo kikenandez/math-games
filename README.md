@@ -16,10 +16,18 @@ If you enjoy these games, please consider [supporting on Patreon ❤](https://ww
 | Math Invaders | Vaporize alien expressions before they breach the line |
 | Mathris | Click rule-matching boxes; chains arm a typed defuse |
 | Balance Scale | Logic puzzles — deduce hidden shape values |
-| Math Frogger | Hop the right answer; ride logs, dodge cars |
+| Math Frogger | Hop through traffic, ride logs, and choose rule-matching numbers |
 | Math\*bert | Iso-pyramid hop with direction-based +1 / −1 math |
 | Missile Command | Defend 6 cities — chain blasts for combo score |
 | Math Asteroids | Shoot only the rocks matching the target answer |
+| Math Snake | Eat only apples that match the active rule |
+| Math Whack-a-Mole | Whack only the numbers that satisfy the rule |
+| Math Match-3 | Swap adjacent tiles to clear rule-matching lines |
+| Math Tower Defense | Place operator towers to reduce enemies to zero |
+| Paratroopers | Shoot target letters while rescuing friendly look-alikes |
+| Letter Whack | Tap target letters and ignore b/d/p/q look-alikes |
+| Recall Crates | Memorize a letter sequence and type it back before landing |
+| Bee Buzz Says | Repeat the bee's honeycomb letter trail in order |
 
 ## Running locally
 
