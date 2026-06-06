@@ -246,6 +246,50 @@
   .card:hover .play-cta {
     background: var(--accent-2);
   }
+  .progress-strip {
+    margin-top: 14px;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.11);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .progress-badge {
+    flex: 0 0 auto;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: rgba(255,244,220,0.78);
+    border-radius: 999px;
+    padding: 5px 9px;
+  }
+  .progress-strip.played .progress-badge { background: var(--cool); }
+  .progress-strip.mastered .progress-badge { background: var(--good); }
+  .progress-metrics {
+    min-width: 0;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .progress-metric {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    color: rgba(255, 244, 220, 0.62);
+    font-size: 11px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .progress-metric b {
+    color: var(--paper);
+    font-weight: 700;
+  }
 
   /* Per-card accent backgrounds */
   .card.numberfall .art    { background: linear-gradient(160deg, #ffd29a 0%, #ffb89e 50%, #a9d8e8 100%); }
@@ -1396,6 +1440,8 @@
   </footer>
 </main>
 <script src="i18n.js"></script>
+<script src="games-registry.js"></script>
+<script src="hub-progress.js"></script>
 <script src="audio.js"></script>
 </body>
 </html>
