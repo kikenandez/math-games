@@ -33,11 +33,13 @@
     return { cellSize, gridW, gridH, x0, y0 };
   }
 
+  const GAME_ID = 'mathsnake';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "speed": 1.0,
     "walls": "solid"
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   // ===== Rules =====
   // Each level has a rule with:
@@ -626,6 +628,7 @@
     });
   }
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch(e) {}
   }
   function showTweaks() { document.getElementById('tweaks').classList.add('open'); }
