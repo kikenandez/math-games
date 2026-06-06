@@ -50,6 +50,7 @@
   };
 
   // ---------- Tweaks ----------
+  const GAME_ID = 'mathinvaders';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "inferno",
     "theme": "void",
@@ -59,6 +60,7 @@
     "allowNegatives": false,
     "antiSpam": true
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   // ---------- Difficulty config ----------
   // Translates the pygame DifficultyConfig — formation grid + op unlocks + speed
@@ -1354,6 +1356,7 @@
     });
   }
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try {
       window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*');
     } catch (e) {}

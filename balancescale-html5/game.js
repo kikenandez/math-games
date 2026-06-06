@@ -247,11 +247,13 @@
   ];
 
   // ---------- Tweaks ----------
+  const GAME_ID = 'balancescale';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "theme": "day",
     "showClueTotals": true,
     "autoAdvance": true
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   // ---------- State ----------
   const state = {
@@ -1283,6 +1285,7 @@
     });
   }
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch(e) {}
   }
   function showTweaks() { document.getElementById('tweaks').classList.add('open'); }

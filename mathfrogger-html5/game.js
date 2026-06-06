@@ -43,6 +43,7 @@
     return 'start';
   }
 
+  const GAME_ID = 'mathfrogger';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "theme": "day",
@@ -50,6 +51,7 @@
     "riverSpeed": 1.0,
     "startTime": 60
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   const state = {
     phase: 'title',
@@ -1262,6 +1264,7 @@
     });
   }
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch(e) {}
   }
   function showTweaks() { document.getElementById('tweaks').classList.add('open'); }

@@ -64,6 +64,7 @@
   };
 
   // ---------- Tweaks ----------
+  const GAME_ID = 'missilecommand';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "palette": "twilight",
     "enemySpeed": 1.0,
@@ -71,6 +72,7 @@
     "ammoCount": 10,
     "blastRadius": 1.0
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   // ---------- State ----------
   const state = {
@@ -1253,6 +1255,7 @@
     });
   }
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch(e) {}
   }
   function showTweaks() { document.getElementById('tweaks').classList.add('open'); }

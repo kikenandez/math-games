@@ -107,11 +107,13 @@
     const tp = document.getElementById('title-p'); if (tp) tp.innerHTML = T.warn;
   }
 
+  const GAME_ID = 'recallcrates';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "age": "",
     "theme": "day"
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   // ===== Letter pool (reversal-prone letters seeded in for the dyslexia signal) =====
   const REVERSAL_CORE = ['b', 'd', 'p', 'q'];
@@ -682,6 +684,7 @@
     });
   }
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {}
   }
   function showTweaks() { document.getElementById('tweaks').classList.add('open'); }

@@ -22,6 +22,7 @@
   window.addEventListener('resize', resize);
   resize();
 
+  const GAME_ID = 'mathasteroids';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "theme": "blue",
@@ -29,6 +30,7 @@
     "speed": 1.0,
     "ops": "all"
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   const state = {
     phase: 'title',
@@ -1169,6 +1171,7 @@
     });
   }
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch(e) {}
   }
   function showTweaks() { document.getElementById('tweaks').classList.add('open'); }

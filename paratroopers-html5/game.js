@@ -95,11 +95,13 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   // ===== Tweaks (editable from the gear panel / hub edit-mode) =====
+  const GAME_ID = 'paratroopers';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "pace": "normal",
     "colorCues": true,
     "theme": "day"
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   // Color cues are a *visual aid* — bad/good is shown by colour. Off by intent
   // for letter-orientation training (read the letter, not the colour); on as help.
@@ -1680,7 +1682,7 @@
     });
     close?.addEventListener('click', () => { hideTweaks(); notifyDismiss(); });
   }
-  function persistTweaks() { try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {} }
+  function persistTweaks() { window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS); try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {} }
   function notifyDismiss() { try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {} }
   function showTweaks() { document.getElementById('tweaks')?.classList.add('open'); }
   function hideTweaks() { document.getElementById('tweaks')?.classList.remove('open'); }

@@ -145,6 +145,7 @@
     set('ht1', T.ht1); set('hd1', T.hd1); set('ht2', T.ht2); set('hd2', T.hd2); set('ht3', T.ht3); set('hd3', T.hd3);
   }
 
+  const GAME_ID = 'beebuzzsays';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "age": "",
@@ -152,6 +153,7 @@
     "theme": "honey",
     "motion": "full"
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
   function reducedMotion() { return TWEAKS.motion === 'reduced'; }
 
   const rand = (min, max) => Math.random() * (max - min) + min;
@@ -776,7 +778,7 @@
       if (open) { hideTweaks(); try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {} } else showTweaks();
     });
   }
-  function persistTweaks() { try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {} }
+  function persistTweaks() { window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS); try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {} }
   function showTweaks() { document.getElementById('tweaks').classList.add('open'); }
   function hideTweaks() { document.getElementById('tweaks').classList.remove('open'); }
   window.addEventListener('message', (e) => {

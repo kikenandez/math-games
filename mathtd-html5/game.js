@@ -123,10 +123,12 @@
   ];
 
   // ===== Tweaks (Settings panel + hub edit-mode) =====
+  const GAME_ID = 'mathtd';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "theme": "day"
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
   const DIFF = { easy: { gold: 150, hp: 25 }, normal: { gold: 100, hp: 20 }, hard: { gold: 70, hp: 15 } };
   function diffCfg() { return DIFF[TWEAKS.difficulty] || DIFF.normal; }
 
@@ -1248,7 +1250,7 @@
     });
     if (close) close.addEventListener('click', () => { hideTweaks(); notifyDismiss(); });
   }
-  function persistTweaks() { try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {} }
+  function persistTweaks() { window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS); try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {} }
   function notifyDismiss() { try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {} }
   function showTweaks() { const el = document.getElementById('tweaks'); if (el) el.classList.add('open'); }
   function hideTweaks() { const el = document.getElementById('tweaks'); if (el) el.classList.remove('open'); }

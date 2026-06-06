@@ -123,12 +123,14 @@
     return { cell, gridW, gridH, x0, y0 };
   }
 
+  const GAME_ID = 'letterwhack';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "speed": 1.0,
     "age": "",
     "theme": "day"
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   // ===== Letter sets =====
   // The reversal-prone core: every cross-pair of these is a mirror/rotation
@@ -878,6 +880,7 @@
     });
   }
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch (e) {}
   }
   function showTweaks() { document.getElementById('tweaks').classList.add('open'); }

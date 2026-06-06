@@ -101,6 +101,7 @@
   };
 
   // ---------- Tweakable defaults ----------
+  const GAME_ID = 'numberfall';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "palette": "sunset",
     "truckColor": "red",
@@ -110,6 +111,7 @@
     "launchPower": 1.0,
     "allowNegatives": false
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   // ---------- State ----------
   const state = {
@@ -1828,6 +1830,7 @@
   }
 
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try {
       window.parent.postMessage({
         type: '__edit_mode_set_keys',

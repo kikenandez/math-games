@@ -35,11 +35,13 @@
     return { cell, gridW, gridH, x0, y0 };
   }
 
+  const GAME_ID = 'mathmatch3';
   const TWEAKS = /*EDITMODE-BEGIN*/{
     "difficulty": "normal",
     "theme": "violet",
     "minLine": 3
   }/*EDITMODE-END*/;
+  window.MathArcadeStorage?.hydrateSettings(GAME_ID, TWEAKS);
 
   function isPrime(n) {
     if (n < 2) return false;
@@ -1006,6 +1008,7 @@
     });
   }
   function persistTweaks() {
+    window.MathArcadeStorage?.setSettings(GAME_ID, TWEAKS);
     try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*'); } catch(e) {}
   }
   function showTweaks() { document.getElementById('tweaks').classList.add('open'); }
