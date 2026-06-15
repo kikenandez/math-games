@@ -313,6 +313,32 @@
     box-shadow: 0 2px 0 rgba(0,0,0,0.55);
   }
   .patreon-btn .heart { color: var(--ink); font-size: 16px; line-height: 1; }
+  .studio84-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    color: var(--accent-2);
+    background: transparent;
+    border: 2px solid var(--accent-2);
+    border-radius: 999px;
+    padding: 7px 18px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.55);
+    margin: 4px 0 14px;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .studio84-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.55);
+    text-decoration: none;
+  }
+  .studio84-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.55);
+  }
   .footer-fine {
     color: rgba(255, 244, 220, 0.35);
     font-size: 12px;
@@ -1389,6 +1415,7 @@
 
   <footer>
     <p class="credit-line"><span class="by">A handcrafted arcade by</span> <a href="https://www.patreon.com/c/kikenandez" target="_blank" rel="noopener">kikenandez</a></p>
+    <p><a class="studio84-btn" id="studio84-cta" href="https://www.studio84.fr/?utm_source=play&amp;utm_medium=games_site&amp;utm_campaign=math_games" target="_blank" rel="noopener">More learning resources at Studio84 &rarr;</a></p>
     <a class="patreon-btn" href="https://www.patreon.com/c/kikenandez" target="_blank" rel="noopener">
       <span class="heart">♥</span> SUPPORT ON PATREON
     </a>
@@ -1397,5 +1424,22 @@
 </main>
 <script src="i18n.js"></script>
 <script src="audio.js"></script>
+<script>
+  // Studio84 CTA — localized using the same language source the arcade already uses.
+  (function () {
+    var supported = ['en', 'fr', 'es'];
+    var req = new URLSearchParams(location.search).get('lang');
+    var stored = localStorage.getItem('mathArcadeLang');
+    var lang = supported.indexOf(req) > -1 ? req
+             : (supported.indexOf(stored) > -1 ? stored : 'en');
+    var t = {
+      en: 'More learning resources at Studio84 \u2192',
+      fr: 'Plus de ressources p\u00e9dagogiques sur Studio84 \u2192',
+      es: 'M\u00e1s recursos educativos en Studio84 \u2192'
+    };
+    var el = document.getElementById('studio84-cta');
+    if (el && t[lang]) el.textContent = t[lang];
+  })();
+</script>
 </body>
 </html>
