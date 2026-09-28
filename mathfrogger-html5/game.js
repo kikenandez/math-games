@@ -19,21 +19,113 @@
     canvas.style.height = H + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
-  window.addEventListener('resize', resize);
+  let lastMetrics = null;
+  window.addEventListener('resize', () => {
+    const prev = lastMetrics;
+    resize();
+    onLayoutChanged(prev);
+  });
   resize();
 
   const ROW_COUNT = 13;
   const COL_COUNT = 9;
+  // Space the stacked timer / rule boxes take above and below the grid. Measured
+  // from the DOM on layout changes so the grid never runs underneath them.
+  const hudInsets = { top: 155, bottom: 160 };
+  function clearInline(el) {
+    for (const prop of ['top', 'left', 'bottom', 'transform', 'minWidth', 'maxWidth']) el.style[prop] = '';
+  }
+  function measureHudInsets() {
+    const target = document.getElementById('target');
+    const eq = document.getElementById('bottom-eq');
+    if (!target || !eq) return;
+    clearInline(target);
+    clearInline(eq);
+    eq.querySelector('.eq').style.whiteSpace = '';
+    eq.querySelector('.eq').style.fontSize = '';
+    const tb = target.getBoundingClientRect();
+    const eb = eq.getBoundingClientRect();
+    hudInsets.top = Math.max(120, Math.round(tb.bottom + 10));
+    hudInsets.bottom = Math.max(100, Math.round(H - eb.top + 8));
+    // Touch d-pad (shown on touch devices) needs its own strip under the grid.
+    const pad = document.getElementById('mobile-controls');
+    hudInsets.controls = pad && pad.classList.contains('show') ? Math.round(pad.getBoundingClientRect().height + 16) : 0;
+  }
+
   function getMetrics() {
-    const playTop = 155;
-    const playBottom = H - 160;
+    // Stacked layout: timer above the grid, rule card below it.
+    let playTop = hudInsets.top;
+    let playBottom = H - hudInsets.bottom;
+    // Side layout: on short-but-wide windows the stacked boxes squeeze the 13
+    // rows into a strip. If there is room beside the grid, move the boxes there
+    // and give the grid the full height.
+    const stackedRowH = Math.min(60, (playBottom - playTop) / ROW_COUNT);
+    const sideBottom = 30 + (hudInsets.controls || 0);
+    const roomyRowH = Math.min(60, (H - 110 - sideBottom) / ROW_COUNT);
+    const roomyGridW = Math.min(roomyRowH * 1.1, (W - 32) / COL_COUNT) * COL_COUNT;
+    const sideRoom = (W - roomyGridW) / 2;
+    const sideLayout = sideRoom >= 190 && roomyRowH > stackedRowH * 1.12;
+    if (sideLayout) { playTop = 110; playBottom = H - sideBottom; }
     const rowH = Math.min(60, (playBottom - playTop) / ROW_COUNT);
     const colW = Math.min(rowH * 1.1, (W - 32) / COL_COUNT);
     const gridW = colW * COL_COUNT;
     const gridH = rowH * ROW_COUNT;
     const gridX = (W - gridW) / 2;
     const gridY = playTop;
-    return { rowH, colW, gridW, gridH, gridX, gridY };
+    return { rowH, colW, gridW, gridH, gridX, gridY, sideLayout };
+  }
+
+  // Position the timer and rule boxes for the current layout.
+  function layoutHud() {
+    const m = getMetrics();
+    const target = document.getElementById('target');
+    const eq = document.getElementById('bottom-eq');
+    if (!target || !eq) return;
+    const eqText = eq.querySelector('.eq');
+    if (m.sideLayout) {
+      const gap = 20;
+      const maxW = W - (m.gridX + m.gridW + gap) - 12;
+      Object.assign(target.style, {
+        top: (m.gridY + 4) + 'px', left: (m.gridX - gap) + 'px', bottom: 'auto', transform: 'translateX(-100%)',
+      });
+      Object.assign(eq.style, {
+        top: (m.gridY + m.gridH / 2) + 'px', left: (m.gridX + m.gridW + gap) + 'px', bottom: 'auto',
+        transform: 'translateY(-50%)', minWidth: '0', maxWidth: maxW + 'px',
+      });
+      eqText.style.whiteSpace = 'normal';
+      eqText.style.fontSize = maxW < 230 ? '20px' : '';
+    } else {
+      clearInline(target);
+      clearInline(eq);
+      eqText.style.whiteSpace = '';
+      eqText.style.fontSize = '';
+    }
+  }
+
+  // Keep traffic, bubbles and the frog on the grid when the window changes size.
+  function relayoutLanes(prev) {
+    const m = getMetrics();
+    if (!prev || prev.gridW <= 0 || !state.lanes.length) return;
+    const sx = m.gridW / prev.gridW;
+    const pace = m.colW / prev.colW;
+    const bw = bubbleSize();
+    for (const lane of state.lanes) {
+      lane.speed *= pace;
+      for (const e of lane.entities) { e.x = m.gridX + (e.x - prev.gridX) * sx; e.w *= sx; }
+      for (const b of lane.bubbles || []) { b.x = m.gridX + (b.x - prev.gridX) * sx; b.w = bw; b.speed *= pace; }
+    }
+    placeFrogAtGrid(state.frog.col, state.frog.row);
+  }
+
+  function onLayoutChanged(prev) {
+    measureHudInsets();
+    lastMetrics = getMetrics();
+    relayoutLanes(prev);
+    layoutHud();
+  }
+  // Box heights settle once the web fonts arrive; re-measure then.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => onLayoutChanged(lastMetrics));
   }
   function rowToType(r) {
     if (r === 0) return 'finish';
@@ -130,12 +222,13 @@
     // Pick a random off-screen bubble in a random lane and convert it.
     if (!state.lanes.length) return;
     const candidates = [];
+    const lb = laneBounds();
     for (const lane of state.lanes) {
       if (!lane.bubbles) continue;
       for (const b of lane.bubbles) {
         if (b.isTime) continue;
-        // Prefer bubbles that are still off-screen so the appearance feels natural.
-        if (b.x < -10 || b.x > W + 10) candidates.push(b);
+        // Prefer bubbles that are still outside the grid so the appearance feels natural.
+        if (b.x + b.w < lb.left + LANE_MARGIN || b.x > lb.right - LANE_MARGIN) candidates.push(b);
       }
     }
     const pool = candidates.length ? candidates : (() => {
@@ -168,72 +261,75 @@
     return Math.random() < 0.025;
   }
 
+  // Lanes are clipped to the grid, so traffic and bubbles live (and wrap) just
+  // outside the grid edges rather than the window edges. Spreading them over the
+  // whole window left most of a lane invisible and the frog waiting on empty lanes.
+  const LANE_MARGIN = 60;
+  function laneBounds() {
+    const m = getMetrics();
+    return { left: m.gridX - LANE_MARGIN, right: m.gridX + m.gridW + LANE_MARGIN, span: m.gridW + LANE_MARGIN * 2 };
+  }
+  // Speeds were tuned for ~60px cells; scale them with the cell so the frog's
+  // hop and the traffic keep the same relationship at any window size.
+  function paceScale() { return getMetrics().colW / 60; }
+  function bubbleSize() { return clamp(getMetrics().rowH * 0.85, 24, 56); }
+
+  function pushBubbles(lane, round, laneSpeed) {
+    const b = laneBounds();
+    const numbers = makeBubbleNumbersForLane(round);
+    const count = clamp(Math.round(b.span / 115), 3, numbers.length);
+    const stride = b.span / count;
+    const w = bubbleSize();
+    for (let i = 0; i < count; i++) {
+      lane.bubbles.push({
+        x: b.left + i * stride + Math.random() * stride * 0.35,
+        number: numbers[i],
+        isTime: maybeTimeBubble(),
+        w,
+        dir: lane.dir,
+        speed: laneSpeed * 0.6,
+      });
+    }
+  }
+
   function buildLanes(round) {
     const lanes = [];
+    const m = getMetrics();
+    const b = laneBounds();
+    const pace = paceScale();
     // Road lanes 7-11
     for (let r = 7; r <= 11; r++) {
       const dir = (r % 2 === 0) ? 1 : -1;
-      const baseSpeed = (50 + round * 8 + (r - 7) * 6) * TWEAKS.trafficSpeed;
+      const baseSpeed = (50 + round * 8 + (r - 7) * 6) * TWEAKS.trafficSpeed * pace;
       const lane = { row: r, type: 'road', dir, speed: baseSpeed, entities: [], bubbles: [] };
-      const carCount = 2 + Math.floor(Math.random() * 2);
-      const carW = 80 + Math.random() * 30;
-      const stride = (W + 200) / carCount;
+      const carCount = clamp(Math.round(m.gridW / 150), 2, 4);
+      const stride = b.span / carCount;
       for (let i = 0; i < carCount; i++) {
         lane.entities.push({
-          x: -50 + i * stride + Math.random() * 80,
-          w: carW + Math.random() * 30,
+          x: b.left + i * stride + Math.random() * stride * 0.3,
+          w: m.colW * (2.4 + Math.random() * 0.8),
           color: choice(['#e85a5a', '#5aa8e8', '#e8b85a', '#8a5ae8', '#5ae8a8']),
         });
       }
-      // Bubbles
-      const numbers = makeBubbleNumbersForLane(round);
-      const bubbleStride = (W + 220) / numbers.length;
-      const bubbleSpeed = baseSpeed * 0.45;
-      for (let i = 0; i < numbers.length; i++) {
-        const isTime = maybeTimeBubble();
-        lane.bubbles.push({
-          x: -40 + i * bubbleStride + Math.random() * 60,
-          number: numbers[i],
-          isTime,
-          w: 56,
-          dir,
-          speed: bubbleSpeed,
-        });
-      }
+      pushBubbles(lane, round, baseSpeed);
       lanes.push(lane);
     }
     // River lanes 1-5 — logs/lilies are safe transport. Bubbles float separately.
     for (let r = 1; r <= 5; r++) {
       const dir = (r % 2 === 0) ? -1 : 1;
-      const baseSpeed = (40 + round * 5 + (5 - r) * 4) * TWEAKS.riverSpeed;
+      const baseSpeed = (40 + round * 5 + (5 - r) * 4) * TWEAKS.riverSpeed * pace;
       const isLogLane = r % 2 === 1;
       const lane = { row: r, type: 'river', dir, speed: baseSpeed, entities: [], bubbles: [] };
-      // More logs/lilies for easier transport
-      const count = 4 + Math.floor(Math.random() * 2);
-      const stride = (W + 240) / count;
+      const count = clamp(Math.round(m.gridW / 120), 3, 5);
+      const stride = b.span / count;
       for (let i = 0; i < count; i++) {
-        const w = isLogLane ? 140 + Math.random() * 30 : 90 + Math.random() * 10;
         lane.entities.push({
-          x: -60 + i * stride + Math.random() * 40,
-          w,
+          x: b.left + i * stride + Math.random() * stride * 0.25,
+          w: isLogLane ? m.colW * (3.6 + Math.random() * 0.8) : m.colW * (2.2 + Math.random() * 0.3),
           isLog: isLogLane,
         });
       }
-      // Bubbles
-      const numbers = makeBubbleNumbersForLane(round);
-      const bubbleStride = (W + 220) / numbers.length;
-      const bubbleSpeed = baseSpeed * 0.5;
-      for (let i = 0; i < numbers.length; i++) {
-        const isTime = maybeTimeBubble();
-        lane.bubbles.push({
-          x: -40 + i * bubbleStride + Math.random() * 60,
-          number: numbers[i],
-          isTime,
-          w: 52,
-          dir,
-          speed: bubbleSpeed,
-        });
-      }
+      pushBubbles(lane, round, baseSpeed);
       lanes.push(lane);
     }
     return lanes;
@@ -405,16 +501,17 @@
     if (state.lanes.length) for (const lane of state.lanes) updateLane(lane, dt * 0.3);
   }
   function updateLane(lane, dt) {
+    const lb = laneBounds();
     for (const ent of lane.entities) {
       ent.x += lane.dir * lane.speed * dt;
-      if (lane.dir > 0 && ent.x > W + 50) ent.x = -ent.w - rand(20, 120);
-      else if (lane.dir < 0 && ent.x + ent.w < -50) ent.x = W + rand(20, 120);
+      if (lane.dir > 0 && ent.x > lb.right) ent.x = lb.left - ent.w - rand(10, 80);
+      else if (lane.dir < 0 && ent.x + ent.w < lb.left) ent.x = lb.right + rand(10, 80);
     }
     if (lane.bubbles) {
       for (const b of lane.bubbles) {
         b.x += b.dir * b.speed * dt;
-        if (b.dir > 0 && b.x > W + 50) b.x = -b.w - rand(20, 120);
-        else if (b.dir < 0 && b.x + b.w < -50) b.x = W + rand(20, 120);
+        if (b.dir > 0 && b.x > lb.right) b.x = lb.left - b.w - rand(10, 80);
+        else if (b.dir < 0 && b.x + b.w < lb.left) b.x = lb.right + rand(10, 80);
         // Time bubbles expire after a couple of seconds and revert to a number.
         if (b.isTime) {
           b.timeTTL -= dt;
@@ -523,29 +620,34 @@
   function findFrogBubble() {
     const lane = state.lanes.find(l => l.row === state.frog.row);
     if (!lane || !lane.bubbles) return null;
+    // Catch radius is at least most of a cell, so a bubble that shrank with the
+    // lane height is still eaten when the frog lands on its cell.
+    const cellReach = getMetrics().colW * 0.45;
     for (const b of lane.bubbles) {
       const cx = b.x + b.w / 2;
       const dx = state.frog.x - cx;
-      if (dx * dx <= (b.w * 0.5) * (b.w * 0.5)) return b;
+      const r = Math.max(b.w * 0.5, cellReach);
+      if (dx * dx <= r * r) return b;
     }
     return null;
   }
   // Move a consumed bubble off-screen on its spawn side so it drifts back in fresh.
   function respawnBubble(bubble, lane) {
+    const lb = laneBounds();
     if (lane && lane.bubbles) {
-      // Find a free off-screen slot taking the other bubbles into account so they don't stack.
+      // Find a free off-grid slot taking the other bubbles into account so they don't stack.
       const sameDir = lane.bubbles.filter(b => b !== bubble && b.dir === bubble.dir);
       const xs = sameDir.map(b => b.x);
-      const baseOffset = rand(40, 180);
+      const baseOffset = rand(20, 120);
       if (bubble.dir > 0) {
-        const leftmost = xs.length ? Math.min(...xs) : 0;
-        bubble.x = Math.min(-bubble.w - baseOffset, leftmost - bubble.w - rand(60, 140));
+        const leftmost = xs.length ? Math.min(...xs) : lb.left;
+        bubble.x = Math.min(lb.left - bubble.w - baseOffset, leftmost - bubble.w - rand(50, 120));
       } else {
-        const rightmost = xs.length ? Math.max(...xs) : W;
-        bubble.x = Math.max(W + baseOffset, rightmost + rand(60, 140));
+        const rightmost = xs.length ? Math.max(...xs) : lb.right;
+        bubble.x = Math.max(lb.right + baseOffset, rightmost + rand(50, 120));
       }
     } else {
-      bubble.x = bubble.dir > 0 ? -bubble.w - rand(40, 180) : W + rand(40, 180);
+      bubble.x = bubble.dir > 0 ? lb.left - bubble.w - rand(20, 120) : lb.right + rand(20, 120);
     }
     bubble.isTime = false;
     bubble.number = randInt(1, Math.max(20, 12 + state.round * 3));
@@ -886,7 +988,7 @@
         if (lane.type === 'road') drawCar(ent.x, ey, ent.w, m.rowH * 0.62, ent.color, lane.dir);
         else if (lane.type === 'river') {
           if (ent.isLog) drawLog(ent.x, ey, ent.w, m.rowH * 0.55);
-          else drawLilypad(ent.x, ey, ent.w, m.rowH * 0.55);
+          else drawLilypad(ent.x, ey, ent.w, m.rowH * 0.8);
         }
       }
       if (lane.bubbles) {
@@ -1095,19 +1197,24 @@
     ctx.beginPath(); ctx.ellipse(w/2 - 4, 0, h*0.18, h*0.4, 0, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
+  // A lily pad is an ellipse that stays inside its lane (it used to be a circle
+  // as wide as the pad, which spilled over neighbouring lanes on short windows).
   function drawLilypad(x, y, w, h) {
+    const rx = w / 2, ry = h / 2;
     ctx.save();
     ctx.translate(x + w / 2, y);
-    ctx.fillStyle = '#3aa45a'; ctx.strokeStyle = '#1c5a2a'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(0, 0, w/2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#3aa45a'; ctx.strokeStyle = '#1c5a2a'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    // Notch on the right edge
     ctx.fillStyle = '#4a8acf';
-    ctx.beginPath(); ctx.moveTo(0, 0);
-    ctx.arc(0, 0, w/2 + 1, -Math.PI/6, Math.PI/6); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(rx * 0.35, 0);
+    ctx.lineTo(rx + 2, -ry * 0.45); ctx.lineTo(rx + 2, ry * 0.45); ctx.closePath(); ctx.fill();
+    // Veins
     ctx.strokeStyle = '#2a7a3a'; ctx.lineWidth = 1.5;
     for (let i = 0; i < 6; i++) {
       const a = i * Math.PI / 3 + Math.PI / 6;
       ctx.beginPath(); ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(a) * w * 0.4, Math.sin(a) * w * 0.4); ctx.stroke();
+      ctx.lineTo(Math.cos(a) * rx * 0.8, Math.sin(a) * ry * 0.8); ctx.stroke();
     }
     ctx.restore();
   }
@@ -1285,6 +1392,7 @@
   try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch(e) {}
 
   state.lanes = buildLanes(1);
+  onLayoutChanged(null);
   state.activeRule = genRule(1);
   placeFrogAtGrid(4, 12);
   updateHUD();
