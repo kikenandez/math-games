@@ -485,16 +485,28 @@
   if ('ontouchstart' in window) document.getElementById('mobile-controls').classList.add('show');
 
   let lastTime = performance.now();
+  // Only one animation frame is ever pending: the stall fallback and the
+  // visibility handler re-enter the loop, and without this guard each re-entry
+  // queued an extra frame, so after a tab-away the game ran several loops per frame.
+  let rafId = 0;
+  function scheduleFrame() {
+    if (!rafId) rafId = requestAnimationFrame(frame);
+  }
+  function frame(now) {
+    rafId = 0;
+    loop(now);
+  }
   function loop(now) {
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
+    if (dt < 0) dt = 0;
     try {
       if (state.phase === 'playing' && !state.paused) update(dt);
       else updateIdle(dt);
       draw();
     } catch (err) { console.error('Math Frogger loop error:', err); }
-    requestAnimationFrame(loop);
+    scheduleFrame();
   }
   function updateIdle(dt) {
     state.elapsed += dt * 0.5;
@@ -1399,7 +1411,7 @@
   updateCountdownBanner();
   updateBottomEq();
   draw(); // paint one frame immediately so the scene is never blank before rAF starts
-  requestAnimationFrame(loop);
+  scheduleFrame();
 
   setInterval(() => {
     const now = performance.now();
@@ -1412,7 +1424,7 @@
     if (!document.hidden) {
       lastTime = performance.now() - 16;
       try { draw(); } catch (e) {}
-      requestAnimationFrame(loop);
+      scheduleFrame();
     }
   });
   window.addEventListener('focus', () => {

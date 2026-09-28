@@ -46,6 +46,9 @@
   .badge .val { font-family: 'Lilita One', sans-serif; font-size: 22px; color: var(--paper); }
   .badge.score .val { color: var(--gold); }
   .badge.wave .val { color: var(--cool); }
+  .badge.ammo .val { color: #ff5c7c; }
+  .badge.ammo.low .val { color: #ffba6b; }
+  .badge.ammo.empty { border-color: #ff5c7c; background: rgba(255, 92, 124, 0.18); }
   .cities-strip { display: flex; gap: 4px; align-items: center; height: 22px; }
   .city-icon {
     width: 15px; height: 15px; border-radius: 5px 5px 2px 2px;
@@ -167,6 +170,7 @@
     <div class="hud-group">
       <div class="badge score"><span class="label">Score</span><span class="val" id="score">0</span></div>
       <div class="badge wave"><span class="label">Wave</span><span class="val" id="wave">1</span></div>
+      <div class="badge ammo"><span class="label">Ammo</span><span class="val" id="ammo">30</span></div>
     </div>
     <div class="hud-group">
       <div class="badge"><span class="label">Cities</span><span class="cities-strip" id="cities-strip"></span></div>

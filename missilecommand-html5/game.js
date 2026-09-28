@@ -28,7 +28,7 @@
   const SCORE_MIRV = 75;
   const SCORE_CITY = 100;
   const SCORE_AMMO = 5;
-  const CITY_AWARD_EVERY = 10000;
+  const CITY_AWARD_EVERY = 5000; // a bonus city every ~6 waves instead of ~12
   const PLAYER_MAX_RADIUS = 78;
   const ENEMY_MAX_RADIUS = 42;
   const PLAYER_SPEED = 720; // px/sec
@@ -176,11 +176,16 @@
   // ---------- Wave ----------
   function startWave(wave) {
     state.wave = wave;
-    state.waveBudget = 6 + Math.floor(wave * 1.4); // enemies this wave
+    state.waveBudget = 4 + Math.floor(wave * 1.4); // enemies this wave: 5, 6, 8, 9, 11 ...
     state.spawnTimer = 1.5;
     state.waveActive = true;
-    // Replenish silo ammo
+    // Rebuild destroyed silos and replenish ammo (a lost silo used to stay lost
+    // for the rest of the game, which snowballed every run into defeat).
     for (const s of state.silos) {
+      if (!s.alive && wave > 1) {
+        s.alive = true;
+        showFloater(s.x, s.y - 34, 'SILO REBUILT', '#8aea7a');
+      }
       if (s.alive) s.ammo = s.maxAmmo;
     }
     updateHUD();
@@ -206,11 +211,21 @@
 
   // ---------- Enemy spawning ----------
   function pickEnemyTarget() {
-    // Always aim at a living city or silo so enemies never land harmlessly
+    // Most meteors aim at a living city or silo, but about a third fall on open
+    // ground (or on rubble). When every meteor was lethal, a beginner who missed
+    // three in wave 1 lost three cities, and runs ended by wave 2 or 3.
     const targets = [
       ...state.cities.filter(c => c.alive),
       ...state.silos.filter(s => s.alive),
     ];
+    if (targets.length === 0 || Math.random() < 0.35) {
+      // Open ground between slots: at least 70px from any living target so the
+      // 60px impact check cannot clip one by accident.
+      for (let tries = 0; tries < 12; tries++) {
+        const x = rand(40, W - 40);
+        if (targets.every(t => Math.abs(t.x - x) > 70)) return { x, y: getGroundY() - 10 };
+      }
+    }
     if (targets.length === 0) return { x: W / 2, y: getGroundY() - 10 };
     const t = choice(targets);
     return { x: t.x + rand(-10, 10), y: getGroundY() - 10 };
@@ -289,11 +304,15 @@
       silo = best;
     }
     if (!silo || !silo.alive || silo.ammo <= 0) {
-      // No ammo — beep
-      showFloater(targetX, targetY, 'NO AMMO', '#ff5c7c');
+      // No ammo — beep (throttled so rapid clicking doesn't paper the sky with text)
+      if (state.elapsed - (state.lastNoAmmoAt || -1) > 0.6) {
+        showFloater(targetX, targetY, 'NO AMMO', '#ff5c7c');
+        state.lastNoAmmoAt = state.elapsed;
+      }
       return false;
     }
     silo.ammo--;
+    updateHUD();
     const sx = silo.x, sy = silo.y - 22;
     // Clamp the target so missiles never fire downward.
     // The target must be at least 40px above the silo's launch point.
@@ -321,16 +340,29 @@
 
   // ---------- Update ----------
   let lastTime = performance.now();
+  // Only one animation frame is ever pending. The stall fallback and the
+  // visibility handler both re-enter the loop, and without this guard each
+  // re-entry queued an extra frame callback, so after a tab-away the game
+  // could run several loops per frame at multiplied speed.
+  let rafId = 0;
+  function scheduleFrame() {
+    if (!rafId) rafId = requestAnimationFrame(frame);
+  }
+  function frame(now) {
+    rafId = 0;
+    loop(now);
+  }
   function loop(now) {
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
+    if (dt < 0) dt = 0;
     try {
       if (state.phase === 'playing') update(dt);
       else updateIdle(dt);
       draw();
     } catch (err) { console.error('Missile Command loop error:', err); }
-    requestAnimationFrame(loop);
+    scheduleFrame();
   }
   function updateIdle(dt) {
     state.elapsed += dt * 0.5;
@@ -598,6 +630,13 @@
   function updateHUD() {
     document.getElementById('score').textContent = state.score;
     document.getElementById('wave').textContent = state.wave;
+    const ammoEl = document.getElementById('ammo');
+    if (ammoEl) {
+      const total = state.silos.reduce((n, s) => n + (s.alive ? s.ammo : 0), 0);
+      ammoEl.textContent = total;
+      ammoEl.parentElement.classList.toggle('low', total > 0 && total <= 5);
+      ammoEl.parentElement.classList.toggle('empty', total === 0);
+    }
     const strip = document.getElementById('cities-strip');
     strip.innerHTML = '';
     for (const c of state.cities) {
@@ -1078,28 +1117,29 @@
       if (ex.delay && ex.delay > 0) continue;
       const t = ex.t / ex.dur;
       const a = 1 - t * 0.4;
+      const r = Math.max(0, ex.r); // a negative radius throws in createRadialGradient
       ctx.globalAlpha = a;
       // Outer glow
-      const grd = ctx.createRadialGradient(ex.x, ex.y, ex.r * 0.3, ex.x, ex.y, ex.r);
+      const grd = ctx.createRadialGradient(ex.x, ex.y, r * 0.3, ex.x, ex.y, r);
       grd.addColorStop(0, ex.color);
       grd.addColorStop(0.7, hexA(ex.color, 0.4));
       grd.addColorStop(1, hexA(ex.color, 0));
       ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI * 2);
+      ctx.arc(ex.x, ex.y, r, 0, Math.PI * 2);
       ctx.fill();
       // Core
       ctx.fillStyle = '#fff4dc';
       ctx.globalAlpha = a * 0.85;
       ctx.beginPath();
-      ctx.arc(ex.x, ex.y, ex.r * 0.35, 0, Math.PI * 2);
+      ctx.arc(ex.x, ex.y, r * 0.35, 0, Math.PI * 2);
       ctx.fill();
       // Outline
       ctx.globalAlpha = a;
       ctx.strokeStyle = ex.color;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI * 2);
+      ctx.arc(ex.x, ex.y, r, 0, Math.PI * 2);
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
@@ -1273,7 +1313,7 @@
   setupBase();
   updateHUD();
   draw(); // paint one frame immediately so the scene is never blank before rAF starts
-  requestAnimationFrame(loop);
+  scheduleFrame();
 
   setInterval(() => {
     const now = performance.now();
@@ -1286,7 +1326,7 @@
     if (!document.hidden) {
       lastTime = performance.now() - 16;
       try { draw(); } catch (e) {}
-      requestAnimationFrame(loop);
+      scheduleFrame();
     }
   });
   window.addEventListener('focus', () => {
