@@ -32,7 +32,7 @@
       title: 'Balance Scale',
       url: 'balancescale-html5/index.html',
       solvedKey: 'balancescale_solved',
-      solvedTotal: 8,
+      solvedTotal: 15,
       lastPlayedKey: 'mathArcade.lastPlayed.balancescale',
       category: 'math',
       compatibility: 'pc'

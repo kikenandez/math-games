@@ -219,6 +219,12 @@
   .box-tile.lit { color: var(--ink); background: #d6efd6; }
 
   .keys-note { font-size: 11px; color: #9a7c44; margin-top: 14px; }
+  .link-btn {
+    background: none; border: none; cursor: pointer; margin-top: 12px; padding: 4px 8px;
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 12px; color: #9a7c44;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .link-btn:hover { color: var(--ink); }
   .keys-note kbd { font-family: 'Lilita One', sans-serif; background: #fff; border: 1.5px solid var(--ink); border-radius: 5px; padding: 1px 6px; font-size: 11px; color: var(--ink); box-shadow: 0 1.5px 0 var(--shadow); }
 
   .big-btn {
@@ -256,7 +262,7 @@
   <div id="hud">
     <div class="badge level">
       <span class="label">Level</span>
-      <span class="val"><span id="level">1</span><span class="of"> / </span><span class="of" id="level-max">8</span></span>
+      <span class="val"><span id="level">1</span><span class="of"> / </span><span class="of" id="level-max">15</span></span>
     </div>
     <div class="badge solved">
       <span class="label">Solved</span>
@@ -341,6 +347,7 @@
       <div class="keys-note">Keys — <kbd>click</kbd> pick a box · <kbd>Tab</kbd> next · <kbd>0–9</kbd> type · <kbd>↵</kbd> check · <kbd>H</kbd> hint · <kbd>N</kbd> new · <kbd>R</kbd> reset</div>
 
       <button class="big-btn" id="start-btn">START</button>
+      <div><button class="link-btn" id="start-over-btn" style="display:none">Start over from level 1</button></div>
     </div>
   </div>
 </div>

@@ -341,11 +341,20 @@
     ];
   }
 
+  // Levels past the authored set are "bonus" puzzles: they cycle the three
+  // hardest templates with fresh values, so the game never has to stop.
+  const BONUS_TEMPLATES = [12, 13, 14];
+  function isBonusLevel(idx) { return idx >= LEVELS.length; }
+  function templateFor(idx) {
+    if (!isBonusLevel(idx)) return LEVELS[idx];
+    return LEVELS[BONUS_TEMPLATES[(idx - LEVELS.length) % BONUS_TEMPLATES.length]];
+  }
+
   function setupLevel(idx, options = {}) {
-    state.levelIdx = clamp(idx, 0, LEVELS.length - 1);
+    state.levelIdx = Math.max(0, idx);
     state.runtimeLevel = options.keepPuzzle && state.runtimeLevel
       ? state.runtimeLevel
-      : makeLevelVariant(LEVELS[state.levelIdx], state.levelIdx);
+      : makeLevelVariant(templateFor(state.levelIdx), state.levelIdx);
     resetLevelInputs();
   }
 
@@ -387,7 +396,7 @@
   // ---------- HUD / answer dock ----------
   function updateHUD() {
     document.getElementById('level').textContent = state.levelIdx + 1;
-    document.getElementById('level-max').textContent = LEVELS.length;
+    document.getElementById('level-max').textContent = isBonusLevel(state.levelIdx) ? '∞' : LEVELS.length;
     document.getElementById('solved').textContent = state.solvedCount;
   }
 
@@ -524,7 +533,7 @@
       return;
     }
     if (isLevelSolved()) {
-      state.solvedCount = Math.max(state.solvedCount, state.levelIdx + 1);
+      state.solvedCount = Math.max(state.solvedCount, Math.min(state.levelIdx + 1, LEVELS.length));
       localStorage.setItem('balancescale_solved', String(state.solvedCount));
       updateHUD();
       showMsg(`Level ${state.levelIdx + 1} solved! 🎉`, 'success');
@@ -549,10 +558,11 @@
       // Auto-advance
       if (TWEAKS.autoAdvance) {
         setTimeout(() => {
-          if (state.levelIdx >= LEVELS.length - 1) {
+          if (state.levelIdx === LEVELS.length - 1) {
             wonAll();
           } else {
             setupLevel(state.levelIdx + 1);
+            updateHUD();
             showMsg(`Level ${state.levelIdx + 1}`, '');
           }
         }, 1400);
@@ -576,8 +586,14 @@
   }
 
   // ---------- Phases ----------
-  function startGame() {
+  // Where a fresh visit should begin: the first unsolved level, or the bonus
+  // puzzles once every authored level has been solved.
+  function resumeLevelIdx() {
+    return Math.min(state.solvedCount, LEVELS.length);
+  }
+  function startGame(options = {}) {
     state.phase = 'playing';
+    if (options.resume) state.levelIdx = resumeLevelIdx();
     setupLevel(state.levelIdx);
     document.getElementById('overlay').classList.add('hidden');
     updateHUD();
@@ -591,17 +607,39 @@
     card.innerHTML = `
       <h1><span class="acc">ALL</span> SOLVED!</h1>
       <div class="sub">all ${LEVELS.length} levels balanced</div>
-      <p>You deduced every shape's value across all puzzles. Replay to chase a faster solve, or jump to any level from the Tweaks panel.</p>
-      <button class="big-btn" id="restart-btn">PLAY AGAIN</button>
+      <p>You deduced every shape's value across all puzzles. Keep going for endless bonus puzzles with fresh numbers, or replay from the start to chase a faster solve.</p>
+      <button class="big-btn" id="bonus-btn">KEEP GOING</button>
+      <div><button class="link-btn" id="restart-btn">Start over from level 1</button></div>
     `;
     overlay.appendChild(card);
     overlay.classList.remove('hidden');
+    document.getElementById('bonus-btn').addEventListener('click', () => {
+      state.levelIdx = LEVELS.length;
+      startGame();
+    });
     document.getElementById('restart-btn').addEventListener('click', () => {
       state.levelIdx = 0;
       startGame();
     });
   }
-  document.getElementById('start-btn').addEventListener('click', startGame);
+  function setupTitleCard() {
+    const startBtn = document.getElementById('start-btn');
+    const over = document.getElementById('start-over-btn');
+    const resumeIdx = resumeLevelIdx();
+    if (state.solvedCount > 0) {
+      startBtn.textContent = 'CONTINUE';
+      startBtn.title = isBonusLevel(resumeIdx) ? 'Bonus puzzles' : `Level ${resumeIdx + 1}`;
+      if (over) over.style.display = '';
+    } else if (over) {
+      over.style.display = 'none';
+    }
+  }
+  document.getElementById('start-btn').addEventListener('click', () => startGame({ resume: true }));
+  document.getElementById('start-over-btn')?.addEventListener('click', () => {
+    state.levelIdx = 0;
+    startGame();
+  });
+  setupTitleCard();
   document.getElementById('check-btn').addEventListener('click', commitAndCheck);
   document.getElementById('reset-btn').addEventListener('click', resetLevelInputs);
   document.getElementById('randomize-btn').addEventListener('click', () => setupLevel(state.levelIdx));
