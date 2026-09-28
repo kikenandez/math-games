@@ -36,18 +36,20 @@
   const RULE_MIN_S = 25;
   const RULE_MAX_S = 35;
   const RULE_WARNING_S = 3;
-  const SPEED_RAMP_EVERY = 5;
-  const SPEED_RAMP_FACTOR = 1.10; // per user request: +10% per ramp
-  const SPEED_MAX_MUL = 8.0;
+  // Boxes carry 2-3 operand expressions that need PEMDAS, so the reader needs
+  // time: a gentle ramp (+8% every 6 answers) capped at 3x keeps it readable.
+  const SPEED_RAMP_EVERY = 6;
+  const SPEED_RAMP_FACTOR = 1.08;
+  const SPEED_MAX_MUL = 3.0;
   const MOTHERSHIP_BASE_S = 10;
   const MOTHERSHIP_DECAY = 0.95;
   const MOTHERSHIP_MIN_S = 2;
   const MOTHERSHIP_DELAY_MIN = 8;
   const MOTHERSHIP_DELAY_MAX = 16;
   const BOX_H = 56;
-  const SPAWN_BASE_S = 1.7;
-  const SPAWN_MIN_S = 0.7;
-  const FALL_BASE = 80; // px/sec at speed_mul = 1
+  const SPAWN_BASE_S = 2.4;
+  const SPAWN_MIN_S = 1.1;
+  const FALL_BASE = 50; // px/sec at speed_mul = 1 (~9s to cross the play area)
 
   // ---------- Rules ----------
   const RULES = [
