@@ -23,8 +23,10 @@
 
   // ---------- Constants (faithful to mathinvaders.py) ----------
   const FPS_BASE = 60;
-  const BASE_SPEED = 0.38;         // px/frame at wave 1
-  const WAVE_SPEED_MULTIPLIER = 1.28; // compound formation speed increase per wave
+  // Wave 1 used to crawl (0.38 px/frame) and then compound 28% per wave, which
+  // felt slow at first and then ramped too hard. Start brisker, ramp gentler.
+  const BASE_SPEED = 0.6;          // px/frame at wave 1
+  const WAVE_SPEED_MULTIPLIER = 1.15; // compound formation speed increase per wave
   const DROP_DISTANCE = 28;        // px per side-touch drop (slightly bigger for HTML5 scale)
   const DROP_SPEED = 2.4;          // px/frame while dropping
   const KILL_POINTS = 100;
@@ -381,6 +383,8 @@
       state.phase = 'wave_clear';
       state.waveClearTimer = 1.8;
       state.mothershipSelfBonus = 0;
+      // Misses speed up the current wave only; each wave starts from its own base speed.
+      state.wrongSpeedBonus = 0;
       updateHUD();
     }
 
