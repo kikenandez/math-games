@@ -197,30 +197,41 @@
   const ROAD_SCROLL = 500; // px/sec at bgSpeed=1
   const GROUND_Y_OFFSET = 100; // road top distance from bottom of screen
 
+  // The whole rig (trailer + cab) stays on screen: the cab noses in from the
+  // right edge and boxes tumble off the back of the trailer toward the left.
   function getTruckMetrics() {
-    const cargoH = clamp(H * 0.42, 240, 420);
-    // Long cargo; half-ish is offscreen so we see only the rear side
-    const cargoW = clamp(W * 0.78, 540, 1100);
-    return { cargoH, cargoW };
+    const cargoH = clamp(H * 0.30, 170, 260);
+    const cargoW = clamp(W * 0.40, 340, 560);
+    const cabW = clamp(cargoW * 0.36, 118, 200);
+    const cabH = cargoH * 0.66;
+    const gap = 12; // hitch gap between trailer and cab
+    const wheelR = clamp(Math.min(cargoH * 0.17, cargoW * 0.085), 28, 44);
+    return { cargoH, cargoW, cabW, cabH, gap, wheelR };
   }
   function getTruckPos() {
     const m = getTruckMetrics();
     return {
-      // Anchor so roughly half the cargo is offscreen to the right
-      x: W - 60, // center 60px inset from right edge
-      y: H - GROUND_Y_OFFSET - 50 - m.cargoH / 2,
+      // Trailer center; the cab sits to its right with its nose 40px inside the edge
+      x: W - 40 - m.cabW - m.gap - m.cargoW / 2,
+      y: H - GROUND_Y_OFFSET - 44 - m.cargoH / 2,
     };
   }
-  // Front-most back wheel (the one that hits an incoming rock first)
+  // Rear axle pair under the trailer. XR is the front-most of the pair (it meets
+  // an incoming rock first and triggers the bump).
   function getBackWheelXR() {
     const t = getTruckPos();
     const m = getTruckMetrics();
-    return t.x - m.cargoW * 0.25;
+    return t.x - m.cargoW * 0.13;
   }
   function getBackWheelXL() {
     const t = getTruckPos();
     const m = getTruckMetrics();
-    return t.x - m.cargoW * 0.35;
+    return t.x - m.cargoW * 0.33;
+  }
+  function getFrontWheelX() {
+    const t = getTruckPos();
+    const m = getTruckMetrics();
+    return t.x + m.cargoW / 2 + m.gap + m.cabW * 0.72;
   }
 
   function getSpawnInterval(level) {
@@ -252,7 +263,7 @@
     const spread = total > 1 ? (idx - (total - 1) / 2) / Math.max(1, total - 1) : 0;
 
     // ---- Spawn position: top of cargo near the rear (left half of cargo) ----
-    const hudBottom = 80;
+    const hudBottom = 150; // HUD badges + the answer display now live along the top
     const launchBumpOffset = -20;
     // Rear quarter of the visible cargo top so boxes pop from behind
     let startX = t.x - m.cargoW * 0.32 + rand(-30, 30);
@@ -282,9 +293,10 @@
     const fallTime = Math.sqrt(2 * fallDist / g);
     const T = peakTime + fallTime;
 
-    // Pick landing X within viewport so box never leaves the screen.
+    // Pick landing X within viewport so box never leaves the screen, and always
+    // to the left of the trailer so boxes never come down on top of the rig.
     const landMin = W * 0.08;
-    const landMax = W * 0.62;
+    const landMax = Math.max(landMin + 60, Math.min(W * 0.62, t.x - m.cargoW / 2 - 90));
     const landBand = lerp(landMin, landMax, (spread + 0.5));
     const landingX = clamp(landBand + rand(-40, 40), landMin, landMax);
     const vx = ((landingX - startX) / T) * power;
@@ -331,7 +343,10 @@
   function loop(now) {
     let dt = (now - lastTime) / 1000;
     lastTime = now;
+    // Clamp both ways: long tab-away gaps must not fast-forward, and a frame
+    // timestamp slightly behind the focus/visibility resync must not run time backwards.
     if (dt > 0.1) dt = 0.1;
+    if (dt < 0) dt = 0;
     try {
       if (state.phase === 'playing') update(dt);
       if (state.phase === 'paused' || state.phase === 'title' || state.phase === 'gameover') updateIdle(dt);
@@ -469,11 +484,12 @@
     const v = ROAD_SCROLL * TWEAKS.bgSpeed;
     const wheelX = getBackWheelXR();
     for (const r of state.roadRocks) {
-      const prevX = r.x;
       r.x -= v * dt;
       r.life += dt;
-      // Trigger bump when bump-rock crosses front-most back wheel
-      if (r.bumpTrigger && prevX > wheelX && r.x <= wheelX) {
+      // Trigger the bump once the bump-rock reaches the front-most back wheel.
+      // (No "previous position" check: if the window grew after the rock spawned,
+      // the wheel may already be past it, and the launch must still happen.)
+      if (r.bumpTrigger && r.x <= wheelX) {
         if (state.phase === 'playing') {
           state.truckBumpT = state.truckBumpDur;
           state.truckPendingLaunch = true;
@@ -484,6 +500,10 @@
       }
     }
     state.roadRocks = state.roadRocks.filter(r => r.x > -60);
+    // Safety net: never leave the spawner waiting on a bump-rock that no longer exists.
+    if (state.pendingBumpRock && !state.roadRocks.some(r => r.bumpTrigger)) {
+      state.pendingBumpRock = false;
+    }
   }
 
   function spawnEjectPuff() {
@@ -492,7 +512,7 @@
     const cargoTop = t.y - m.cargoH / 2;
     for (let i = 0; i < 8; i++) {
       state.particles.push({
-        x: t.x + rand(-40, 30),
+        x: t.x - m.cargoW * 0.32 + rand(-40, 30),
         y: cargoTop + rand(-4, 6),
         vx: rand(-60, 60),
         vy: rand(-160, -40),
@@ -512,7 +532,9 @@
     spawnImpact(box.x, H - GROUND_Y_OFFSET);
     state.shake = Math.min(1.2, state.shake + 0.8);
     updateHUD();
-    if (state.lives <= 0) {
+    // Queue game over once; a second box landing inside the 350ms grace must not re-queue it.
+    if (state.lives <= 0 && !state.gameOverQueued) {
+      state.gameOverQueued = true;
       setTimeout(gameOver, 350);
     }
   }
@@ -723,6 +745,7 @@
     state.shake = 0;
     state.truckBumpT = 0;
     state.truckPendingLaunch = false;
+    state.gameOverQueued = false;
     document.getElementById('overlay').classList.add('hidden');
     updateHUD();
     updateAnswerDisplay();
@@ -1152,53 +1175,59 @@
   }
 
   function drawTruck() {
-    const p = P();
     const tc = TRUCK_COLORS[TWEAKS.truckColor] || TRUCK_COLORS.red;
     const pos = getTruckPos();
     const m = getTruckMetrics();
     // Bump animation offset
     let bumpY = 0;
-    let bumpRotL = 0;
+    let bumpRot = 0;
     if (state.truckBumpT > 0) {
       const t = 1 - state.truckBumpT / state.truckBumpDur; // 0..1
-      const lift = Math.sin(t * Math.PI) * 24;
-      bumpY = -lift;
-      bumpRotL = Math.sin(t * Math.PI * 2) * 0.025;
+      bumpY = -Math.sin(t * Math.PI) * 22;
+      bumpRot = Math.sin(t * Math.PI * 2) * 0.02;
     }
     // Idle drive bounce — small
     const drv = Math.sin(state.truckDriveBounce * 8) * 1.5 + Math.max(0, Math.sin(state.truckDriveBounce * 16)) * 1;
     const tx = pos.x;
     const ty = pos.y + bumpY + drv;
 
-    // ---- Wheel positions (in world space, on road) ----
-    const wheelR = clamp(m.cargoH * 0.18, 46, 64);
+    // ---- Wheel positions (world space, on the road) ----
+    const wheelR = m.wheelR;
     const roadTop = H - GROUND_Y_OFFSET;
     const wheelY = roadTop - wheelR + 2;
-    const wheelXL = getBackWheelXL();
-    const wheelXR = getBackWheelXR();
-    // Wheels lift less than body during bump (suspension)
+    // Wheels lift less than the bodies during a bump (suspension)
     const wheelLift = bumpY * 0.35;
+    const cabX = tx + m.cargoW / 2 + m.gap; // cab left edge
+    const cabBottom = ty + m.cargoH / 2;    // shared chassis line
 
-    // Shadow on road (long oval under the visible cargo)
+    // Shadow under the whole rig
+    const rigW = m.cargoW + m.gap + m.cabW;
     ctx.fillStyle = 'rgba(29,41,57,0.28)';
     ctx.beginPath();
-    ctx.ellipse(tx - m.cargoW * 0.15, roadTop + 14, m.cargoW * 0.42, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(tx + (m.gap + m.cabW) / 2, roadTop + 14, rigW / 2 + 10, 12, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Wheels (draw first so cargo overlaps tops)
-    drawWheel(wheelXL, wheelY + wheelLift, wheelR);
-    drawWheel(wheelXR, wheelY + wheelLift, wheelR);
+    // Wheels first so the bodies overlap their tops (wheel wells)
+    drawWheel(getBackWheelXL(), wheelY + wheelLift, wheelR);
+    drawWheel(getBackWheelXR(), wheelY + wheelLift, wheelR);
+    drawWheel(getFrontWheelX(), wheelY + wheelLift * 0.8, wheelR);
 
-    // ---- Cargo container ----
+    // ---- Trailer ----
     ctx.save();
     ctx.translate(tx, ty);
-    ctx.rotate(bumpRotL);
+    ctx.rotate(bumpRot);
     drawCargoSide(tc, m);
+    ctx.restore();
+
+    // ---- Cab ----
+    ctx.save();
+    ctx.translate(cabX, cabBottom);
+    ctx.rotate(bumpRot);
+    drawCab(tc, m);
     ctx.restore();
   }
 
   function drawCargoSide(tc, m) {
-    const p = P();
     const W2 = m.cargoW;
     const H2 = m.cargoH;
     const x1 = -W2 / 2;
@@ -1225,43 +1254,40 @@
     roundRect(x1, y1, W2, H2, 14);
     ctx.fill(); ctx.stroke();
 
-    // ---- Top rail (horizontal band along the top) ----
+    // ---- Top rail ----
     ctx.fillStyle = shade(tc.body, -0.22);
-    ctx.fillRect(x1 + 8, y1 + 6, W2 - 16, 24);
+    ctx.fillRect(x1 + 8, y1 + 6, W2 - 16, 20);
     ctx.strokeStyle = ink;
     ctx.lineWidth = 3;
-    ctx.strokeRect(x1 + 8, y1 + 6, W2 - 16, 24);
+    ctx.strokeRect(x1 + 8, y1 + 6, W2 - 16, 20);
 
-    // ---- Rear edge: vertical dark strip on the LEFT (the back of the truck) ----
+    // ---- Rear doors (left end): dark strip, hinge seam, taillights ----
     const rearW = 14;
     ctx.fillStyle = shade(tc.body, -0.28);
-    ctx.fillRect(x1 + 6, y1 + 36, rearW, H2 - 56);
+    ctx.fillRect(x1 + 6, y1 + 32, rearW, H2 - 52);
     ctx.strokeStyle = ink;
     ctx.lineWidth = 3;
-    ctx.strokeRect(x1 + 6, y1 + 36, rearW, H2 - 56);
-    // Tiny taillight on the rear edge
-    ctx.fillStyle = '#e8392b';
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2.5;
+    ctx.strokeRect(x1 + 6, y1 + 32, rearW, H2 - 52);
     ctx.beginPath();
-    ctx.arc(x1 + 6 + rearW/2, y1 + 60, 8, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    // Rear vertical seam (where back doors meet body)
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(x1 + rearW + 8, y1 + 36);
+    ctx.moveTo(x1 + rearW + 8, y1 + 32);
     ctx.lineTo(x1 + rearW + 8, y1 + H2 - 20);
     ctx.stroke();
+    ctx.fillStyle = '#e8392b';
+    ctx.lineWidth = 2.5;
+    for (const ty of [y1 + 52, y1 + H2 - 40]) {
+      ctx.beginPath();
+      ctx.arc(x1 + 6 + rearW / 2, ty, 6, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+    }
 
-    // ---- Panel seams (vertical divisions along the side) ----
+    // ---- Panel seams ----
     ctx.strokeStyle = 'rgba(0,0,0,0.18)';
     ctx.lineWidth = 2;
-    const panelW = (W2 - rearW - 40) / 5;
-    for (let i = 1; i <= 4; i++) {
+    const panelW = (W2 - rearW - 40) / 4;
+    for (let i = 1; i <= 3; i++) {
       const x = x1 + rearW + 20 + i * panelW;
       ctx.beginPath();
-      ctx.moveTo(x, y1 + 36);
+      ctx.moveTo(x, y1 + 32);
       ctx.lineTo(x, y1 + H2 - 30);
       ctx.stroke();
     }
@@ -1269,63 +1295,58 @@
     // ---- Horizontal corrugation lines (subtle) ----
     ctx.strokeStyle = 'rgba(0,0,0,0.1)';
     ctx.lineWidth = 1.5;
-    const ridgeStart = y1 + 50;
-    const ridgeEnd = y1 + H2 - 70;
-    for (let i = 0; i < 6; i++) {
-      const yy = ridgeStart + (ridgeEnd - ridgeStart) * (i / 6);
+    const ridgeStart = y1 + 44;
+    const ridgeEnd = y1 + H2 - 60;
+    for (let i = 0; i < 5; i++) {
+      const yy = ridgeStart + (ridgeEnd - ridgeStart) * (i / 5);
       ctx.beginPath();
       ctx.moveTo(x1 + rearW + 14, yy);
       ctx.lineTo(x1 + W2 - 14, yy);
       ctx.stroke();
     }
 
-    // ---- Big logo sticker on the side (centered on visible portion of cargo) ----
-    // The right half of the cargo is offscreen, so place the logo on the visible left half
-    const lw = Math.min(W2 * 0.40, 360);
-    const lh = H2 * 0.32;
-    const lx = x1 + W2 * 0.10;
-    const ly = y1 + H2 * 0.36;
+    // ---- Logo sticker, centered on the trailer ----
+    const lw = Math.min(W2 * 0.62, 330);
+    const lh = H2 * 0.36;
+    const lx = x1 + (W2 - lw) / 2 + rearW / 2;
+    const ly = y1 + H2 * 0.33;
     ctx.fillStyle = '#fff4dc';
     ctx.strokeStyle = ink;
     ctx.lineWidth = 4;
     roundRect(lx, ly, lw, lh, 12);
     ctx.fill(); ctx.stroke();
-    // Logo content: NUMBERS! mark
     ctx.fillStyle = '#ff6b3d';
-    ctx.font = `bold ${Math.round(H2 * 0.16)}px "Lilita One", sans-serif`;
+    ctx.font = `bold ${Math.round(Math.min(H2 * 0.17, lw * 0.16))}px "Lilita One", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const cx = lx + lw / 2;
-    const cy = ly + lh / 2 - lh * 0.1;
-    ctx.fillText('NUMBERS', cx, cy);
+    const cy = ly + lh / 2 - lh * 0.12;
     ctx.strokeStyle = ink;
     ctx.lineWidth = 3;
     ctx.strokeText('NUMBERS', cx, cy);
+    ctx.fillText('NUMBERS', cx, cy);
     ctx.fillStyle = ink;
-    ctx.font = `600 ${Math.round(H2 * 0.07)}px "Fredoka", sans-serif`;
-    ctx.fillText('· CARGO CO. ·', cx, cy + H2 * 0.13);
-    // Cargo stars
+    ctx.font = `600 ${Math.round(Math.min(H2 * 0.075, lw * 0.07))}px "Fredoka", sans-serif`;
+    ctx.fillText('· CARGO CO. ·', cx, cy + lh * 0.36);
     ctx.fillStyle = '#ffc94d';
     ctx.strokeStyle = ink;
     ctx.lineWidth = 2.5;
-    drawStar(lx + 18, ly + 14, 9, 5, -Math.PI/2);
+    drawStar(lx + 18, ly + 14, 8, 5, -Math.PI / 2);
     ctx.fill(); ctx.stroke();
-    drawStar(lx + lw - 18, ly + 14, 9, 5, -Math.PI/2);
+    drawStar(lx + lw - 18, ly + 14, 8, 5, -Math.PI / 2);
     ctx.fill(); ctx.stroke();
 
-    // ---- Chassis bar along bottom ----
+    // ---- Chassis bar along the bottom ----
     ctx.fillStyle = '#3a4655';
     ctx.strokeStyle = ink;
     ctx.lineWidth = 3;
     ctx.fillRect(x1 + 4, y1 + H2 - 22, W2 - 8, 18);
     ctx.strokeRect(x1 + 4, y1 + H2 - 22, W2 - 8, 18);
-    // Mud flap behind back wheel (rear bottom)
+    // Mud flap behind the rear wheels
     ctx.fillStyle = '#1d2939';
-    ctx.fillRect(x1 + rearW + 4, y1 + H2 - 22, 22, 36);
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 3;
-    ctx.strokeRect(x1 + rearW + 4, y1 + H2 - 22, 22, 36);
-    // Rivets along chassis
+    ctx.fillRect(x1 + rearW + 4, y1 + H2 - 22, 20, 34);
+    ctx.strokeRect(x1 + rearW + 4, y1 + H2 - 22, 20, 34);
+    // Rivets along the chassis
     ctx.fillStyle = '#cfcfcf';
     for (let i = 0; i < 8; i++) {
       const xx = x1 + 30 + i * (W2 - 60) / 7;
@@ -1334,46 +1355,144 @@
       ctx.fill();
     }
 
-    // ---- Cargo open hint at top (where boxes pop out) ----
+    // ---- Cargo hatch opening at the rear of the roof (where boxes pop out) ----
     if (state.truckBumpT > 0) {
       const openT = 1 - state.truckBumpT / state.truckBumpDur;
       const openA = Math.sin(openT * Math.PI);
       ctx.fillStyle = `rgba(0,0,0,${0.4 * openA})`;
-      // Open at the rear portion where boxes spawn
-      const openX = x1 + W2 * 0.10;
-      const openW = W2 * 0.32;
+      const openX = x1 + W2 * 0.08;
+      const openW = W2 * 0.30;
       ctx.fillRect(openX, y1 - 6 * openA, openW, 5 + 6 * openA);
     }
+  }
 
-    // ---- Cute side mirror eye on the front edge (just before going offscreen) ----
-    // Only draw if the mirror would be on-screen (we still draw it; it's near right edge)
-    const mx = x1 + W2 * 0.46;
-    const my = y1 + H2 * 0.22;
-    // arm
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(mx - 6, my + 10);
-    ctx.lineTo(mx + 4, my - 6);
-    ctx.stroke();
-    // mirror housing
-    ctx.fillStyle = tc.body;
+  // Cab drawn with its origin at the cab's left edge on the chassis line.
+  function drawCab(tc, m) {
+    const ink = '#1d2939';
+    const w = m.cabW;
+    const h = m.cabH;
+    const hoodH = h * 0.44;
+    const hoodW = w * 0.34;
+    const bodyW = w - hoodW;
+    const winTop = -h + 12;
+    const winH = h * 0.42;
+
+    // Chassis connecting to the trailer
+    ctx.fillStyle = '#3a4655';
     ctx.strokeStyle = ink;
     ctx.lineWidth = 3;
-    roundRect(mx - 4, my - 16, 18, 22, 4);
+    ctx.fillRect(-m.gap - 2, -22, w + m.gap + 2, 18);
+    ctx.strokeRect(-m.gap - 2, -22, w + m.gap + 2, 18);
+    // Step behind the door
+    ctx.fillStyle = ink;
+    ctx.fillRect(-m.gap + 1, -22, 9, 32);
+
+    // Exhaust stack behind the cab (only the part above the roof stays visible)
+    ctx.fillStyle = '#8a95a5';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3;
+    ctx.fillRect(5, -h - 26, 9, h + 10);
+    ctx.strokeRect(5, -h - 26, 9, h + 10);
+    ctx.fillStyle = ink;
+    ctx.fillRect(3, -h - 31, 13, 8);
+
+    // Cab box
+    ctx.fillStyle = tc.body;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 5;
+    roundRect(0, -h, bodyW, h - 14, 12);
     ctx.fill(); ctx.stroke();
-    // mirror surface (eye)
+    // Hood (lower, in front of the cab)
+    roundRect(bodyW - 6, -hoodH, hoodW + 6, hoodH - 14, 10);
+    ctx.fill(); ctx.stroke();
+    // Hood top highlight
+    ctx.fillStyle = shade(tc.body, 0.18);
+    ctx.fillRect(bodyW + 4, -hoodH + 6, hoodW - 14, 7);
+
+    // Window
     ctx.fillStyle = '#bfe4f2';
-    roundRect(mx - 1, my - 13, 12, 16, 3);
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4;
+    roundRect(10, winTop, bodyW - 20, winH, 8);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.moveTo(15, winTop + 5); ctx.lineTo(34, winTop + 5); ctx.lineTo(15, winTop + 24);
+    ctx.closePath();
     ctx.fill();
+
+    // Driver: head, cap, eye
+    const dx = 10 + (bodyW - 20) * 0.58;
+    const dy = winTop + winH - 4;
+    const hr = Math.min(12, winH * 0.3);
+    ctx.fillStyle = '#f2c9a0';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(dx, dy - hr, hr, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = tc.accent;
+    ctx.beginPath();
+    ctx.arc(dx, dy - hr - 3, hr + 0.5, Math.PI, 0);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillRect(dx - 1, dy - hr - 5, hr + 8, 5);
+    ctx.strokeRect(dx - 1, dy - hr - 5, hr + 8, 5);
     ctx.fillStyle = ink;
     ctx.beginPath();
-    ctx.arc(mx + 5, my - 5, 3.5, 0, Math.PI * 2);
+    ctx.arc(dx + hr * 0.4, dy - hr + 1, 1.8, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#fff';
+
+    // Door seam + handle
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(mx + 4, my - 6, 1.2, 0, Math.PI * 2);
+    ctx.moveTo(bodyW * 0.5, winTop + winH + 8);
+    ctx.lineTo(bodyW * 0.5, -24);
+    ctx.stroke();
+    ctx.fillStyle = ink;
+    roundRect(bodyW * 0.5 + 8, winTop + winH + 16, 14, 5, 2);
     ctx.fill();
+
+    // Accent stripe
+    ctx.fillStyle = tc.accent;
+    ctx.fillRect(6, -36, bodyW - 12, 8);
+
+    // Roof marker lights
+    ctx.fillStyle = '#ffc94d';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(bodyW * 0.3 + i * bodyW * 0.2, -h - 3, 4, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+    }
+
+    // Headlight, grille, bumper
+    ctx.fillStyle = '#fff4dc';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3;
+    roundRect(w - 15, -hoodH + 10, 11, 16, 3);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = shade(tc.body, -0.3);
+    ctx.fillRect(w - 24, -hoodH + 32, 18, Math.max(8, hoodH - 46));
+    ctx.lineWidth = 2;
+    ctx.strokeRect(w - 24, -hoodH + 32, 18, Math.max(8, hoodH - 46));
+    ctx.fillStyle = '#3a4655';
+    ctx.lineWidth = 3;
+    roundRect(w - 8, -24, 16, 16, 4);
+    ctx.fill(); ctx.stroke();
+
+    // Side mirror
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(bodyW - 2, winTop + 8);
+    ctx.lineTo(bodyW + 12, winTop + 14);
+    ctx.stroke();
+    ctx.fillStyle = tc.body;
+    roundRect(bodyW + 10, winTop + 6, 8, 16, 2);
+    ctx.fill(); ctx.stroke();
   }
 
   function drawWheel(x, y, r) {
@@ -1586,6 +1705,9 @@
     const padX = 12, padY = 4;
     const stickerW = totalW + padX * 2;
     const stickerH = 44;
+    // Wide expressions (negatives in parentheses) shrink to stay on the box.
+    const fit = Math.min(1, (box.w + 26) / stickerW);
+    if (fit < 1) ctx.scale(fit, fit);
     const sx = -stickerW / 2;
     const sy = -stickerH / 2;
     // Sticker bg
