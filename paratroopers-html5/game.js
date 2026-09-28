@@ -283,6 +283,11 @@
   function spawnHelicopter() {
     if (state.spawners.parasSpawned >= state.spawners.parasTotal) return;
     state.spawners.clearedSpawns++;
+    // Each helicopter carries exactly one payload, so the budget is consumed at
+    // spawn. Counting at drop time let a helicopter that left without dropping
+    // both decrement the remaining counter AND respawn, drifting the HUD negative
+    // and ending levels early.
+    state.spawners.parasSpawned++;
 
     const side = Math.random() < 0.5 ? 'left' : 'right';
     const x = side === 'left' ? -60 : W + 60;
@@ -454,11 +459,10 @@
       h.rotorAngle += 28 * dt;
       
       // Spawn drops during play
-      if (state.phase === 'playing' && !h.hasDropped && state.spawners.parasSpawned < state.spawners.parasTotal) {
+      if (state.phase === 'playing' && !h.hasDropped) {
         const crossed = h.vx > 0 ? h.x >= h.dropX : h.x <= h.dropX;
         if (crossed && h.x > 80 && h.x < W - 80) {
           h.hasDropped = true;
-          state.spawners.parasSpawned++;
           
           // Drop paratrooper carrying p vs q
           const letter = Math.random() < 0.5 ? 'p' : 'q';
@@ -807,12 +811,9 @@
 
     p.alive = false;
 
-    // A bad paratrooper crashing onto a truck blows it up — game over.
-    if (hitTruck && isBad) {
-      explodeTruck(truckAt(p.x), p.x);
-      return;
-    }
-
+    // A trooper whose chute was shot is dead on impact, truck or not. Only a
+    // trooper who LANDS on a truck under a chute can sabotage it, so popping a
+    // chute is always a safe defensive move (it used to blow the truck up).
     if (hitTruck) {
       showFloaterAt(p.x, groundY - 55, 'CLANG!', '#5cd9ff');
       triggerTruckSparks(p.x, groundY - 30);
@@ -822,7 +823,7 @@
       // will clear the bad paratroopers stacked at that same landing position column
       crushedCount = splashLandedBadParatroopers(p.x, 8);
     }
-    
+
     // Particle splat
     for (let i = 0; i < 10; i++) {
       state.particles.push({
@@ -837,18 +838,33 @@
         gravity: 120
       });
     }
-    
-    if (!hitTruck) {
-      const message = crushedCount
-        ? `SPLASH x${crushedCount}!`
-        : (crushedRunner ? 'CRUSH!' : 'CRASH!');
-      showFloaterAt(p.x, groundY - 55, message, '#ff5c7c');
+
+    // The crash is the player's doing (they shot the chute), so it scores like
+    // a hit: a bad trooper splats for points, a friendly one costs a heart.
+    // Without this, popping every chute regardless of letter was free, which
+    // bypassed the whole letter-reading exercise.
+    if (isBad) {
+      state.metrics.badHits++;
+      state.score += 10;
+      const message = crushedCount ? `SPLASH x${crushedCount}!` : 'SPLAT +10';
+      showFloaterAt(p.x, groundY - 80, message, '#ffd24d');
+      window.MathArcadeAudio?.event('SOLVED');
+    } else {
+      state.metrics.friendlyFire++;
+      state.score = Math.max(0, state.score - 15);
+      state.lives--;
+      showFloaterAt(p.x, groundY - 80, 'FRIENDLY DOWN! −1♥ −15', '#ff5c7c');
+      window.MathArcadeAudio?.event('DEATH');
+      if (state.lives <= 0) {
+        handleGameOver('Shot down friendly paratroopers!');
+        return;
+      }
     }
-    window.MathArcadeAudio?.event('DEATH');
-    
+    if (crushedRunner) showFloaterAt(p.x, groundY - 104, 'CRUSH!', '#ff5c7c');
+
     state.spawners.parasRemaining--;
     updateHUD();
-    
+
     checkLevelClear();
   }
 
@@ -1255,6 +1271,28 @@
       ctx.beginPath();
       ctx.arc(sirenX, ty - 3, 4, 0, Math.PI * 2);
       ctx.fill(); ctx.stroke();
+
+      // 6. Danger marker: a bad trooper is drifting down onto this truck. Four
+      //    of the drop columns sit over the trucks, so the threat needs to be
+      //    obvious before it lands.
+      const threatened = state.phase === 'playing' && state.paratroopers.some(p =>
+        p.status === 'drift' && isBadParatrooper(p) && truckAt(p.x) === t);
+      if (threatened) {
+        const pulse = (Math.sin(state.elapsed * 10) + 1) * 0.5;
+        const mx = bodyX + 21, my = ty - 14 - pulse * 4;
+        ctx.fillStyle = pulse > 0.5 ? '#ff5c7c' : '#ffd24d';
+        ctx.beginPath();
+        ctx.moveTo(mx, my - 20);
+        ctx.lineTo(mx + 13, my + 2);
+        ctx.lineTo(mx - 13, my + 2);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#1a1a14';
+        ctx.font = 'bold 14px "Lilita One", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('!', mx, my - 6);
+      }
     };
 
     // Draw Left and Right trucks
