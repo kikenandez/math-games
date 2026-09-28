@@ -9,14 +9,14 @@
 
   const map = {
     fr: {
-      "Bonus bubble": "Bulle bonus", "Meadow": "Prairie",
+      "Bonus bubble": "Bulle bonus", "Next wave": "Vague suivante", "Meadow": "Prairie",
       "sets starting gold & base HP": "définit l’or de départ et les PV de base",
       "drain every bubble to zero before it reaches your base": "réduis chaque bulle à zéro avant qu’elle atteigne ta base",
       "1 · ROUTE": "1 · TRAJET", "2 · REDUCE": "2 · RÉDUIS", "3 · ZERO": "3 · ZÉRO",
       "Steer bubbles through 3 gates. Detours pass more towers.": "Guide les bulles par 3 portes. Les détours passent plus de tours.",
       "Place operator towers. Each path cell they cover = a hit.": "Place des tours opérateurs. Chaque case du chemin qu’elles couvrent = un coup.",
-      "Reach the base at 0. Anything left costs 1 HP.": "Atteins la base à 0. Tout ce qui reste coûte 1 PV.",
-      "Hit the <b>bonus target</b> (shown up top) for gold and a healed heart. Towers go down <b>between waves</b>. Survive <b>5 waves</b> to level up.": "Touche la <b>cible bonus</b> (affichée en haut) pour de l’or et un cœur soigné. Les tours se posent <b>entre les vagues</b>. Survis à <b>5 vagues</b> pour monter de niveau.",
+      "Hit exactly 0 and the bubble pops. Anything left at the base costs 1 HP.": "Touche exactement 0 et la bulle éclate. Tout ce qui reste à la base coûte 1 PV.",
+      "Every bubble shows where it will land on the current route — switch gates to steer it onto <b>0</b>. Hit the <b>bonus target</b> (shown up top) for gold and a healed heart. Build and sell towers <b>between waves</b>, with the next wave's numbers shown. Survive <b>5 waves</b> to level up.": "Chaque bulle affiche où elle finira sur le trajet actuel — change les portes pour l’amener sur <b>0</b>. Touche la <b>cible bonus</b> (affichée en haut) pour de l’or et un cœur soigné. Construis et vends des tours <b>entre les vagues</b>, avec les nombres de la vague suivante affichés. Survis à <b>5 vagues</b> pour monter de niveau.",
       "Keys — gates: <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd> / <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd> · <kbd>Space</kbd> start wave · <kbd>F</kbd> turbo": "Touches — portes : <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd> / <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd> · <kbd>Space</kbd> lancer la vague · <kbd>F</kbd> turbo",
       "Settings": "Réglages", "Pace": "Rythme", "CALM": "CALME", "FAST": "RAPIDE",
       "how fast paratroopers arrive": "vitesse d’arrivée des parachutistes",
@@ -476,14 +476,14 @@
       "Keys — <kbd>click</kbd> destroy · <kbd>0–9</kbd> type · <kbd>↵</kbd> submit · <kbd>⌫</kbd> delete · <kbd>P</kbd> pause": "Touches — <kbd>clic</kbd> détruire · <kbd>0–9</kbd> saisir · <kbd>↵</kbd> valider · <kbd>⌫</kbd> effacer · <kbd>P</kbd> pause"
     },
     es: {
-      "Bonus bubble": "Burbuja bonus", "Meadow": "Pradera",
+      "Bonus bubble": "Burbuja bonus", "Next wave": "Siguiente oleada", "Meadow": "Pradera",
       "sets starting gold & base HP": "define el oro inicial y los PV base",
       "drain every bubble to zero before it reaches your base": "reduce cada burbuja a cero antes de que llegue a tu base",
       "1 · ROUTE": "1 · RUTA", "3 · ZERO": "3 · CERO",
       "Steer bubbles through 3 gates. Detours pass more towers.": "Guía las burbujas por 3 puertas. Los desvíos pasan más torres.",
       "Place operator towers. Each path cell they cover = a hit.": "Coloca torres de operador. Cada celda del camino que cubren = un golpe.",
-      "Reach the base at 0. Anything left costs 1 HP.": "Llega a la base en 0. Lo que sobre cuesta 1 PV.",
-      "Hit the <b>bonus target</b> (shown up top) for gold and a healed heart. Towers go down <b>between waves</b>. Survive <b>5 waves</b> to level up.": "Acierta el <b>objetivo bonus</b> (arriba) para oro y un corazón curado. Las torres se colocan <b>entre oleadas</b>. Sobrevive <b>5 oleadas</b> para subir de nivel.",
+      "Hit exactly 0 and the bubble pops. Anything left at the base costs 1 HP.": "Llega exactamente a 0 y la burbuja estalla. Lo que sobre en la base cuesta 1 PV.",
+      "Every bubble shows where it will land on the current route — switch gates to steer it onto <b>0</b>. Hit the <b>bonus target</b> (shown up top) for gold and a healed heart. Build and sell towers <b>between waves</b>, with the next wave's numbers shown. Survive <b>5 waves</b> to level up.": "Cada burbuja muestra dónde acabará en la ruta actual: cambia las puertas para llevarla al <b>0</b>. Acierta el <b>objetivo bonus</b> (arriba) para oro y un corazón curado. Construye y vende torres <b>entre oleadas</b>, con los números de la siguiente oleada a la vista. Sobrevive <b>5 oleadas</b> para subir de nivel.",
       "Keys — gates: <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd> / <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd> · <kbd>Space</kbd> start wave · <kbd>F</kbd> turbo": "Teclas — puertas: <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd> / <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd> · <kbd>Space</kbd> iniciar oleada · <kbd>F</kbd> turbo",
       "Settings": "Ajustes", "Pace": "Ritmo", "CALM": "CALMA", "FAST": "RÁPIDO",
       "how fast paratroopers arrive": "qué tan rápido llegan los paracaidistas",

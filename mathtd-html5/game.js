@@ -97,16 +97,18 @@
   // Per-level bonus rule. A bubble that arrives at the base validating the
   // current level's rule pays out a small gold bonus AND restores 1 HP
   // (capped at 20). Cycles through the table as the player levels up.
+  // Bubbles pop the moment they hit exactly 0, so the bonus target is a second,
+  // small positive landing value: a bubble that reaches the base with it heals.
   const LEVEL_RULES = [
-    { label: '= −1',       test: v => v === -1 },
-    { label: '5 < v < 7',  test: v => v > 5 && v < 7 },
-    { label: '= −3',       test: v => v === -3 },
-    { label: '9 < v < 11', test: v => v > 9 && v < 11 },
-    { label: 'v < −3',     test: v => v < -3 },
     { label: '= 1',        test: v => v === 1 },
+    { label: '= 2',        test: v => v === 2 },
     { label: '3 < v < 5',  test: v => v > 3 && v < 5 },
-    { label: '= −7',       test: v => v === -7 },
-    { label: 'v > 15',     test: v => v > 15 },
+    { label: '= 3',        test: v => v === 3 },
+    { label: '= 5',        test: v => v === 5 },
+    { label: '5 < v < 7',  test: v => v > 5 && v < 7 },
+    { label: '= 4',        test: v => v === 4 },
+    { label: '= 7',        test: v => v === 7 },
+    { label: '9 < v < 11', test: v => v > 9 && v < 11 },
   ];
   function currentRule() {
     return LEVEL_RULES[(state.level - 1) % LEVEL_RULES.length];
@@ -143,6 +145,7 @@
     inWave: false,
     waveSpawnQueue: [],
     waveSpawnTimer: 0,
+    nextWave: [], // generated ahead of time so the player can plan towers against it
     hp: 20,
     maxHp: 20,
     gold: 100,
@@ -216,17 +219,42 @@
     state.inWave = false;
     state.waveSpawnQueue = [];
     state.selectedBranches = [1, 1, 1];
+    state.nextWave = generateWave(state.level, state.wave);
     updateHUD();
     updateWaveBtn();
+    renderNextWave();
     document.getElementById('overlay').classList.add('hidden');
   }
 
   function startWave() {
     if (state.inWave) return;
-    state.waveSpawnQueue = generateWave(state.level, state.wave);
+    state.waveSpawnQueue = state.nextWave.length ? state.nextWave.slice() : generateWave(state.level, state.wave);
+    state.nextWave = [];
     state.waveSpawnTimer = 1.0;
     state.inWave = true;
     updateWaveBtn();
+    renderNextWave();
+  }
+
+  // Preview strip of the values coming in the next wave (sorted, so the
+  // player can see the range they need to cover with towers and routes).
+  function renderNextWave() {
+    const wrap = document.getElementById('next-wave');
+    const vals = document.getElementById('next-wave-vals');
+    if (!wrap || !vals) return;
+    while (vals.firstChild) vals.removeChild(vals.firstChild);
+    if (state.phase !== 'playing' || state.inWave || !state.nextWave.length) {
+      wrap.classList.add('hidden');
+      return;
+    }
+    wrap.classList.remove('hidden');
+    const sorted = state.nextWave.slice().sort((a, b) => a - b);
+    for (const v of sorted) {
+      const chip = document.createElement('span');
+      chip.className = 'nw-chip';
+      chip.textContent = String(v);
+      vals.appendChild(chip);
+    }
   }
 
   function endWave() {
@@ -254,8 +282,10 @@
       showFloaterCenter(`WAVE CLEAR  +${bonus}g`, '#ffd24d');
       flashHUD('wave');
     }
+    state.nextWave = generateWave(state.level, state.wave);
     updateHUD();
     updateWaveBtn();
+    renderNextWave();
   }
 
   function makeStatChip(label, value, hi) {
@@ -378,6 +408,18 @@
       showFloater(state.mouse.col, state.mouse.row, 'ONLY BETWEEN WAVES!', '#ff5c7c');
       return;
     }
+    // Clicking an existing tower between waves sells it (60% refund) so the
+    // layout can be reworked as the wave values climb.
+    const existing = state.towers.find(t => t.c === state.mouse.col && t.r === state.mouse.row);
+    if (existing) {
+      const refund = Math.round(existing.type.cost * 0.6);
+      state.towers = state.towers.filter(t => t !== existing);
+      state.gold += refund;
+      showFloater(existing.c, existing.r, `SOLD  +${refund}g`, '#ffd24d');
+      updateHUD();
+      updateMouse(state.mouse.x, state.mouse.y);
+      return;
+    }
     if (!state.mouse.valid) return;
     const tt = TOWER_TYPES.find(t => t.id === state.selectedTower);
     if (!tt || state.gold < tt.cost) {
@@ -477,6 +519,38 @@
     return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
   }
 
+  function applyOp(type, v) {
+    if (type.divide) return v >= 0 ? Math.floor(v / type.divide) : -Math.floor(-v / type.divide);
+    return v + type.delta;
+  }
+
+  // Where this bubble will end up if the gates stay as they are now: walk the
+  // rest of its route and apply every tower hit it has not taken yet. Shown
+  // under each bubble so routing becomes a readable puzzle instead of a guess.
+  function predictFinal(e) {
+    const branches = e.branchIndices.map((b, i) => (b != null ? b : state.selectedBranches[i]));
+    const cells = [
+      ...ENTRY_PATH,
+      ...FORK1_BRANCHES[branches[0]], ...CONNECTOR1,
+      ...FORK2_BRANCHES[branches[1]], ...CONNECTOR2,
+      ...FORK3_BRANCHES[branches[2]], ...EXIT_PATH,
+    ];
+    let v = e.value;
+    const start = Math.floor(clamp(e.progress, 0, cells.length - 1));
+    for (let i = start; i < cells.length; i++) {
+      const [ec, er] = cells[i];
+      for (const t of state.towers) {
+        const dc = ec - t.c, dr = er - t.r;
+        if (dc * dc + dr * dr > t.type.range * t.type.range + 0.01) continue;
+        const hit = e.hitByCells.get(t.id);
+        if (hit && hit.has(i)) continue;
+        v = applyOp(t.type, v);
+        if (v === 0) return 0;
+      }
+    }
+    return v;
+  }
+
   function update(dt) {
     state.elapsed += dt;
     if (state.inWave && state.waveSpawnQueue.length) {
@@ -558,20 +632,28 @@
         }
         if (cellSet.has(cellIdx)) continue;
         cellSet.add(cellIdx);
-        let newVal;
-        if (t.type.divide) {
-          newVal = e.value >= 0
-            ? Math.floor(e.value / t.type.divide)
-            : -Math.floor(-e.value / t.type.divide);
-        } else {
-          newVal = e.value + t.type.delta;
-        }
-        e.value = newVal;
+        e.value = applyOp(t.type, e.value);
         e.hitT = 0.3;
         const ep = enemyPos(e);
         const tc = cellCenter(t.c, t.r);
         state.beams.push({ fromX: tc.x, fromY: tc.y, toX: ep.x, toY: ep.y, t: 0, dur: 0.25, color: t.type.color });
         showFloaterAt(ep.x, ep.y - 18, t.type.op, t.type.color);
+        // Exactly zero: the bubble pops on the spot. This is the payoff the
+        // towers exist for, so it is immediate and visible rather than a
+        // silent walk to the base.
+        if (e.value === 0) {
+          e.alive = false;
+          state.gold += 10;
+          state.score += 50;
+          showFloaterAt(ep.x, ep.y - 34, 'POP!  +10g', '#5cd97a');
+          for (let i = 0; i < 14; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const sp = rand(60, 180);
+            state.particles.push({ x: ep.x, y: ep.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60, life: rand(0.4, 0.8), size: rand(3, 6), color: i % 2 ? '#5cd97a' : '#fff4dc', gravity: 240 });
+          }
+          updateHUD();
+          break;
+        }
       }
     }
     state.enemies = state.enemies.filter(e => e.alive);
@@ -1081,6 +1163,19 @@
       ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#1a1a14';
       ctx.fillText(txt, p.x, p.y + size * 0.52 * hitScale + chipH / 2 + 1);
+
+      // 9. Predicted landing value on the current route: green = will pop,
+      //    gold = will hit the bonus target, red = will cost a heart.
+      const pred = predictFinal(e);
+      const rule = currentRule();
+      const predColor = pred === 0 ? '#5cd97a' : (rule.test(pred) ? '#ffd24d' : '#ff5c7c');
+      ctx.font = `bold ${Math.round(size * 0.46)}px "Lilita One", sans-serif`;
+      const py = p.y + size * 0.52 * hitScale + chipH + size * 0.5;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#1a1a14';
+      ctx.strokeText(`→${pred}`, p.x, py);
+      ctx.fillStyle = predColor;
+      ctx.fillText(`→${pred}`, p.x, py);
     }
   }
   function drawBeams() {
