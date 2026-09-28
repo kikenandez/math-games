@@ -608,6 +608,12 @@
       ctx.globalAlpha = a;
       ctx.translate(f.x, f.y); ctx.scale(sc, sc);
       ctx.font = f.big ? 'bold 44px "Lilita One", sans-serif' : 'bold 22px "Lilita One", sans-serif';
+      if (f.big) {
+        // Level banners can be long ("LEVEL 1: EVEN NUMBERS"); shrink to fit narrow screens.
+        const maxW = (W - 24) / sc;
+        const measured = ctx.measureText(f.text).width;
+        if (measured > maxW) ctx.font = 'bold ' + Math.max(18, Math.floor(44 * maxW / measured)) + 'px "Lilita One", sans-serif';
+      }
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.lineWidth = f.big ? 5 : 3;
       ctx.strokeStyle = '#2a1a10';

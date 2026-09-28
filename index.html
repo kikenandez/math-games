@@ -400,10 +400,23 @@
     letter-spacing: 0.06em;
   }
 
+  /* Keyboard focus */
+  .card:focus-visible {
+    outline: 3px solid var(--cool);
+    outline-offset: 4px;
+  }
+
   /* Small */
   @media (max-width: 640px) {
-    main { padding: 36px 18px 60px; }
+    /* Extra bottom room so the fixed sound / language controls never cover the footer. */
+    main { padding: 36px 18px 120px; }
     .hero { margin-bottom: 36px; }
+    /* Stack the three title words so nothing clips at phone widths. */
+    .hero h1 { font-size: clamp(48px, 15vw, 64px); line-height: 1.02; }
+    .hero h1 > span { display: block; }
+    .hero h1 .dot { display: none; }
+    .hero .lead { font-size: 16px; }
+    .hero .meta { font-size: 11px; letter-spacing: 0.12em; }
     .card { min-height: 320px; }
     .card .art { height: 140px; }
     .card h2 { font-size: 24px; }
@@ -414,7 +427,7 @@
 <main>
   <section class="hero">
     <div class="eyebrow">MATH ARCADE</div>
-    <h1><span class="accent-1">PLAY</span>·<span class="accent-2">SOLVE</span>·<span>SURVIVE</span></h1>
+    <h1><span class="accent-1">PLAY</span><span class="dot">·</span><span class="accent-2">SOLVE</span><span class="dot">·</span><span>SURVIVE</span></h1>
     <p class="lead">A handcrafted collection of browser-native math and letter arcade games. Aliens, cargo crates, tower routes, rescue trucks, memory trails, and meteor swarms — playable in your browser with no installs.</p>
     <div class="meta">click a card to <span>PLAY</span> · everything runs in your browser · zero installs · high scores save locally</div>
   </section>

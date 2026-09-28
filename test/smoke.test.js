@@ -45,6 +45,21 @@ test('local script tags point to existing static files', () => {
   }
 });
 
+test('every game page loads the shared chrome scripts in order', () => {
+  for (const game of loadRegistry()) {
+    const html = read(game.url);
+    const scripts = Array.from(html.matchAll(/<script\s+src="([^"]+)"/g)).map((m) => m[1]);
+    for (const shared of ['../i18n.js', '../game-shell.js', '../audio.js']) {
+      assert.ok(scripts.includes(shared), `${game.id} loads ${shared}`);
+    }
+    assert.ok(
+      scripts.indexOf('../game-shell.js') < scripts.indexOf('../audio.js'),
+      `${game.id} loads game-shell.js before audio.js`
+    );
+    assert.ok(html.includes('<canvas id="game"'), `${game.id} has the game canvas the shell keys on`);
+  }
+});
+
 test('project JavaScript files pass syntax check', () => {
   const jsFiles = fs.readdirSync(root, { recursive: true })
     .filter((file) => file.endsWith('.js'))

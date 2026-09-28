@@ -1095,6 +1095,12 @@
       ctx.globalAlpha = a;
       ctx.translate(f.x, f.y); ctx.scale(sc, sc);
       ctx.font = f.big ? 'bold 44px "Lilita One", sans-serif' : 'bold 22px "Lilita One", sans-serif';
+      if (f.big) {
+        // Long banners shrink to fit narrow screens.
+        const maxW = (W - 24) / sc;
+        const measured = ctx.measureText(f.text).width;
+        if (measured > maxW) ctx.font = 'bold ' + Math.max(18, Math.floor(44 * maxW / measured)) + 'px "Lilita One", sans-serif';
+      }
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.lineWidth = f.big ? 5 : 3;
       ctx.strokeStyle = '#0a0e1e';

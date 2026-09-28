@@ -174,6 +174,10 @@
   @media (max-width: 560px) {
     .card { padding: 22px 18px 24px; }
     .how .step .d { display: none; }
+    /* Drop the target letter card under the chip row so it never covers score / lives. */
+    #target { top: 70px; padding: 6px 14px 8px; gap: 10px; }
+    .chip { padding: 5px 9px 6px; min-width: 40px; }
+    .chip .val { font-size: 18px; }
   }
 </style>
 </head>
@@ -269,6 +273,7 @@
 
 <script src="../i18n.js"></script>
 <script src="../storage.js"></script>
+<script src="../game-shell.js"></script>
 <script src="../audio.js"></script>
 <script src="game.js"></script>
 </body>

@@ -183,7 +183,11 @@
   @media (max-width: 640px) {
     .card { padding: 22px 18px 24px; }
     .how .step .d { display: none; }
+    /* Drop the target chip under the badge row so it never covers score / lives. */
+    #target { top: 70px; min-width: 0; padding: 6px 18px 8px; }
     #target .eq { font-size: 26px; }
+    .badge { padding: 5px 10px 6px; min-width: 44px; }
+    .badge .val { font-size: 19px; }
   }
 </style>
 </head>
@@ -304,6 +308,7 @@
 
 <script src="../i18n.js"></script>
 <script src="../storage.js"></script>
+<script src="../game-shell.js"></script>
 <script src="../audio.js"></script>
 <script src="game.js"></script>
 </body>

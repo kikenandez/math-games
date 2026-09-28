@@ -233,6 +233,31 @@
     });
     document.body.appendChild(btn);
     updateButton();
+    // On game pages the toggle follows the shared chrome rule (visible on title /
+    // game-over cards, hidden during play) so it never covers on-screen controls.
+    // Mid-run muting stays available through the M key.
+    const shell = window.MathArcadeShell;
+    if (shell && typeof shell.watchChrome === 'function') {
+      shell.watchChrome((visible) => {
+        const display = visible ? '' : 'none';
+        if (btn.style.display !== display) btn.style.display = display;
+      });
+    }
+  }
+
+  function isTypingTarget(el) {
+    if (!el) return false;
+    const tag = (el.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+  }
+
+  function onHotkey(e) {
+    if (e.key !== 'm' && e.key !== 'M') return;
+    if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+    if (isTypingTarget(e.target)) return;
+    ensure();
+    setMuted(!muted);
+    click();
   }
 
   function maybeUiSound(target) {
@@ -254,6 +279,7 @@
 
   document.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
   document.addEventListener('keydown', unlockAudio, { once: true });
+  document.addEventListener('keydown', onHotkey);
   document.addEventListener('click', (e) => maybeUiSound(e.target), true);
   document.addEventListener('DOMContentLoaded', addButton);
 })();

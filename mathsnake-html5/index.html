@@ -175,6 +175,14 @@
     z-index: 6;
   }
   #mobile-controls.show { display: grid; }
+
+  @media (max-width: 640px) {
+    /* Drop the rule card under the badge row so it never covers score / length. */
+    #target { top: 62px; padding: 6px 16px 8px; max-width: calc(100vw - 28px); }
+    #target .rule { font-size: 20px; }
+    .badge { padding: 6px 10px; gap: 6px; }
+    .badge .val { font-size: 17px; }
+  }
   .mc-btn {
     border: 3px solid var(--paper);
     background: rgba(14, 26, 20, 0.85);

@@ -197,6 +197,11 @@
     .how .step .d { display: none; }
     #target { top: 60px; padding: 6px 16px 7px; }
     #target .eq { font-size: 22px; }
+    /* Smaller touch pad, and lift the rule card clear of it. */
+    #mobile-controls { grid-template-columns: 52px 52px 52px; grid-template-rows: 52px 52px; gap: 5px; bottom: 6px; }
+    .mc-btn { font-size: 20px; }
+    #bottom-eq { bottom: 124px; min-width: 0; padding: 6px 16px 7px; max-width: calc(100vw - 28px); }
+    #bottom-eq .eq { font-size: 20px; white-space: normal; }
   }
 </style>
 </head>
@@ -300,6 +305,7 @@
 
 <script src="../i18n.js"></script>
 <script src="../storage.js"></script>
+<script src="../game-shell.js"></script>
 <script src="../audio.js"></script>
 <script src="game.js"></script>
 </body>

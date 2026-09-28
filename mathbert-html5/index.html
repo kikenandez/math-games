@@ -179,6 +179,10 @@
   @media (max-width: 640px) {
     .card { padding: 22px 18px 24px; }
     .how .step .d { display: none; }
+    /* Smaller touch pad, and lift the objective card clear of it. */
+    #mobile-controls { grid-template-columns: 54px 54px; grid-template-rows: 54px 54px; gap: 6px; bottom: 6px; }
+    #bottom-eq { bottom: 128px; min-width: 0; padding: 6px 16px 7px; max-width: calc(100vw - 28px); }
+    #bottom-eq .eq { font-size: 20px; }
   }
 </style>
 </head>
@@ -284,6 +288,7 @@
 
 <script src="../i18n.js"></script>
 <script src="../storage.js"></script>
+<script src="../game-shell.js"></script>
 <script src="../audio.js"></script>
 <script src="game.js"></script>
 </body>

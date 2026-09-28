@@ -33,6 +33,11 @@ If you enjoy these games, please consider [supporting on Patreon ❤](https://ww
 
 Open `index.html` in a browser. Everything runs client-side — no server needed.
 
+## Controls shared by every game
+
+- **◀ Arcade** (bottom-left) returns to the hub. It appears on title, briefing, and game-over screens and hides during play, alongside the sound and language controls, so it never covers on-screen buttons.
+- **M** toggles sound at any time, including mid-run.
+
 ## Languages
 
 The arcade supports English, French, and Spanish. Use the language switcher in the bottom-right corner, or open the site with `?lang=fr` or `?lang=es`.
