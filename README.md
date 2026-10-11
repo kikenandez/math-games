@@ -28,6 +28,7 @@ If you enjoy these games, please consider [supporting on Patreon ❤](https://ww
 | Letter Whack | Tap target letters and ignore b/d/p/q look-alikes |
 | Recall Crates | Memorize a letter sequence and type it back before landing |
 | Bee Buzz Says | Repeat the bee's honeycomb letter trail in order |
+| Bid Challenge | Sealed-bid auction for 2–4 players: build the best holiday resort with 20 stars |
 
 ## Running locally
 

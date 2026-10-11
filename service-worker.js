@@ -1,4 +1,4 @@
-const CACHE_NAME = 'math-arcade-static-v2';
+const CACHE_NAME = 'math-arcade-static-v3';
 
 const STATIC_ASSETS = [
   './',
@@ -21,6 +21,8 @@ const STATIC_ASSETS = [
   './beebuzzsays-html5/index.html',
   './beebuzzsays-html5/core.js',
   './beebuzzsays-html5/game.js',
+  './bidchallenge-html5/index.html',
+  './bidchallenge-html5/game.js',
   './letterwhack-html5/index.html',
   './letterwhack-html5/game.js',
   './mathasteroids-html5/index.html',

@@ -147,6 +147,15 @@
       lastPlayedKey: 'mathArcade.lastPlayed.beebuzzsays',
       category: 'letters',
       compatibility: 'mobile'
+    },
+    {
+      id: 'bidchallenge',
+      title: 'Bid Challenge',
+      url: 'bidchallenge-html5/index.html',
+      bestKey: 'bidchallenge_best',
+      lastPlayedKey: 'mathArcade.lastPlayed.bidchallenge',
+      category: 'strategy',
+      compatibility: 'pc'
     }
   ];
 })();

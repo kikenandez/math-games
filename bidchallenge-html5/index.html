@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bid Challenge</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Fredoka:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #2b2418;
+    --ink-soft: rgba(43, 36, 24, 0.6);
+    --paper: #fff8df;
+    --paper-2: #fffcf0;
+    --gold: #ffd24d;
+    --good: #4fae62;
+    --bad: #d94b5f;
+    --accent: #3f86d6;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background: #f3e3b6; font-family: 'Fredoka', Arial, sans-serif; color: var(--ink);
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  #game-wrap { position: fixed; inset: 0; overflow: hidden; }
+  canvas#game { display: block; width: 100%; height: 100%; touch-action: manipulation; }
+
+  .overlay {
+    position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+    background: rgba(43, 36, 24, 0.45); padding: 16px; overflow-y: auto;
+  }
+  .overlay.hidden { display: none !important; }
+  .card {
+    background: linear-gradient(180deg, var(--paper-2), var(--paper));
+    border: 3px solid var(--ink); border-radius: 22px; box-shadow: 0 7px 0 var(--ink);
+    padding: 22px 26px; width: min(760px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; margin: auto;
+  }
+  h1 { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: clamp(38px, 7vw, 56px); margin: 0; text-align: center; letter-spacing: .02em; line-height: 1; }
+  h1 .acc { color: #e0535f; }
+  .sub { text-align: center; color: var(--ink-soft); margin: 6px 0 12px; font-weight: 500; }
+  .intro { text-align: center; margin: 0 0 14px; font-size: 15px; line-height: 1.45; }
+  .seats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .seat, .opt {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    border: 2.5px solid var(--ink); border-radius: 13px; background: #fff; padding: 9px 12px;
+    font: 600 15px 'Fredoka', sans-serif; color: var(--ink); cursor: pointer; text-align: left;
+    box-shadow: 0 3px 0 var(--ink); transition: transform .08s;
+  }
+  .seat:active, .opt:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+  .seat .who { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 18px; }
+  .seat.off { background: #efe6cc; color: var(--ink-soft); }
+  .seat.locked { cursor: default; }
+  .opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .opt { flex-direction: column; align-items: flex-start; }
+  .opt .v { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 17px; color: var(--accent); }
+  .opt.no .v { color: var(--ink-soft); }
+  .opt .h { font-size: 11.5px; font-weight: 500; color: var(--ink-soft); line-height: 1.3; }
+  .row { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+  .btn {
+    font: 400 22px 'Lilita One', sans-serif; letter-spacing: .05em; color: #fff; cursor: pointer;
+    background: var(--good); border: 3px solid var(--ink); border-radius: 14px; padding: 10px 26px;
+    box-shadow: 0 5px 0 var(--ink); transition: transform .08s;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
+  .btn.alt { background: #fff; color: var(--ink); font-size: 17px; padding: 8px 16px; }
+  .btn.blue { background: var(--accent); }
+  .best { text-align: center; color: var(--ink-soft); margin-top: 10px; font-size: 14px; }
+  .keys { text-align: center; color: var(--ink-soft); font-size: 12px; margin-top: 4px; }
+  #handoff .card { text-align: center; }
+  #handoff .big { font-family: 'Lilita One', sans-serif; font-size: clamp(34px, 6vw, 52px); margin: 6px 0; }
+  #handoff p { margin: 8px 0; font-size: 17px; }
+  #help ul { padding-left: 20px; line-height: 1.5; margin: 10px 0 16px; }
+  #help h2 { font-family: 'Lilita One', sans-serif; font-weight: 400; margin: 0; text-align: center; font-size: 32px; }
+  #endbar {
+    inset: auto 0 12px 0; background: none; padding: 0; overflow: visible; pointer-events: none;
+  }
+  #endbar .bar {
+    pointer-events: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    background: rgba(255, 248, 223, .96); border: 2.5px solid var(--ink); border-radius: 16px;
+    box-shadow: 0 4px 0 var(--ink); padding: 8px 10px; max-width: calc(100% - 300px);
+  }
+  #endbar .btn { font-size: 16px; padding: 7px 14px; }
+  @media (max-width: 760px) {
+    .seats, .opts { grid-template-columns: 1fr; }
+    #endbar { bottom: 60px; }
+    #endbar .bar { max-width: calc(100% - 20px); }
+  }
+</style>
+</head>
+<body>
+<div id="game-wrap"><canvas id="game"></canvas></div>
+
+<div class="overlay" id="menu">
+  <div class="card">
+    <h1><span class="acc">BID</span> CHALLENGE</h1>
+    <div class="sub" id="m-sub"></div>
+    <p class="intro" id="m-intro"></p>
+    <div class="seats" id="m-seats"></div>
+    <div class="opts" id="m-opts"></div>
+    <div class="row">
+      <button class="btn" id="m-play" type="button"></button>
+      <button class="btn alt" id="m-rules" type="button"></button>
+    </div>
+    <div class="best" id="m-best"></div>
+    <div class="keys" id="m-keys"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="handoff">
+  <div class="card">
+    <div class="sub" id="h-title"></div>
+    <div class="big" id="h-turn"></div>
+    <p id="h-hide"></p>
+    <p><b id="h-what"></b></p>
+    <div class="row"><button class="btn blue" id="h-go" type="button"></button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="help">
+  <div class="card">
+    <h2 id="r-title"></h2>
+    <ul id="r-list"></ul>
+    <div class="row"><button class="btn alt" id="r-close" type="button">OK</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="endbar">
+  <div class="bar">
+    <button class="btn alt" id="e-toggle" type="button"></button>
+    <button class="btn alt" id="e-download" type="button"></button>
+    <button class="btn alt" id="e-menu" type="button"></button>
+    <button class="btn" id="e-again" type="button"></button>
+  </div>
+</div>
+
+<script src="../i18n.js"></script>
+<script src="../game-shell.js"></script>
+<script src="../audio.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

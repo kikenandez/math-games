@@ -20,7 +20,7 @@ function loadRegistry() {
 test('game registry maps to hub cards and game pages', () => {
   const html = read('index.html');
   const games = loadRegistry();
-  assert.equal(games.length, 16);
+  assert.equal(games.length, 17);
 
   for (const game of games) {
     assert.match(game.id, /^[a-z0-9]+$/);
