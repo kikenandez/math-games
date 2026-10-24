@@ -70,67 +70,24 @@
   window.addEventListener('resize', resize);
 
   // ===== Localization (unchanged copy + tightened intro) =====
-  const supported = ['en', 'fr', 'es'];
-  const stored = localStorage.getItem('mathArcadeLang');
-  const param = new URLSearchParams(location.search).get('lang');
-  const LANG = supported.includes(param) ? param : (supported.includes(stored) ? stored : 'en');
-  const STR = {
-    en: {
-      titleAcc: 'BEE BUZZ', titleRest: ' SAYS', sub: 'watch the bee — then tap the letters back in order',
-      start: 'START', playAgain: 'PLAY AGAIN', note: 'Practice game — not a diagnosis.',
-      watch: 'WATCH…', recall: 'YOUR TURN!',
-      score: 'Score', level: 'Level', best: 'Best', strikes: 'Strikes',
-      boardClear: 'HIVE COMPLETE!', correct: 'PERFECT!', wrong: 'OOPS', tooSlow: 'TOO SLOW',
-      gameAcc: 'SWARM', gameRest: ' RESTS', tooMany: 'too many slip-ups!',
-      maxLen: 'Best trail', tweaks: 'Tweaks', difficulty: 'Difficulty',
-      easy: 'EASY', normal: 'NORMAL', hard: 'HARD', age: 'Child age', color: 'Color cues',
-      colNone: 'NONE', colFun: 'FUN', colLetters: 'LETTERS',
-      players: 'Players', modeSolo: 'SOLO', modeCoop: 'CO-OP', modeVersus: 'VERSUS',
-      yourTurn: 'YOUR TURN', team: 'Team', pass: 'PASS TO', tap: 'CONTINUE', wins: 'WINS!', draw: "IT'S A DRAW!",
-      toBeat: 'to beat', player: 'Player',
-      ht1: 'WATCH', hd1: 'A bee lights up letters, one buzz each.',
-      ht2: 'REPEAT', hd2: 'Tap them back in the same order.',
-      ht3: 'GROW', hd3: 'Each round adds one more letter.',
-      reversalT: 'Letter mix-ups', reversalCap: 'How often a wrong tap was a mirror letter (b↔d, p↔q). Lower is steadier.',
-    },
-    fr: {
-      titleAcc: "L’ABEILLE", titleRest: ' DIT', sub: "regarde l’abeille — puis retape les lettres dans l’ordre",
-      start: 'JOUER', playAgain: 'REJOUER', note: "Jeu d’entraînement — pas un diagnostic.",
-      watch: 'REGARDE…', recall: 'À VOUS !',
-      score: 'Score', level: 'Niveau', best: 'Record', strikes: 'Erreurs',
-      boardClear: 'RUCHE COMPLÈTE !', correct: 'PARFAIT !', wrong: 'RATÉ', tooSlow: 'TROP LENT',
-      gameAcc: "L’ESSAIM", gameRest: ' SE REPOSE', tooMany: "trop d’erreurs !",
-      maxLen: 'Meilleure série', tweaks: 'Réglages', difficulty: 'Difficulté',
-      easy: 'FACILE', normal: 'NORMAL', hard: 'DIFFICILE', age: "Âge de l’enfant", color: 'Couleurs',
-      colNone: 'AUCUNE', colFun: 'AMUSANT', colLetters: 'LETTRES',
-      players: 'Joueurs', modeSolo: 'SOLO', modeCoop: 'COOP', modeVersus: 'DUEL',
-      yourTurn: 'À VOUS', team: 'Équipe', pass: 'AU TOUR DE', tap: 'CONTINUER', wins: 'GAGNE !', draw: 'ÉGALITÉ !',
-      toBeat: 'à battre', player: 'Joueur',
-      ht1: 'REGARDE', hd1: "L’abeille allume des lettres, un bourdon chacune.",
-      ht2: 'RÉPÈTE', hd2: 'Retapez-les dans le même ordre.',
-      ht3: 'GRANDIS', hd3: 'Chaque manche ajoute une lettre.',
-      reversalT: 'Confusions de lettres', reversalCap: "Part des erreurs qui étaient une lettre miroir (b↔d, p↔q). Plus bas = plus régulier.",
-    },
-    es: {
-      titleAcc: 'LA ABEJA', titleRest: ' DICE', sub: 'mira a la abeja — luego toca las letras en orden',
-      start: 'JUGAR', playAgain: 'JUGAR OTRA VEZ', note: 'Juego de práctica — no es un diagnóstico.',
-      watch: 'MIRA…', recall: '¡TU TURNO!',
-      score: 'Puntos', level: 'Nivel', best: 'Récord', strikes: 'Fallos',
-      boardClear: '¡PANAL COMPLETO!', correct: '¡PERFECTO!', wrong: 'UPS', tooSlow: 'MUY LENTO',
-      gameAcc: 'EL ENJAMBRE', gameRest: ' DESCANSA', tooMany: '¡demasiados fallos!',
-      maxLen: 'Mejor serie', tweaks: 'Ajustes', difficulty: 'Dificultad',
-      easy: 'FÁCIL', normal: 'NORMAL', hard: 'DIFÍCIL', age: 'Edad del niño', color: 'Colores',
-      colNone: 'NINGUNO', colFun: 'FUN', colLetters: 'LETRAS',
-      players: 'Jugadores', modeSolo: 'SOLO', modeCoop: 'COOP', modeVersus: 'DUELO',
-      yourTurn: 'TU TURNO', team: 'Equipo', pass: 'TURNO DE', tap: 'CONTINUAR', wins: '¡GANA!', draw: '¡EMPATE!',
-      toBeat: 'a batir', player: 'Jugador',
-      ht1: 'MIRA', hd1: 'La abeja enciende letras, un zumbido cada una.',
-      ht2: 'REPITE', hd2: 'Tócalas en el mismo orden.',
-      ht3: 'CRECE', hd3: 'Cada ronda añade una letra más.',
-      reversalT: 'Confusiones de letras', reversalCap: 'Cuántos fallos fueron una letra espejo (b↔d, p↔q). Más bajo = más estable.',
-    },
-  };
-  const T = STR[LANG];
+  
+  // ===== Localization — resolved through the shared i18n.js dictionary =====
+  const I18N = window.MathArcadeI18n;
+  const _EN_SOURCES = {"titleAcc":"BEE BUZZ","titleRest":" SAYS","sub":"watch the bee \u2014 then tap the letters back in order","start":{"en":"START","fr":"Bee Buzz Says \u00b7 START","es":"Bee Buzz Says \u00b7 START"},"playAgain":"PLAY AGAIN","note":"Practice game \u2014 not a diagnosis.","watch":"WATCH\u2026","recall":"YOUR TURN!","score":"Score","level":"Level","best":{"en":"Best","fr":"Bee Buzz Says \u00b7 Best","es":"Best"},"strikes":"Strikes","boardClear":"HIVE COMPLETE!","correct":"PERFECT!","wrong":"OOPS","tooSlow":"TOO SLOW","gameAcc":"SWARM","gameRest":" RESTS","tooMany":"too many slip-ups!","maxLen":"Best trail","tweaks":"Tweaks","difficulty":"Difficulty","easy":"EASY","normal":"NORMAL","hard":"HARD","age":"Child age","color":"Color cues","colNone":"NONE","colFun":"FUN","colLetters":"LETTERS","players":"Players","modeSolo":"SOLO","modeCoop":"CO-OP","modeVersus":"VERSUS","yourTurn":"YOUR TURN","team":"Team","pass":"PASS TO","tap":"CONTINUE","wins":"WINS!","draw":"IT'S A DRAW!","toBeat":"to beat","player":"Player","ht1":"WATCH","hd1":"A bee lights up letters, one buzz each.","ht2":"REPEAT","hd2":"Tap them back in the same order.","ht3":"GROW","hd3":"Each round adds one more letter.","reversalT":"Letter mix-ups","reversalCap":"How often a wrong tap was a mirror letter (b\u2194d, p\u2194q). Lower is steadier."};
+  const _isEn = !I18N || I18N.lang === 'en';
+  const T = {};
+  for (const _k of Object.keys(_EN_SOURCES)) {
+    const _src = _EN_SOURCES[_k];
+    // _src is either a plain English string or {en, fr, es} holding the i18n
+    // dictionary key for each locale (namespaced "<Game> · <source>" when the
+    // English source collides with another game's translation in that locale).
+    if (typeof _src === 'string') {
+      T[_k] = I18N && typeof I18N.t === 'function' ? I18N.t(_src) : _src;
+    } else {
+      const _key = _isEn ? _src.en : (_src[I18N.lang] || _src.en);
+      T[_k] = I18N && typeof I18N.t === 'function' ? I18N.t(_key) : _key;
+    }
+  }
   function applyStaticText() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     document.getElementById('title-h1').innerHTML = `<span class="acc">${T.titleAcc}</span>${T.titleRest}`;
@@ -647,7 +604,7 @@
   function saveMetrics() {
     const m = activePlayer().metrics;
     const summary = {
-      date: new Date().toISOString(), lang: LANG, age: TWEAKS.age || null,
+      date: new Date().toISOString(), lang: (window.MathArcadeI18n && window.MathArcadeI18n.lang) || 'en', age: TWEAKS.age || null,
       difficulty: TWEAKS.difficulty, colorMode: colorMode(), colorCues: colorOn(), mode: session.mode,
       level: session.boardRadius, score: activePlayer().score,
       rounds: m.rounds, correct: m.correct, strikes: activePlayer().strikes,
