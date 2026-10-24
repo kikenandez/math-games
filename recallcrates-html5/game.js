@@ -52,10 +52,10 @@
     },
     fr: {
       titleAcc: 'RAPPELLE', titleRest: '-CAISSES',
-      sub: 'mémorise les lettres — retape-les dans l’ordre',
-      intro: "Une caisse de lettres s'ouvre un instant, puis se referme et tombe. <b>Tape les lettres dans le même ordre</b> que tu les as vues, avant que la caisse atterrisse. À chaque manche, une lettre de plus. Attention aux sosies comme <b>b d p q</b>. Trois caisses tombées et le spectacle est fini.",
+      sub: 'mémorisez les lettres — retapez-les dans l’ordre',
+      intro: "Une caisse de lettres s'ouvre un instant, puis se referme et tombe. <b>Tapez les lettres dans le même ordre</b> que vous les avez vues, avant que la caisse atterrisse. À chaque manche, une lettre de plus. Attention aux sosies comme <b>b d p q</b>. Trois caisses tombées et le spectacle est fini.",
       start: 'JOUER', playAgain: 'REJOUER', note: "Jeu d'entraînement — pas un diagnostic.",
-      typeWhat: 'Tape ce que tu as vu', hint: 'tape les lettres dans l’ordre · Retour pour corriger',
+      typeWhat: 'Tapez ce que vous avez vu', hint: 'tapez les lettres dans l’ordre · Retour pour corriger',
       watch: 'REGARDE…', recall: 'TAPE !',
       score: 'Score', level: 'Niveau', span: 'Longueur', misses: 'Erreurs', best: 'Record',
       correct: 'PARFAIT !', orderErr: 'MAUVAIS ORDRE', wrong: 'NON', dropped: 'TOMBÉE !',
@@ -65,7 +65,7 @@
       bigTop: 'Chapiteau', day: 'JOUR', night: 'NUIT',
       ht1: 'REGARDE', hd1: 'Une caisse s’ouvre un instant.',
       ht2: 'FERME', hd2: 'Elle se referme et tombe.',
-      ht3: 'TAPE', hd3: 'Retape-les dans l’ordre.',
+      ht3: 'TAPE', hd3: 'Retapez-les dans l’ordre.',
       warn: "Attention aux sosies comme <b>b d p q</b>. Trois caisses tombées et le spectacle est fini.",
     },
     es: {

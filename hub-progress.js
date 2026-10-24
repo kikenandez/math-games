@@ -2,6 +2,10 @@
   const games = window.MathArcadeGames || [];
   if (!games.length) return;
 
+  // Shared translator from i18n.js (window.MathArcadeI18n.t). Falls back to the
+  // raw English string when i18n is unavailable or the key is unknown.
+  const tr = (window.MathArcadeI18n && window.MathArcadeI18n.t) || ((s) => s);
+
   function readNumber(key) {
     if (!key) return 0;
     const raw = localStorage.getItem(key);
@@ -20,18 +24,18 @@
   }
 
   function formatDate(value) {
-    if (!value) return 'Not played';
+    if (!value) return tr('Not played');
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Not played';
+    if (Number.isNaN(date.getTime())) return tr('Not played');
 
     const today = new Date();
     const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const days = Math.round((startToday - startDate) / 86400000);
 
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days > 1 && days < 7) return days + ' days ago';
+    if (days === 0) return tr('Today');
+    if (days === 1) return tr('Yesterday');
+    if (days > 1 && days < 7) return days + tr(' days ago');
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
@@ -50,7 +54,7 @@
       lastPlayed,
       hasProgress,
       mastered,
-      badge: mastered ? 'Mastered' : (hasProgress ? 'Played' : 'New')
+      badge: mastered ? tr('Mastered') : (hasProgress ? tr('Played') : tr('New'))
     };
   }
 
@@ -82,16 +86,16 @@
 
     if (game.solvedKey) {
       const total = game.solvedTotal ? '/' + game.solvedTotal : '';
-      metrics.appendChild(makeMetric('Solved', progress.solved + total));
+      metrics.appendChild(makeMetric(tr('Solved'), progress.solved + total));
     } else {
-      metrics.appendChild(makeMetric('Best', progress.best));
+      metrics.appendChild(makeMetric(tr('Best'), progress.best));
     }
 
     if (game.historyKey && progress.historyCount > 0) {
-      metrics.appendChild(makeMetric('Runs', progress.historyCount));
+      metrics.appendChild(makeMetric(tr('Runs'), progress.historyCount));
     }
 
-    metrics.appendChild(makeMetric('Last', formatDate(progress.lastPlayed)));
+    metrics.appendChild(makeMetric(tr('Last'), formatDate(progress.lastPlayed)));
     strip.appendChild(metrics);
 
     const body = card.querySelector('.body');

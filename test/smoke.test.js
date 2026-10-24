@@ -69,3 +69,119 @@ test('project JavaScript files pass syntax check', () => {
     execFileSync(process.execPath, ['--check', path.join(root, file)], { stdio: 'pipe' });
   }
 });
+
+
+function loadI18n(lang) {
+  const sandbox = {
+    window: {},
+    localStorage: { getItem: () => null, setItem() {} },
+    document: {
+      documentElement: {},
+      readyState: 'loading',
+      addEventListener() {},
+      querySelector: () => null,
+      querySelectorAll: () => [],
+      createElement: () => ({
+        style: {},
+        classList: { add() {}, toggle() {}, contains: () => false },
+        setAttribute() {},
+        appendChild() {},
+        addEventListener() {},
+        textContent: ''
+      }),
+      head: { appendChild() {} },
+      body: { appendChild() {} }
+    },
+    location: { search: '?lang=' + lang, href: 'http://localhost/index.html' },
+    URLSearchParams,
+    MutationObserver: class { observe() {} disconnect() {} },
+    performance: { now: () => 0 }
+  };
+  sandbox.window = sandbox;
+  sandbox.self = sandbox;
+  vm.runInNewContext(read('i18n.js'), sandbox);
+  return sandbox.MathArcadeI18n.t;
+}
+
+function topLevelKeys(lang) {
+  // The top-level locale maps live inside `const map = { ... }`, which ends at the
+  // first line that is exactly "  };". The dynamic packs come after and reuse the
+  // same "    fr: {" / "    es: {" shape, so bound the section by "  };" instead of
+  // the first "    }," (which is the close of an inner rules/exact block).
+  const src = read('i18n.js');
+  const mapStart = src.indexOf('const map = {');
+  const mapEnd = src.indexOf('\n  };', mapStart);
+  const section = src.slice(mapStart, mapEnd);
+  const re = new RegExp('^    ' + lang + ': \\{', 'm');
+  const start = section.search(re);
+  const rest = section.slice(start);
+  const end = rest.match(/\n    \}/);
+  const body = rest.slice(0, end.index);
+  return [...body.matchAll(/^\s*(['"])(.+?)\1\s*:/gm)].map((m) => m[2]);
+}
+
+function dynamicKeys(lang) {
+  // The dynamic packs live inside `const dynamic = { ... }`, which closes with a
+  // line that is exactly "  };" (the es pack is the last entry, so it ends "    }\n  };").
+  // Extract the rules/exact keys (8-space indent) for one locale.
+  const src = read('i18n.js');
+  const dynStart = src.indexOf('const dynamic = {');
+  const dynEnd = src.indexOf('\n  };', dynStart);
+  const section = src.slice(dynStart, dynEnd);
+  const re = new RegExp('^    ' + lang + ': \\{', 'm');
+  const start = section.search(re);
+  const rest = section.slice(start);
+  const end = rest.match(/\n    \}/);
+  const body = rest.slice(0, end.index);
+  return [...body.matchAll(/^        '((?:[^'\\\\]|\\\\.)+)':/gm)].map((m) => m[1]);
+}
+
+test('i18n dictionaries have no duplicate keys and stay in sync across locales', () => {
+  for (const lang of ['fr', 'es']) {
+    for (const keys of [topLevelKeys(lang), dynamicKeys(lang)]) {
+      const seen = new Set();
+      const dups = keys.filter((k) => seen.has(k) || (seen.add(k), false));
+      assert.deepEqual(dups, [], `${lang} has duplicate dictionary keys`);
+    }
+  }
+
+  // The two locales must resolve the same key set: top-level map + dynamic pack.
+  // Compare the keys each locale actually resolves (via t()), so a key that is
+  // intentionally identical to its translation (e.g. "arcade" -> "arcade") or
+  // absent from one locale is caught as a real gap.
+  const frKeys = new Set([...topLevelKeys('fr'), ...dynamicKeys('fr')]);
+  const esKeys = new Set([...topLevelKeys('es'), ...dynamicKeys('es')]);
+  assert.deepEqual([...esKeys].filter((k) => !frKeys.has(k)), [], 'fr dictionaries are missing keys present in es');
+  assert.deepEqual([...frKeys].filter((k) => !esKeys.has(k)), [], 'es dictionaries are missing keys present in fr');
+
+  // Dynamic rule/exact packs must carry the same keys in every locale.
+  const frDyn = new Set(dynamicKeys('fr'));
+  const esDyn = new Set(dynamicKeys('es'));
+  assert.deepEqual([...esDyn].filter((k) => !frDyn.has(k)), [], 'fr dynamic pack is missing keys present in es');
+  assert.deepEqual([...frDyn].filter((k) => !esDyn.has(k)), [], 'es dynamic pack is missing keys present in fr');
+});
+
+test('i18n translates shared chrome and game-over strings in fr and es', () => {
+  const keys = [
+    'PLAY AGAIN', 'Best', 'Kills', 'NO AMMO', 'ESCAPED!', 'DEFUSED!',
+    'self bite!', 'shrunk away!', 'too many escapes!', 'base destroyed!',
+    'Fill in all answer boxes first.', 'No more hints! Try checking your math.',
+    'Mastered', 'Played', 'Runs', 'Not played', 'Today', 'Yesterday',
+    'Back to Arcade', 'Sound off', 'Sound on', 'Language'
+  ];
+  for (const lang of ['fr', 'es']) {
+    const t = loadI18n(lang);
+    for (const key of keys) {
+      assert.notEqual(t(key), key, `${lang} is missing a translation for ${JSON.stringify(key)}`);
+    }
+  }
+});
+
+test('i18n dynamic patterns translate level, wave, and combo strings', () => {
+  const t = loadI18n('fr');
+  assert.equal(t('LEVEL 3: EVEN NUMBERS'), 'NIVEAU 3 : NOMBRES PAIRS');
+  assert.equal(t('WAVE 2'), 'VAGUE 2');
+  assert.equal(t('START WAVE 4'), 'LANCER LA VAGUE 4');
+  assert.equal(t('EAT 5 MORE!'), 'ENCORE 5 !');
+  assert.equal(t('COMBO \u00d73!'), 'COMBO \u00d73 !');
+});
