@@ -9,23 +9,14 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  function resize() {
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
   let lastMetrics = null;
-  window.addEventListener('resize', () => {
-    const prev = lastMetrics;
-    resize();
-    onLayoutChanged(prev);
+  window.MathArcadeShell.createCanvasStage(canvas, ctx, {
+    onResize: ({ width, height }) => {
+      W = width; H = height;
+      const prev = lastMetrics;
+      onLayoutChanged(prev);
+    }
   });
-  resize();
 
   const ROW_COUNT = 13;
   const COL_COUNT = 9;

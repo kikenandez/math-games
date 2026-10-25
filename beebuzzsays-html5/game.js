@@ -8,7 +8,7 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  let DPR = 1;
 
   // ---- theme colours read from CSS custom properties (per hive theme) ----
   const THEME = {};
@@ -59,15 +59,13 @@
     return `rgba(${r},${g},${bl},${a})`;
   }
 
-  function resize() {
-    W = window.innerWidth; H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR); canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    layoutBoard();
-    buildBackground();
-  }
-  window.addEventListener('resize', resize);
+  window.MathArcadeShell.createCanvasStage(canvas, ctx, {
+    onResize: ({ width, height, dpr }) => {
+      W = width; H = height; DPR = dpr;
+      layoutBoard();
+      buildBackground();
+    }
+  });
 
   // ===== Localization (unchanged copy + tightened intro) =====
   
@@ -795,7 +793,8 @@
   setupTweaks();
   document.documentElement.dataset.theme = TWEAKS.theme === 'honey' ? '' : TWEAKS.theme;
   readTheme();
-  resize();
+  layoutBoard();
+  buildBackground();
   drawHero();
   drawIcons();
   updateHUD();
