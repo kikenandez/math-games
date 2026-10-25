@@ -102,8 +102,9 @@
     const link = document.createElement('a');
     link.className = 'hub-link';
     link.href = hubUrl();
-    link.setAttribute('aria-label', 'Back to Arcade');
-    link.title = 'Back to Arcade';
+    const tr = (window.MathArcadeI18n && window.MathArcadeI18n.t) || ((s) => s);
+    link.setAttribute('aria-label', tr('Back to Arcade'));
+    link.title = tr('Back to Arcade');
     const arrow = document.createElement('span');
     arrow.className = 'arrow';
     arrow.setAttribute('aria-hidden', 'true');

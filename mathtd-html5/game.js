@@ -12,18 +12,9 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  function resize() {
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  window.MathArcadeShell.createCanvasStage(canvas, ctx, {
+    onResize: ({ width, height }) => { W = width; H = height; }
+  });
 
   const COLS = 16, ROWS = 17;
   function getMetrics() {
@@ -138,7 +129,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('mathtd_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathtd')) || 0,
     level: 1,
     wave: 1,
     wavesPerLevel: 5,
@@ -305,7 +296,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathtd_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathtd', state.best);
     }
     showFloaterCenter(reason, '#ff5c7c');
     state.shake = Math.min(0.6, state.shake + 0.4);

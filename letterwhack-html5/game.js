@@ -12,83 +12,29 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  function resize() {
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  window.MathArcadeShell.createCanvasStage(canvas, ctx, {
+    onResize: ({ width, height }) => { W = width; H = height; }
+  });
 
   // ===== Localization (self-contained; canvas text is never DOM-translated) =====
-  const supported = ['en', 'fr', 'es'];
-  const stored = localStorage.getItem('mathArcadeLang');
-  const param = new URLSearchParams(location.search).get('lang');
-  const LANG = supported.includes(param) ? param : (supported.includes(stored) ? stored : 'en');
-  const speechLang = { en: 'en-US', fr: 'fr-FR', es: 'es-ES' }[LANG];
-
-  const STR = {
-    en: {
-      titleAcc: 'LETTER', titleRest: ' WHACK',
-      sub: 'whack only the target letter — leave the rest alone',
-      intro: "Letters pop up from the holes. <b>Tap only the letter shown at the top</b> — the target. Watch out for look-alike letters like <b>b d p q</b> that face the wrong way. Tapping a wrong letter costs a <b style='color:#ff5c7c'>miss</b>, and letting a target duck back is a miss too. Three misses and it's over.",
-      start: 'START', playAgain: 'PLAY AGAIN', note: 'Practice game — not a diagnosis.',
-      findLetter: 'Find this letter',
-      score: 'Score', level: 'Level', time: 'Time', misses: 'Misses', best: 'Best',
-      levelStart: 'LEVEL', find: 'FIND', wrong: 'WRONG!', escaped: 'ESCAPED!',
-      clear: 'CLEAR', gameAcc: 'GAME', gameRest: ' OVER',
-      tooManyMisses: 'too many misses!', tooManyEscapes: 'too many escapes!',
-      tweaks: 'Tweaks', difficulty: 'Difficulty', easy: 'EASY', normal: 'NORMAL', hard: 'HARD',
-      speed: 'Spawn speed', age: 'Child age',
-      bigTop: 'Big top', day: 'DAY', night: 'NIGHT',
-      ht1: 'THE TARGET', hd1: 'Shown up top — and spoken.',
-      ht2: 'WHACK IT', hd2: 'Tap clowns holding that letter.',
-      ht3: 'DODGE', hd3: 'Leave the look-alikes alone.',
-      warn: "A wrong tap or a target that ducks away is a <b style='color:var(--hot)'>miss</b>. Three misses ends the show.",
-    },
-    fr: {
-      titleAcc: 'TAPE', titleRest: '-LETTRE',
-      sub: 'tapez seulement la lettre cible — laissez les autres tranquilles',
-      intro: "Des lettres sortent des trous. <b>Tapez seulement la lettre affichée en haut</b> — la cible. Attention aux lettres qui se ressemblent comme <b>b d p q</b> et qui sont à l'envers. Taper une mauvaise lettre coûte une <b style='color:#ff5c7c'>erreur</b>, et laisser filer une cible aussi. Trois erreurs et c'est fini.",
-      start: 'JOUER', playAgain: 'REJOUER', note: "Jeu d'entraînement — pas un diagnostic.",
-      findLetter: 'Trouve cette lettre',
-      score: 'Score', level: 'Niveau', time: 'Temps', misses: 'Erreurs', best: 'Record',
-      levelStart: 'NIVEAU', find: 'CIBLE', wrong: 'FAUX !', escaped: 'RATÉ !',
-      clear: 'RÉUSSI', gameAcc: 'FIN', gameRest: ' DE PARTIE',
-      tooManyMisses: "trop d'erreurs !", tooManyEscapes: 'trop de ratés !',
-      tweaks: 'Réglages', difficulty: 'Difficulté', easy: 'FACILE', normal: 'NORMAL', hard: 'DIFFICILE',
-      speed: 'Vitesse', age: "Âge de l'enfant",
-      bigTop: 'Chapiteau', day: 'JOUR', night: 'NUIT',
-      ht1: 'LA CIBLE', hd1: 'Affichée en haut — et dite.',
-      ht2: 'TAPE-LA', hd2: 'Tape les clowns avec cette lettre.',
-      ht3: 'ÉVITE', hd3: 'Laisse les sosies tranquilles.',
-      warn: "Une mauvaise tape ou une cible qui s’échappe, c’est une <b style='color:var(--hot)'>erreur</b>. Trois erreurs et le spectacle est fini.",
-    },
-    es: {
-      titleAcc: 'GOLPEA', titleRest: '-LETRAS',
-      sub: 'golpea solo la letra objetivo — deja las demás en paz',
-      intro: "Salen letras de los agujeros. <b>Golpea solo la letra que se muestra arriba</b> — el objetivo. Cuidado con letras parecidas como <b>b d p q</b> que están al revés. Golpear una letra incorrecta cuesta un <b style='color:#ff5c7c'>fallo</b>, y dejar escapar un objetivo también. Tres fallos y se acabó.",
-      start: 'JUGAR', playAgain: 'JUGAR OTRA VEZ', note: 'Juego de práctica — no es un diagnóstico.',
-      findLetter: 'Encuentra esta letra',
-      score: 'Puntos', level: 'Nivel', time: 'Tiempo', misses: 'Fallos', best: 'Récord',
-      levelStart: 'NIVEL', find: 'BUSCA', wrong: '¡MAL!', escaped: '¡ESCAPÓ!',
-      clear: 'COMPLETADO', gameAcc: 'FIN', gameRest: ' DEL JUEGO',
-      tooManyMisses: '¡demasiados fallos!', tooManyEscapes: '¡demasiados escapes!',
-      tweaks: 'Ajustes', difficulty: 'Dificultad', easy: 'FÁCIL', normal: 'NORMAL', hard: 'DIFÍCIL',
-      speed: 'Velocidad', age: 'Edad del niño',
-      bigTop: 'Carpa', day: 'DÍA', night: 'NOCHE',
-      ht1: 'EL OBJETIVO', hd1: 'Arriba — y se dice en voz alta.',
-      ht2: 'GOLPÉALA', hd2: 'Toca payasos con esa letra.',
-      ht3: 'ESQUIVA', hd3: 'Deja en paz a las parecidas.',
-      warn: "Una mala tocada o un objetivo que escapa es un <b style='color:var(--hot)'>fallo</b>. Tres fallos y se acabó el espectáculo.",
-    },
-  };
-  const T = STR[LANG];
+  
+  // ===== Localization — resolved through the shared i18n.js dictionary =====
+  const I18N = window.MathArcadeI18n;
+  const _EN_SOURCES = {"titleAcc":"LETTER","titleRest":" WHACK","sub":"whack only the target letter \u2014 leave the rest alone","intro":"Letters pop up from the holes. <b>Tap only the letter shown at the top</b> \u2014 the target. Watch out for look-alike letters like <b>b d p q</b> that face the wrong way. Tapping a wrong letter costs a <b style='color:#ff5c7c'>miss</b>, and letting a target duck back is a miss too. Three misses and it's over.","start":{"en":"START","fr":"Letter Whack \u00b7 START","es":"Letter Whack \u00b7 START"},"playAgain":"PLAY AGAIN","note":{"en":"Practice game \u2014 not a diagnosis.","fr":"Letter Whack \u00b7 Practice game \u2014 not a diagnosis.","es":"Practice game \u2014 not a diagnosis."},"findLetter":"Find this letter","score":"Score","level":"Level","time":"Time","misses":{"en":"Misses","fr":"Letter Whack \u00b7 Misses","es":"Misses"},"best":{"en":"Best","fr":"Letter Whack \u00b7 Best","es":"Best"},"levelStart":"LEVEL","find":"FIND","wrong":"WRONG!","escaped":{"en":"ESCAPED!","fr":"Letter Whack \u00b7 ESCAPED!","es":"ESCAPED!"},"clear":"CLEAR","gameAcc":"GAME","gameRest":" OVER","tooManyMisses":{"en":"too many misses!","fr":"Letter Whack \u00b7 too many misses!","es":"too many misses!"},"tooManyEscapes":{"en":"too many escapes!","fr":"Letter Whack \u00b7 too many escapes!","es":"too many escapes!"},"tweaks":"Tweaks","difficulty":"Difficulty","easy":"EASY","normal":"NORMAL","hard":"HARD","speed":{"en":"Spawn speed","fr":"Letter Whack \u00b7 Spawn speed","es":"Letter Whack \u00b7 Spawn speed"},"age":{"en":"Child age","fr":"Letter Whack \u00b7 Child age","es":"Child age"},"bigTop":"Big top","day":"DAY","night":"NIGHT","ht1":"THE TARGET","hd1":"Shown up top \u2014 and spoken.","ht2":"WHACK IT","hd2":"Tap clowns holding that letter.","ht3":"DODGE","hd3":"Leave the look-alikes alone.","warn":"A wrong tap or a target that ducks away is a <b style='color:var(--hot)'>miss</b>. Three misses ends the show."};
+  const _isEn = !I18N || I18N.lang === 'en';
+  const T = {};
+  for (const _k of Object.keys(_EN_SOURCES)) {
+    const _src = _EN_SOURCES[_k];
+    // _src is either a plain English string or {en, fr, es} holding the i18n
+    // dictionary key for each locale (namespaced "<Game> · <source>" when the
+    // English source collides with another game's translation in that locale).
+    if (typeof _src === 'string') {
+      T[_k] = I18N && typeof I18N.t === 'function' ? I18N.t(_src) : _src;
+    } else {
+      const _key = _isEn ? _src.en : (_src[I18N.lang] || _src.en);
+      T[_k] = I18N && typeof I18N.t === 'function' ? I18N.t(_key) : _key;
+    }
+  }
   function applyStaticText() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     document.getElementById('title-h1').innerHTML = `<span class="acc">${T.titleAcc}</span>${T.titleRest}`;
@@ -168,7 +114,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('letterwhack_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('letterwhack')) || 0,
     level: 1,
     misses: 0,
     maxMisses: 3,
@@ -201,7 +147,7 @@
   function saveMetrics() {
     const summary = {
       date: new Date().toISOString(),
-      lang: LANG,
+      lang: (window.MathArcadeI18n && window.MathArcadeI18n.lang) || 'en',
       age: TWEAKS.age || null,
       level: state.level,
       score: state.score,
@@ -213,20 +159,13 @@
       medianRtMs: median(metrics.rtSamples),
       reversalErrorRate: metrics.trials ? +(metrics.reversalErrors / metrics.trials).toFixed(3) : 0,
     };
-    try {
-      const key = 'dyslexiaScreening.letterwhack';
-      const store = JSON.parse(localStorage.getItem(key) || '{"history":[]}');
-      store.lastSession = summary;
-      store.history = (store.history || []).concat([summary]).slice(-50);
-      localStorage.setItem(key, JSON.stringify(store));
-    } catch (e) { /* storage unavailable — game still playable */ }
+    if (window.MathArcadeStorage) window.MathArcadeStorage.recordSession('letterwhack', summary);
     return summary;
   }
   // Future "Reading Check-Up" screener reads aggregated metrics from here.
   window.DyslexiaScreening = window.DyslexiaScreening || {};
   window.DyslexiaScreening.letterwhack = () => {
-    try { return JSON.parse(localStorage.getItem('dyslexiaScreening.letterwhack') || 'null'); }
-    catch (e) { return null; }
+    return (window.MathArcadeStorage && window.MathArcadeStorage.getHistory('letterwhack')) || null;
   };
 
   // ===== Speech (sound-symbol reinforcement; optional, guarded, offline) =====
@@ -450,7 +389,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('letterwhack_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('letterwhack', state.best);
     }
     const summary = saveMetrics();
     state.shake = Math.min(0.6, state.shake + 0.4);

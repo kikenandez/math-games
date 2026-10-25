@@ -8,18 +8,9 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
-  let DPR = Math.min(window.devicePixelRatio || 1, 2);
-  function resize() {
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  window.MathArcadeShell.createCanvasStage(canvas, ctx, {
+    onResize: ({ width, height }) => { W = width; H = height; }
+  });
 
   // ---------- Palettes ----------
   const PALETTES = {
@@ -117,7 +108,7 @@
   const state = {
     phase: 'title', // title | playing | paused | gameover
     score: 0,
-    best: parseInt(localStorage.getItem('numberfall_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('numberfall')) || 0,
     level: 1,
     lives: 3,
     boxes: [],
@@ -771,7 +762,7 @@
     state.phase = 'gameover';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('numberfall_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('numberfall', state.best);
     }
     showGameOverCard();
   }

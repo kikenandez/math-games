@@ -12,82 +12,29 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  function resize() {
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  window.MathArcadeShell.createCanvasStage(canvas, ctx, {
+    onResize: ({ width, height }) => { W = width; H = height; }
+  });
 
   // ===== Localization (self-contained; canvas text is never DOM-translated) =====
-  const supported = ['en', 'fr', 'es'];
-  const stored = localStorage.getItem('mathArcadeLang');
-  const param = new URLSearchParams(location.search).get('lang');
-  const LANG = supported.includes(param) ? param : (supported.includes(stored) ? stored : 'en');
-
-  const STR = {
-    en: {
-      titleAcc: 'RECALL', titleRest: ' CRATES',
-      sub: 'remember the letters — type them back in order',
-      intro: "A crate of letters opens for a moment, then snaps shut and falls. <b>Type the letters in the same order</b> you saw them, before the crate lands. Each round it remembers one more letter. Watch for tricky look-alikes like <b>b d p q</b>. Three crates dropped and the show's over.",
-      start: 'START', playAgain: 'PLAY AGAIN', note: 'Practice game — not a diagnosis.',
-      typeWhat: 'Type what you saw', hint: 'type the letters in order · Backspace to fix',
-      watch: 'WATCH…', recall: 'NOW TYPE!',
-      score: 'Score', level: 'Level', span: 'Length', misses: 'Misses', best: 'Best',
-      correct: 'PERFECT!', orderErr: 'WRONG ORDER', wrong: 'NOPE', dropped: 'DROPPED!',
-      gameAcc: 'SHOW', gameRest: ' OVER', tooMany: 'too many crates dropped!',
-      maxLen: 'Best length', tweaks: 'Tweaks', difficulty: 'Difficulty',
-      easy: 'EASY', normal: 'NORMAL', hard: 'HARD', age: 'Child age',
-      bigTop: 'Big top', day: 'DAY', night: 'NIGHT',
-      ht1: 'PEEK', hd1: 'A crate opens for a moment.',
-      ht2: 'SHUT', hd2: 'It snaps closed and falls.',
-      ht3: 'TYPE', hd3: 'Type them back, in order.',
-      warn: "Watch for tricky look-alikes like <b>b d p q</b>. Three crates dropped and the show's over.",
-    },
-    fr: {
-      titleAcc: 'RAPPELLE', titleRest: '-CAISSES',
-      sub: 'mémorise les lettres — retape-les dans l’ordre',
-      intro: "Une caisse de lettres s'ouvre un instant, puis se referme et tombe. <b>Tape les lettres dans le même ordre</b> que tu les as vues, avant que la caisse atterrisse. À chaque manche, une lettre de plus. Attention aux sosies comme <b>b d p q</b>. Trois caisses tombées et le spectacle est fini.",
-      start: 'JOUER', playAgain: 'REJOUER', note: "Jeu d'entraînement — pas un diagnostic.",
-      typeWhat: 'Tape ce que tu as vu', hint: 'tape les lettres dans l’ordre · Retour pour corriger',
-      watch: 'REGARDE…', recall: 'TAPE !',
-      score: 'Score', level: 'Niveau', span: 'Longueur', misses: 'Erreurs', best: 'Record',
-      correct: 'PARFAIT !', orderErr: 'MAUVAIS ORDRE', wrong: 'NON', dropped: 'TOMBÉE !',
-      gameAcc: 'FIN', gameRest: ' DU SPECTACLE', tooMany: 'trop de caisses tombées !',
-      maxLen: 'Longueur max', tweaks: 'Réglages', difficulty: 'Difficulté',
-      easy: 'FACILE', normal: 'NORMAL', hard: 'DIFFICILE', age: "Âge de l'enfant",
-      bigTop: 'Chapiteau', day: 'JOUR', night: 'NUIT',
-      ht1: 'REGARDE', hd1: 'Une caisse s’ouvre un instant.',
-      ht2: 'FERME', hd2: 'Elle se referme et tombe.',
-      ht3: 'TAPE', hd3: 'Retape-les dans l’ordre.',
-      warn: "Attention aux sosies comme <b>b d p q</b>. Trois caisses tombées et le spectacle est fini.",
-    },
-    es: {
-      titleAcc: 'RECUERDA', titleRest: ' CAJAS',
-      sub: 'recuerda las letras — escríbelas en orden',
-      intro: "Una caja de letras se abre un momento, luego se cierra y cae. <b>Escribe las letras en el mismo orden</b> que las viste, antes de que la caja aterrice. Cada ronda recuerda una letra más. Cuidado con las parecidas como <b>b d p q</b>. Tres cajas caídas y se acabó el espectáculo.",
-      start: 'JUGAR', playAgain: 'JUGAR OTRA VEZ', note: 'Juego de práctica — no es un diagnóstico.',
-      typeWhat: 'Escribe lo que viste', hint: 'escribe las letras en orden · Retroceso para corregir',
-      watch: 'MIRA…', recall: '¡ESCRIBE!',
-      score: 'Puntos', level: 'Nivel', span: 'Longitud', misses: 'Fallos', best: 'Récord',
-      correct: '¡PERFECTO!', orderErr: 'ORDEN INCORRECTO', wrong: 'NO', dropped: '¡CAYÓ!',
-      gameAcc: 'FIN', gameRest: ' DEL JUEGO', tooMany: '¡demasiadas cajas caídas!',
-      maxLen: 'Longitud máx', tweaks: 'Ajustes', difficulty: 'Dificultad',
-      easy: 'FÁCIL', normal: 'NORMAL', hard: 'DIFÍCIL', age: 'Edad del niño',
-      bigTop: 'Carpa', day: 'DÍA', night: 'NOCHE',
-      ht1: 'MIRA', hd1: 'Una caja se abre un instante.',
-      ht2: 'CIERRA', hd2: 'Se cierra de golpe y cae.',
-      ht3: 'ESCRIBE', hd3: 'Reescríbelas en orden.',
-      warn: "Cuidado con las parecidas como <b>b d p q</b>. Tres cajas caídas y se acabó el espectáculo.",
-    },
-  };
-  const T = STR[LANG];
+  
+  // ===== Localization — resolved through the shared i18n.js dictionary =====
+  const I18N = window.MathArcadeI18n;
+  const _EN_SOURCES = {"titleAcc":"RECALL","titleRest":" CRATES","sub":"remember the letters \u2014 type them back in order","intro":"A crate of letters opens for a moment, then snaps shut and falls. <b>Type the letters in the same order</b> you saw them, before the crate lands. Each round it remembers one more letter. Watch for tricky look-alikes like <b>b d p q</b>. Three crates dropped and the show's over.","start":{"en":"START","fr":"Recall Crates \u00b7 START","es":"Recall Crates \u00b7 START"},"playAgain":"PLAY AGAIN","note":{"en":"Practice game \u2014 not a diagnosis.","fr":"Recall Crates \u00b7 Practice game \u2014 not a diagnosis.","es":"Practice game \u2014 not a diagnosis."},"typeWhat":"Type what you saw","hint":"type the letters in order \u00b7 Backspace to fix","watch":"WATCH\u2026","recall":"NOW TYPE!","score":"Score","level":"Level","span":"Length","misses":{"en":"Misses","fr":"Recall Crates \u00b7 Misses","es":"Misses"},"best":{"en":"Best","fr":"Recall Crates \u00b7 Best","es":"Best"},"correct":"PERFECT!","orderErr":"WRONG ORDER","wrong":"NOPE","dropped":"DROPPED!","gameAcc":"SHOW","gameRest":{"en":" OVER","fr":"Recall Crates \u00b7  OVER","es":" OVER"},"tooMany":"too many crates dropped!","maxLen":"Best length","tweaks":"Tweaks","difficulty":"Difficulty","easy":"EASY","normal":"NORMAL","hard":"HARD","age":{"en":"Child age","fr":"Recall Crates \u00b7 Child age","es":"Child age"},"bigTop":"Big top","day":"DAY","night":"NIGHT","ht1":"PEEK","hd1":"A crate opens for a moment.","ht2":"SHUT","hd2":"It snaps closed and falls.","ht3":"TYPE","hd3":"Type them back, in order.","warn":"Watch for tricky look-alikes like <b>b d p q</b>. Three crates dropped and the show's over."};
+  const _isEn = !I18N || I18N.lang === 'en';
+  const T = {};
+  for (const _k of Object.keys(_EN_SOURCES)) {
+    const _src = _EN_SOURCES[_k];
+    // _src is either a plain English string or {en, fr, es} holding the i18n
+    // dictionary key for each locale (namespaced "<Game> · <source>" when the
+    // English source collides with another game's translation in that locale).
+    if (typeof _src === 'string') {
+      T[_k] = I18N && typeof I18N.t === 'function' ? I18N.t(_src) : _src;
+    } else {
+      const _key = _isEn ? _src.en : (_src[I18N.lang] || _src.en);
+      T[_k] = I18N && typeof I18N.t === 'function' ? I18N.t(_key) : _key;
+    }
+  }
   function applyStaticText() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     document.getElementById('title-h1').innerHTML = `<span class="acc">${T.titleAcc}</span>${T.titleRest}`;
@@ -149,7 +96,7 @@
   const state = {
     phase: 'title',                       // title | watch | recall | resolve | level_clear | game_over
     score: 0,
-    best: parseInt(localStorage.getItem('recallcrates_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('recallcrates')) || 0,
     level: 1,
     span: 2,
     misses: 0,
@@ -184,7 +131,7 @@
   function saveMetrics() {
     const summary = {
       date: new Date().toISOString(),
-      lang: LANG,
+      lang: (window.MathArcadeI18n && window.MathArcadeI18n.lang) || 'en',
       age: TWEAKS.age || null,
       level: state.level,
       score: state.score,
@@ -196,19 +143,12 @@
       maxSpan: metrics.maxSpan,
       transpositionRate: metrics.rounds ? +(metrics.orderErrors / metrics.rounds).toFixed(3) : 0,
     };
-    try {
-      const key = 'dyslexiaScreening.recallcrates';
-      const store = JSON.parse(localStorage.getItem(key) || '{"history":[]}');
-      store.lastSession = summary;
-      store.history = (store.history || []).concat([summary]).slice(-50);
-      localStorage.setItem(key, JSON.stringify(store));
-    } catch (e) { /* storage unavailable — game still playable */ }
+    if (window.MathArcadeStorage) window.MathArcadeStorage.recordSession('recallcrates', summary);
     return summary;
   }
   window.DyslexiaScreening = window.DyslexiaScreening || {};
   window.DyslexiaScreening.recallcrates = () => {
-    try { return JSON.parse(localStorage.getItem('dyslexiaScreening.recallcrates') || 'null'); }
-    catch (e) { return null; }
+    return (window.MathArcadeStorage && window.MathArcadeStorage.getHistory('recallcrates')) || null;
   };
   // Lightweight read-only state probe (used by automated checks; harmless in play).
   window.__rc = () => ({ phase: state.phase, seq: state.seq.slice(), typed: state.typed.slice(), span: state.span, misses: state.misses });
@@ -407,7 +347,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('recallcrates_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('recallcrates', state.best);
     }
     const summary = saveMetrics();
     state.shake = Math.min(0.6, state.shake + 0.4);

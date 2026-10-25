@@ -14,200 +14,29 @@
   'use strict';
 
   // ---------------------------------------------------------------- i18n
+  // Resolved through the shared i18n.js dictionary (English source as key).
   const I18N = window.MathArcadeI18n;
   const LANG = I18N && ['en', 'fr', 'es'].includes(I18N.lang) ? I18N.lang : 'en';
-  const LI = { en: 0, fr: 1, es: 2 }[LANG];
 
-  const S = {
-    subtitle: ['Build the most attractive holiday resort — at auction!', 'Construisez la station de vacances la plus attirante — aux enchères !', '¡Construye el complejo vacacional más atractivo — en subasta!'],
-    intro: ['Everyone gets {0} stars and {1} places go up for auction. Secret bids: the highest wins the place and pays its stars. Build the most appealing resort!',
-      'Chacun reçoit {0} étoiles et {1} lieux sont mis aux enchères. Mises secrètes : la plus haute remporte le lieu et paie ses étoiles. Construisez la station la plus attirante !',
-      'Cada uno recibe {0} estrellas y se subastan {1} lugares. Pujas secretas: la más alta gana el lugar y paga sus estrellas. ¡Construye el complejo más atractivo!'],
-    seat: ['Seat {0}', 'Place {0}', 'Puesto {0}'],
-    human: ['Human', 'Humain', 'Humano'],
-    computer: ['Computer', 'Ordinateur', 'Ordenador'],
-    empty: ['— empty —', '— absent —', '— vacío —'],
-    opt_mode: ['Auctions', 'Enchères', 'Subastas'],
-    mode_seq: ['one by one', 'tour par tour', 'una a una'],
-    mode_bulk: ['all at once', "toutes d'un coup", 'todas a la vez'],
-    mode_hint: ['One by one: bid, reveal, next. All at once: spread your stars over the 10 places first.', "Tour par tour : on mise, on révèle, on continue. Toutes d'un coup : chacun répartit d'abord ses étoiles sur les 10 lieux.", 'Una a una: pujar, revelar, siguiente. Todas a la vez: reparte primero tus estrellas entre los 10 lugares.'],
-    opt_events: ['Twists of fate', 'Aléas de la vie', 'Imprevistos'],
-    events_hint: ['3 random news flashes change places or stars.', '3 Flash info au hasard changent les lieux ou les étoiles.', '3 noticias al azar cambian lugares o estrellas.'],
-    opt_silent: ['Silent bidding', 'Mise silencieuse', 'Puja silenciosa'],
-    silent_hint: ['No sound while bidding: nobody can count your clicks.', 'Aucun son pendant la mise : personne ne peut compter vos clics.', 'Sin sonido al pujar: nadie puede contar tus clics.'],
-    yes: ['yes', 'oui', 'sí'], no: ['no', 'non', 'no'],
-    play: ['PLAY ▶', 'JOUER ▶', 'JUGAR ▶'],
-    rules: ['Rules', 'Règles', 'Reglas'],
-    best: ['Best resort: {0} pts', 'Record : {0} pts', 'Récord: {0} pts'],
-    menu_keys: ['Enter: play · T / A / S: options · 2 / 3 / 4: seats · M: sound', 'Entrée : jouer · T / A / S : options · 2 / 3 / 4 : places · M : son', 'Enter: jugar · T / A / S: opciones · 2 / 3 / 4: puestos · M: sonido'],
-    player: ['Player {0}', 'Joueur {0}', 'Jugador {0}'],
-    cpu: [' (cpu)', ' (ordi)', ' (IA)'],
-    hud_round: ['Auction {0} / {1}', 'Enchère {0} / {1}', 'Subasta {0} / {1}'],
-    hud_plan: ['All-at-once bids', 'Mises groupées', 'Pujas agrupadas'],
-    hud_event: ['News flash', 'Flash info', 'Última hora'],
-    hud_keys: ['H: rules · M: sound', 'H : règles · M : son', 'H: reglas · M: sonido'],
-    appeal: ['Appeal', 'Attrait', 'Atractivo'],
-    pts: ['{0} pts', '{0} pts', '{0} pts'],
-    duo_with: ['Pair with: {0} (+{1})', 'Duo avec : {0} (+{1})', 'Pareja con: {0} (+{1})'],
-    p_owned: ['already with {0}', 'déjà chez {0}', 'ya es de {0}'],
-    p_coming: ['still to come', 'encore à venir', 'aún por venir'],
-    p_gone: ['went unsold', 'parti sans preneur', 'quedó sin vender'],
-    p_absent: ['not in this game', 'absent de cette partie', 'no está en esta partida'],
-    worth: ['For you this place is worth: +{0} pts', 'Pour vous ce lieu vaut : +{0} pts', 'Para ti este lugar vale: +{0} pts'],
-    worth_sub: ['(appeal, pair, variety, lodging)', '(attrait, duo, variété, hébergement)', '(atractivo, pareja, variedad, alojamiento)'],
-    secret_bid: ['Secret bid — {0}', 'Mise secrète de {0}', 'Puja secreta de {0}'],
-    stars_left: ['{0} stars left', 'Il vous reste {0} étoiles', 'Te quedan {0} estrellas'],
-    left_if_win: ['{0} left if you win', 'reste {0} si gagné', 'quedan {0} si ganas'],
-    bid: ['Bid', 'Miser', 'Pujar'], pass: ['Pass', 'Passer', 'Pasar'],
-    bid_hint: ['Arrows or tap a star · digits · Enter/Space to confirm', 'Flèches ou clic sur une étoile · chiffres · Entrée/Espace pour valider', 'Flechas o toca una estrella · cifras · Enter/Espacio para confirmar'],
-    opening: ['Opening the envelopes', 'Ouverture des enveloppes', 'Abriendo los sobres'],
-    revealing: ['Bids, from lowest to highest', 'Révélation des mises, de la plus petite à la plus grande', 'Pujas, de la más baja a la más alta'],
-    result: ['Result', 'Résultat', 'Resultado'],
-    goes_to: ['And {0} goes to', 'Et {0} revient à', 'Y {0} es para'],
-    wins_place: ['{0} wins {1}!', '{0} remporte {1} !', '¡{0} gana {1}!'],
-    unsold_msg: ['{0}: unsold!', '{0} : invendu !', '{0}: ¡sin vender!'],
-    paid: ['Paid: {0} star(s).', 'Payé : {0} étoile(s).', 'Pagado: {0} estrella(s).'],
-    tie_fewer: ['Tie: the player with fewer places wins.', "Égalité : le joueur avec le moins de lots l'emporte.", 'Empate: gana quien tiene menos lugares.'],
-    tie_rot: ['Perfect tie: rotating priority decides.', 'Égalité parfaite : la priorité tournante tranche.', 'Empate perfecto: decide la prioridad rotatoria.'],
-    nobody: ['Nobody bid: unsold.', "Personne n'a misé : lot invendu.", 'Nadie pujó: sin vender.'],
-    skip_anim: ['Space / tap: skip animation', "Espace / clic : passer l'animation", 'Espacio / toque: saltar animación'],
-    next: ['Space / tap: next', 'Espace / clic : suite', 'Espacio / toque: siguiente'],
-    final_next: ['Space / tap: final results', 'Espace / clic : résultat final', 'Espacio / toque: resultados finales'],
-    wins: ['WINS!', 'GAGNE !', '¡GANA!'],
-    no_places: ['no places yet', "aucun lieu pour l'instant", 'aún sin lugares'],
-    leading: ['leading', 'en tête', 'en cabeza'],
-    no_lodging: ['no lodging {0}', 'sans hébergement {0}', 'sin alojamiento {0}'],
-    info: ['spent {0} · appeal {1} · pairs +{2} · variety +{3} · stars +{4}', 'dépensé {0} · attrait {1} · duos +{2} · variété +{3} · étoiles +{4}', 'gastado {0} · atractivo {1} · parejas +{2} · variedad +{3} · estrellas +{4}'],
-    unsold: ['unsold', 'invendu', 'sin vender'],
-    h_title: ['Secret bid', 'Mise secrète', 'Puja secreta'],
-    h_turn: ["{0}'s turn", 'Au tour de {0}', 'Turno de {0}'],
-    h_hide: ['Everyone else, look away!', "Les autres joueurs ne regardent pas l'écran !", '¡Los demás, no miréis!'],
-    h_plan: ['Secretly spread your stars over the {0} places', 'Répartissez en secret vos étoiles sur les {0} lieux', 'Reparte en secreto tus estrellas entre los {0} lugares'],
-    h_lot: ['Auction {0} / {1}: {2}', 'Enchère {0} / {1} : {2}', 'Subasta {0} / {1}: {2}'],
-    h_go: ["I'm ready ▶", 'Je suis prêt ▶', 'Estoy listo ▶'],
-    plan_head: ['{0} — secret spread: {1} / {2} stars bid', '{0} — répartition secrète : {1} / {2} étoiles misées', '{0} — reparto secreto: {1} / {2} estrellas'],
-    plan_hint: ['Up/Down: choose · Left/Right or digits: bid · Enter: confirm', 'Haut/Bas : choisir · Gauche/Droite ou chiffres : miser · Entrée : valider', 'Arriba/Abajo: elegir · Izq/Der o cifras: pujar · Enter: confirmar'],
-    plan_note: ['Unspent stars are worth 1 pt each.', 'Les étoiles non dépensées valent 1 pt chacune.', 'Las estrellas no gastadas valen 1 pt cada una.'],
-    confirm: ['Confirm', 'Valider', 'Confirmar'],
-    pair_short: ['Pair: {0}', 'Duo : {0}', 'Pareja: {0}'],
-    absent: [' (absent)', ' (absent)', ' (ausente)'],
-    attr_short: ['{0} · appeal {1}', '{0} · attrait {1}', '{0} · atractivo {1}'],
-    flash: ['NEWS FLASH — {0}', 'FLASH INFO — {0}', 'ÚLTIMA HORA — {0}'],
-    before_auction: ['before auction {0}', "avant l'enchère {0}", 'antes de la subasta {0}'],
-    before_final: ['before the final count', 'avant le décompte final', 'antes del recuento final'],
-    cont: ['Space / tap to continue', 'Espace ou clic pour continuer', 'Espacio o toque para continuar'],
-    eff_appeal: ['{0}{1}: appeal {2} → {3}', '{0}{1} : attrait {2} → {3}', '{0}{1}: atractivo {2} → {3}'],
-    at_owner: [' (at {0})', ' (chez {0})', ' (de {0})'],
-    eff_plus: ['{0}: +3 stars (now {1})', '{0} : +3 étoiles (il en a {1})', '{0}: +3 estrellas (ahora {1})'],
-    eff_minus: ['{0}: −{1} stars ({2} left)', '{0} : −{1} étoiles (il en reste {2})', '{0}: −{1} estrellas (quedan {2})'],
-    eff_none: ['No effect this time… phew!', 'Aucun effet cette fois-ci… ouf !', 'Sin efecto esta vez… ¡uf!'],
-    final_title: ['BID CHALLENGE — the resorts', 'BID CHALLENGE — les stations', 'BID CHALLENGE — los complejos'],
-    resort_of: ["{0}'s resort", 'Station de {0}', 'Complejo de {0}'],
-    wasteland: ['Empty lot…', 'Terrain vague…', 'Solar vacío…'],
-    final_line: ['{0}. {1} — {2} pts · {3}', '{0}. {1} — {2} pts · {3}', '{0}. {1} — {2} pts · {3}'],
-    final_sub: ['{0} place(s) · spent {1} stars · {2} left', '{0} lieu(x) · dépensé {1} étoiles · il en reste {2}', '{0} lugar(es) · gastado {1} estrellas · quedan {2}'],
-    ledger_bids: ['Bids', 'Mises', 'Pujas'],
-    ledger_spent: ['Spent', 'Dépensé', 'Gastado'],
-    tie_title: ['TIE!', 'ÉGALITÉ !', '¡EMPATE!'],
-    you_win: ['YOU WIN!', 'VOUS GAGNEZ !', '¡GANASTE!'],
-    you_lose: ['YOU LOSE!', 'PERDU !', '¡PERDISTE!'],
-    x_wins: ['{0} WINS!', '{0} GAGNE !', '¡{0} GANA!'],
-    new_record: ['NEW RECORD!', 'NOUVEAU RECORD !', '¡NUEVO RÉCORD!'],
-    col_appeal: ['Appeal', 'Attrait', 'Atractivo'], col_pairs: ['Pairs', 'Duos', 'Parejas'],
-    col_variety: ['Variety', 'Variété', 'Variedad'], col_stars: ['Stars', 'Étoiles', 'Estrellas'],
-    col_lodging: ['Lodging', 'Héberg.', 'Aloj.'], col_total: ['Total', 'Total', 'Total'],
-    btn_details: ['Score details', 'Détail des points', 'Detalle de puntos'],
-    btn_picture: ['Resort picture', 'Image des stations', 'Imagen de los complejos'],
-    btn_download: ['Download picture', "Télécharger l'image", 'Descargar imagen'],
-    btn_again: ['Play again', 'Rejouer', 'Jugar otra vez'],
-    btn_menu: ['Menu', 'Menu', 'Menú'],
-    cat_H: ['Lodging', 'Hébergement', 'Alojamiento'], cat_A: ['Ride', 'Attraction', 'Atracción'],
-    cat_R: ['Food', 'Restauration', 'Restauración'], cat_D: ['Relax', 'Détente', 'Relax'],
-    lot_palace: ['5-Star Palace', 'Palace 5 étoiles', 'Palacio 5 estrellas'],
-    lot_family: ['Family Hotel', 'Hôtel familial', 'Hotel familiar'],
-    lot_treehouse: ['Treehouse Cabins', 'Cabanes perchées', 'Cabañas en árboles'],
-    lot_glamping: ['Glamping', 'Camping glamping', 'Glamping'],
-    lot_coaster: ['Roller Coaster', 'Montagnes russes', 'Montaña rusa'],
-    lot_waterpark: ['Water Park', 'Parc aquatique', 'Parque acuático'],
-    lot_ferris: ['Ferris Wheel', 'Grande roue', 'Noria'],
-    lot_haunted: ['Haunted House', 'Maison hantée', 'Casa encantada'],
-    lot_gourmet: ['Starred Restaurant', 'Restaurant étoilé', 'Restaurante estrella'],
-    lot_panoramic: ['Sky Restaurant', 'Resto panoramique', 'Restaurante mirador'],
-    lot_cocktail: ['Cocktail Bar', 'Bar à cocktails', 'Bar de cócteles'],
-    lot_foodtrucks: ['Food Trucks', 'Food trucks', 'Food trucks'],
-    lot_beach: ['Private Beach', 'Plage privée', 'Playa privada'],
-    lot_spa: ['Thermal Spa', 'Spa thermal', 'Spa termal'],
-    lot_forest: ['Enchanted Forest', 'Forêt enchantée', 'Bosque encantado'],
-    lot_lake: ['Lake & Pedal Boats', 'Lac & pédalos', 'Lago e hidropedales'],
-    rate0: ['Dream destination', 'Destination de rêve', 'Destino de ensueño'],
-    rate1: ['Very popular resort', 'Station très prisée', 'Complejo muy popular'],
-    rate2: ['Really nice place', 'Lieu bien sympa', 'Lugar muy agradable'],
-    rate3: ['Quiet little spot', 'Petit coin tranquille', 'Rincón tranquilo'],
-    rate4: ['Needs renovation', 'Endroit à rénover', 'Necesita reformas'],
-    ev_heatwave: ['Heatwave!', 'Canicule !', '¡Ola de calor!'],
-    evt_heatwave: ['Everyone wants to cool off: +2 appeal for Water Park, Private Beach, Lake & Pedal Boats and Thermal Spa.', "Tout le monde veut se rafraîchir : +2 d'attrait pour Parc aquatique, Plage privée, Lac & pédalos et Spa thermal.", 'Todos quieren refrescarse: +2 de atractivo para Parque acuático, Playa privada, Lago e hidropedales y Spa termal.'],
-    ev_storm: ['Storm over the region', 'Tempête sur la région', 'Tormenta en la región'],
-    evt_storm: ['Outdoor places suffer: −2 for Private Beach, Glamping, Enchanted Forest and Ferris Wheel.', 'Les lieux en plein air souffrent : −2 pour Plage privée, Camping glamping, Forêt enchantée et Grande roue.', 'Los lugares al aire libre sufren: −2 para Playa privada, Glamping, Bosque encantado y Noria.'],
-    ev_guide: ['The food guide came by', 'Le guide gastronomique est passé', 'Pasó la guía gastronómica'],
-    evt_guide: ['Critics love it: +2 for every Food place.', 'Les critiques adorent : +2 pour chaque lieu de Restauration.', 'A la crítica le encanta: +2 para cada lugar de Restauración.'],
-    ev_breakdown: ['Giant breakdown', 'Panne géante', 'Avería gigante'],
-    evt_breakdown: ['Roller Coaster and Ferris Wheel under maintenance: −3 appeal.', "Montagnes russes et Grande roue en maintenance : −3 d'attrait.", 'Montaña rusa y Noria en mantenimiento: −3 de atractivo.'],
-    ev_halloween: ['Halloween party', "Fête d'Halloween", 'Fiesta de Halloween'],
-    evt_halloween: ['Chills guaranteed: Haunted House +4, Cocktail Bar +2.', 'Frissons garantis : Maison hantée +4, Bar à cocktails +2.', 'Escalofríos garantizados: Casa encantada +4, Bar de cócteles +2.'],
-    ev_slow: ['Slow travel is trendy', 'Le slow tourisme est à la mode', 'El turismo lento está de moda'],
-    evt_slow: ['Calm is in: +1 for every Lodging and every Relax place.', 'Le calme est tendance : +1 pour chaque Hébergement et chaque lieu de Détente.', 'La calma está de moda: +1 para cada Alojamiento y cada lugar de Relax.'],
-    ev_influencer: ['A star influencer arrives', 'Une influenceuse star débarque', 'Llega una influencer famosa'],
-    evt_influencer: ['Her video goes viral: a random place already sold gains +4.', 'Sa vidéo devient virale : un lieu déjà vendu, tiré au hasard, gagne +4.', 'Su vídeo se hace viral: un lugar ya vendido, al azar, gana +4.'],
-    ev_subsidy: ['Regional subsidy', 'Subvention régionale', 'Subvención regional'],
-    evt_subsidy: ['A boost for the underdog: the player with the fewest stars gets 3.', "Coup de pouce au plus modeste : le joueur qui a le moins d'étoiles en reçoit 3.", 'Ayuda al más modesto: el jugador con menos estrellas recibe 3.'],
-    ev_tax: ['Tax audit', 'Contrôle fiscal', 'Inspección fiscal'],
-    evt_tax: ['The player with the most stars loses 3.', "Le joueur qui a le plus d'étoiles en perd 3.", 'El jugador con más estrellas pierde 3.'],
-    ev_renovation: ['Renovation works', 'Travaux de rénovation', 'Obras de reforma'],
-    evt_renovation: ["Each resort's least attractive place gains +2.", 'Le lieu le moins attractif de chaque station gagne +2.', 'El lugar menos atractivo de cada complejo gana +2.'],
-    ev_review: ['1-star customer review', 'Avis clients : 1 étoile', 'Reseña de 1 estrella'],
-    evt_review: ["An unhappy guest: the leader's best place loses 3 appeal.", "Un client mécontent : le meilleur lieu du joueur en tête perd 3 d'attrait.", 'Un cliente descontento: el mejor lugar del líder pierde 3 de atractivo.']
-  };
-
-  const HELP = [
-    ['Rules', 'Règles', 'Reglas'],
-    [
-      'Everyone starts with 20 stars. 10 places are auctioned; the full list is shown at the bottom of the screen.',
-      'Secret bids from 0 to all your stars. The highest bid wins the place and pays it; the others pay nothing. If nobody bids, the place is unsold. Tie: the player with fewer places wins, then a rotating priority.',
-      '"One by one" mode: bid place by place. "All at once" mode: everyone first spreads their stars over the 10 places, then results are revealed one by one.',
-      'Twists of fate: 3 news flashes pop up during the game (heatwave, breakdown, tax audit, subsidy…) and change places\' appeal or players\' stars.',
-      'Final resort score: appeal of every place you own (news flashes included).',
-      'Pair: +5 for each complete pair (e.g. Palace + Spa, Ferris Wheel + Sky Restaurant).',
-      'Variety: +3 / +7 / +12 for 2 / 3 / 4 different categories.',
-      '+1 per unspent star.',
-      '−8 if the resort has no lodging: where would visitors sleep?'
-    ],
-    [
-      'Chaque joueur commence avec 20 étoiles. 10 lieux sont mis aux enchères ; la liste complète est visible en bas de l\'écran.',
-      'Mises secrètes de 0 à toutes ses étoiles. La plus haute mise remporte le lieu et paie sa mise ; les autres ne paient rien. Si personne ne mise, le lieu est invendu. Égalité : le joueur qui possède le moins de lieux gagne, sinon la priorité tournante.',
-      'Mode « tour par tour » : on mise lieu par lieu. Mode « toutes d\'un coup » : chacun répartit d\'abord ses étoiles sur les 10 lieux, puis les résultats tombent un par un.',
-      'Aléas de la vie : 3 Flash info surgissent pendant la partie (canicule, panne, contrôle fiscal, subvention…) et changent l\'attrait des lieux ou les étoiles des joueurs.',
-      'Points de la station : attrait de chaque lieu possédé (Flash info compris).',
-      'Duo : +5 pour chaque paire complète (ex. Palace + Spa, Grande roue + Resto panoramique).',
-      'Variété : +3 / +7 / +12 pour 2 / 3 / 4 catégories différentes.',
-      '+1 par étoile non dépensée.',
-      '−8 si la station n\'a aucun hébergement : où dormiraient les visiteurs ?'
-    ],
-    [
-      'Cada jugador empieza con 20 estrellas. Se subastan 10 lugares; la lista completa se ve abajo en la pantalla.',
-      'Pujas secretas de 0 a todas tus estrellas. La puja más alta gana el lugar y la paga; los demás no pagan nada. Si nadie puja, queda sin vender. Empate: gana quien tiene menos lugares, si no, la prioridad rotatoria.',
-      'Modo «una a una»: se puja lugar por lugar. Modo «todas a la vez»: cada uno reparte primero sus estrellas entre los 10 lugares y luego se revelan uno a uno.',
-      'Imprevistos: 3 noticias de última hora aparecen durante la partida (ola de calor, avería, inspección fiscal, subvención…) y cambian el atractivo de los lugares o las estrellas.',
-      'Puntos del complejo: atractivo de cada lugar que posees (noticias incluidas).',
-      'Pareja: +5 por cada pareja completa (p. ej. Palacio + Spa, Noria + Restaurante mirador).',
-      'Variedad: +3 / +7 / +12 por 2 / 3 / 4 categorías diferentes.',
-      '+1 por estrella no gastada.',
-      '−8 si el complejo no tiene alojamiento: ¿dónde dormirían los visitantes?'
-    ]
-  ];
-
+  // ===== Localization — resolved through the shared i18n.js dictionary =====
+  const _EN_SOURCES = {"subtitle":"Build the most attractive holiday resort — at auction!","intro":"Everyone gets {0} stars and {1} places go up for auction. Secret bids: the highest wins the place and pays its stars. Build the most appealing resort!","seat":"Seat {0}","human":"Human","computer":"Computer","empty":"— empty —","opt_mode":"Auctions","mode_seq":"one by one","mode_bulk":"all at once","mode_hint":"One by one: bid, reveal, next. All at once: spread your stars over the 10 places first.","opt_events":"Twists of fate","events_hint":"3 random news flashes change places or stars.","opt_silent":"Silent bidding","silent_hint":"No sound while bidding: nobody can count your clicks.","yes":"yes","no":"no","play":"PLAY ▶","rules":"Rules","best":"Best resort: {0} pts","menu_keys":"Enter: play · T / A / S: options · 2 / 3 / 4: seats · M: sound","player":"Player {0}","cpu":" (cpu)","hud_round":"Auction {0} / {1}","hud_plan":"All-at-once bids","hud_event":"News flash","hud_keys":"H: rules · M: sound","appeal":{en:"Appeal",fr:"Bid Challenge · Appeal (hud)",es:"Bid Challenge · Appeal (hud)"},"pts":"{0} pts","duo_with":"Pair with: {0} (+{1})","p_owned":"already with {0}","p_coming":"still to come","p_gone":"went unsold","p_absent":"not in this game","worth":"For you this place is worth: +{0} pts","worth_sub":"(appeal, pair, variety, lodging)","secret_bid":"Secret bid — {0}","stars_left":"{0} stars left","left_if_win":"{0} left if you win","bid":"Bid","pass":"Pass","bid_hint":"Arrows or tap a star · digits · Enter/Space to confirm","opening":"Opening the envelopes","revealing":"Bids, from lowest to highest","result":"Result","goes_to":"And {0} goes to","wins_place":"{0} wins {1}!","unsold_msg":"{0}: unsold!","paid":"Paid: {0} star(s).","tie_fewer":"Tie: the player with fewer places wins.","tie_rot":"Perfect tie: rotating priority decides.","nobody":"Nobody bid: unsold.","skip_anim":"Space / tap: skip animation","next":"Space / tap: next","final_next":"Space / tap: final results","wins":"WINS!","no_places":"no places yet","leading":"leading","no_lodging":"no lodging {0}","info":"spent {0} · appeal {1} · pairs +{2} · variety +{3} · stars +{4}","unsold":"unsold","h_title":"Secret bid","h_turn":"{0}'s turn","h_hide":"Everyone else, look away!","h_plan":"Secretly spread your stars over the {0} places","h_lot":"Auction {0} / {1}: {2}","h_go":"I'm ready ▶","plan_head":"{0} — secret spread: {1} / {2} stars bid","plan_hint":"Up/Down: choose · Left/Right or digits: bid · Enter: confirm","plan_note":"Unspent stars are worth 1 pt each.","confirm":"Confirm","pair_short":"Pair: {0}","absent":" (absent)","attr_short":"{0} · appeal {1}","flash":"NEWS FLASH — {0}","before_auction":"before auction {0}","before_final":"before the final count","cont":"Space / tap to continue","eff_appeal":"{0}{1}: appeal {2} → {3}","at_owner":" (at {0})","eff_plus":"{0}: +3 stars (now {1})","eff_minus":"{0}: −{1} stars ({2} left)","eff_none":"No effect this time… phew!","final_title":"BID CHALLENGE — the resorts","resort_of":"{0}'s resort","wasteland":"Empty lot…","final_line":"{0}. {1} — {2} pts · {3}","final_sub":"{0} place(s) · spent {1} stars · {2} left","ledger_bids":"Bids","ledger_spent":"Spent","tie_title":"TIE!","you_win":"YOU WIN!","you_lose":"YOU LOSE!","x_wins":"{0} WINS!","new_record":"NEW RECORD!","col_appeal":{en:"Appeal",fr:"Bid Challenge · Appeal (col)",es:"Bid Challenge · Appeal (col)"},"col_pairs":"Pairs","col_variety":"Variety","col_stars":"Stars","col_lodging":{en:"Lodging",fr:"Bid Challenge · Lodging (col)",es:"Bid Challenge · Lodging (col)"},"col_total":"Total","btn_details":"Score details","btn_picture":"Resort picture","btn_download":"Download picture","btn_again":"Play again","btn_menu":"Menu","cat_H":{en:"Lodging",fr:"Bid Challenge · Lodging (cat)",es:"Bid Challenge · Lodging (cat)"},"cat_A":"Ride","cat_R":"Food","cat_D":"Relax","lot_palace":"5-Star Palace","lot_family":"Family Hotel","lot_treehouse":"Treehouse Cabins","lot_glamping":"Glamping","lot_coaster":"Roller Coaster","lot_waterpark":"Water Park","lot_ferris":"Ferris Wheel","lot_haunted":"Haunted House","lot_gourmet":"Starred Restaurant","lot_panoramic":"Sky Restaurant","lot_cocktail":"Cocktail Bar","lot_foodtrucks":"Food Trucks","lot_beach":"Private Beach","lot_spa":"Thermal Spa","lot_forest":"Enchanted Forest","lot_lake":"Lake & Pedal Boats","rate0":"Dream destination","rate1":"Very popular resort","rate2":"Really nice place","rate3":"Quiet little spot","rate4":"Needs renovation","ev_heatwave":"Heatwave!","evt_heatwave":"Everyone wants to cool off: +2 appeal for Water Park, Private Beach, Lake & Pedal Boats and Thermal Spa.","ev_storm":"Storm over the region","evt_storm":"Outdoor places suffer: −2 for Private Beach, Glamping, Enchanted Forest and Ferris Wheel.","ev_guide":"The food guide came by","evt_guide":"Critics love it: +2 for every Food place.","ev_breakdown":"Giant breakdown","evt_breakdown":"Roller Coaster and Ferris Wheel under maintenance: −3 appeal.","ev_halloween":"Halloween party","evt_halloween":"Chills guaranteed: Haunted House +4, Cocktail Bar +2.","ev_slow":"Slow travel is trendy","evt_slow":"Calm is in: +1 for every Lodging and every Relax place.","ev_influencer":"A star influencer arrives","evt_influencer":"Her video goes viral: a random place already sold gains +4.","ev_subsidy":"Regional subsidy","evt_subsidy":"A boost for the underdog: the player with the fewest stars gets 3.","ev_tax":"Tax audit","evt_tax":"The player with the most stars loses 3.","ev_renovation":"Renovation works","evt_renovation":"Each resort's least attractive place gains +2.","ev_review":"1-star customer review","evt_review":"An unhappy guest: the leader's best place loses 3 appeal."};
+  const _HELP_TITLE_SRC = "Rules";
+  const _HELP_LINES_SRC = ["Everyone starts with 20 stars. 10 places are auctioned; the full list is shown at the bottom of the screen.","Secret bids from 0 to all your stars. The highest bid wins the place and pays it; the others pay nothing. If nobody bids, the place is unsold. Tie: the player with fewer places wins, then a rotating priority.","\"One by one\" mode: bid place by place. \"All at once\" mode: everyone first spreads their stars over the 10 places, then results are revealed one by one.","Twists of fate: 3 news flashes pop up during the game (heatwave, breakdown, tax audit, subsidy…) and change places' appeal or players' stars.","Final resort score: appeal of every place you own (news flashes included).","Pair: +5 for each complete pair (e.g. Palace + Spa, Ferris Wheel + Sky Restaurant).","Variety: +3 / +7 / +12 for 2 / 3 / 4 different categories.","+1 per unspent star.","−8 if the resort has no lodging: where would visitors sleep?"];
+  const _isEn = !I18N || I18N.lang === 'en';
+  function _resolve(src) {
+    if (typeof src === 'string') return I18N && typeof I18N.t === 'function' ? I18N.t(src) : src;
+    if (_isEn) return src.en;
+    const key = src[I18N.lang] || src.en;
+    if (!I18N || typeof I18N.t !== 'function') return key;
+    return I18N.t(key);
+  }
+  const _T = {};
+  for (const _k of Object.keys(_EN_SOURCES)) _T[_k] = _resolve(_EN_SOURCES[_k]);
+  const _HELP_TITLE = _resolve(_HELP_TITLE_SRC);
+  const _HELP_LINES = _HELP_LINES_SRC.map(_resolve);
   function t(key, ...args) {
-    const e = S[key];
-    const s = e ? (e[LI] !== undefined ? e[LI] : e[0]) : key;
+    const s = Object.prototype.hasOwnProperty.call(_T, key) ? _T[key] : key;
+    if (!args.length) return s;
     return s.replace(/\{(\d)\}/g, (_, i) => String(args[+i]));
   }
 
@@ -238,7 +67,6 @@
   const DIVERSITY_BONUS = [0, 0, 3, 7, 12];
   const RATINGS = [[45, 'rate0'], [35, 'rate1'], [25, 'rate2'], [15, 'rate3'], [-999, 'rate4']];
 
-  const BEST_KEY = 'bidchallenge_best';
   const PREFS_KEY = 'bidchallenge_prefs';
 
   const BG = '#f3e3b6', PANEL = '#fffcf0', PANEL_HI = '#eadcb8', TEXT = '#2b2418', INK = '#2b2418';
@@ -884,7 +712,7 @@
   let revealFrame = 0, revealCounted = 0, revealDone = false, result = null;
   let confetti = [];
   let finalCanvas = null, newRecord = false;
-  let best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
+  let best = (window.MathArcadeStorage && window.MathArcadeStorage.getBest('bidchallenge')) || 0;
 
   function loadPrefs() {
     const d = { seats: ['human', 'human', 'off', 'off'], mode: MODE_SEQ, events: true, silent: true };
@@ -1024,7 +852,7 @@
     const bestHuman = Math.max(0, ...model.players.filter((p) => p.human).map((p) => p.score().total));
     if (bestHuman > best) {
       best = bestHuman; newRecord = true;
-      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) { /* ignore */ }
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('bidchallenge', best);
     }
     finalCanvas = renderFinal();
     showDetails = false;
@@ -1145,10 +973,10 @@
   }
 
   function buildHelp() {
-    $('r-title').textContent = HELP[0][LI];
+    $('r-title').textContent = _HELP_TITLE;
     const ul = $('r-list');
     ul.innerHTML = '';
-    HELP[1 + LI].forEach((line) => {
+    _HELP_LINES.forEach((line) => {
       const li = document.createElement('li');
       li.textContent = line;
       ul.appendChild(li);

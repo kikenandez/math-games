@@ -7,18 +7,9 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  function resize() {
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  window.MathArcadeShell.createCanvasStage(canvas, ctx, {
+    onResize: ({ width, height }) => { W = width; H = height; }
+  });
 
   // ---------- Symbols (cute-fruit theme — keys kept for level-data compatibility) ----------
   const SYMBOLS = {
@@ -260,7 +251,7 @@
     phase: 'title',
     levelIdx: 0,
     runtimeLevel: null,
-    solvedCount: parseInt(localStorage.getItem('balancescale_solved') || '0', 10) || 0,
+    solvedCount: (window.MathArcadeStorage && window.MathArcadeStorage.getSolved('balancescale')) || 0,
     guesses: {},
     activeSymbol: null,
     inputBuffer: '',
@@ -534,7 +525,7 @@
     }
     if (isLevelSolved()) {
       state.solvedCount = Math.max(state.solvedCount, Math.min(state.levelIdx + 1, LEVELS.length));
-      localStorage.setItem('balancescale_solved', String(state.solvedCount));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setSolved('balancescale', state.solvedCount);
       updateHUD();
       showMsg(`Level ${state.levelIdx + 1} solved! 🎉`, 'success');
       // Confetti

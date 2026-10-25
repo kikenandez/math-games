@@ -212,8 +212,9 @@
     const btn = document.getElementById('sound-toggle');
     if (!btn) return;
     btn.textContent = muted ? '🔇' : '🔊';
-    btn.title = muted ? 'Sound off' : 'Sound on';
-    btn.setAttribute('aria-label', muted ? 'Sound off' : 'Sound on');
+    const tr = (window.MathArcadeI18n && window.MathArcadeI18n.t) || ((s) => s);
+    btn.title = muted ? tr('Sound off') : tr('Sound on');
+    btn.setAttribute('aria-label', muted ? tr('Sound off') : tr('Sound on'));
     btn.classList.toggle('muted', muted);
   }
 

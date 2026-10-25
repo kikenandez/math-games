@@ -2,8 +2,14 @@
   const games = window.MathArcadeGames || [];
   if (!games.length) return;
 
+  // Shared translator from i18n.js (window.MathArcadeI18n.t). Falls back to the
+  // raw English string when i18n is unavailable or the key is unknown.
+  const tr = (window.MathArcadeI18n && window.MathArcadeI18n.t) || ((s) => s);
+  const storage = window.MathArcadeStorage || null;
+
   function readNumber(key) {
     if (!key) return 0;
+    if (storage && typeof storage.readInt === 'function') return storage.readInt(key);
     const raw = localStorage.getItem(key);
     const value = parseInt(raw || '0', 10);
     return Number.isFinite(value) ? value : 0;
@@ -11,6 +17,9 @@
 
   function readHistoryCount(key) {
     if (!key) return 0;
+    if (storage && key.indexOf('dyslexiaScreening.') === 0) {
+      return storage.readHistoryCount(key.slice('dyslexiaScreening.'.length));
+    }
     try {
       const data = JSON.parse(localStorage.getItem(key) || 'null');
       return Array.isArray(data && data.history) ? data.history.length : 0;
@@ -20,18 +29,18 @@
   }
 
   function formatDate(value) {
-    if (!value) return 'Not played';
+    if (!value) return tr('Not played');
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Not played';
+    if (Number.isNaN(date.getTime())) return tr('Not played');
 
     const today = new Date();
     const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const days = Math.round((startToday - startDate) / 86400000);
 
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days > 1 && days < 7) return days + ' days ago';
+    if (days === 0) return tr('Today');
+    if (days === 1) return tr('Yesterday');
+    if (days > 1 && days < 7) return days + tr(' days ago');
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
@@ -50,7 +59,7 @@
       lastPlayed,
       hasProgress,
       mastered,
-      badge: mastered ? 'Mastered' : (hasProgress ? 'Played' : 'New')
+      badge: mastered ? tr('Mastered') : (hasProgress ? tr('Played') : tr('New'))
     };
   }
 
@@ -82,16 +91,16 @@
 
     if (game.solvedKey) {
       const total = game.solvedTotal ? '/' + game.solvedTotal : '';
-      metrics.appendChild(makeMetric('Solved', progress.solved + total));
+      metrics.appendChild(makeMetric(tr('Solved'), progress.solved + total));
     } else {
-      metrics.appendChild(makeMetric('Best', progress.best));
+      metrics.appendChild(makeMetric(tr('Best'), progress.best));
     }
 
     if (game.historyKey && progress.historyCount > 0) {
-      metrics.appendChild(makeMetric('Runs', progress.historyCount));
+      metrics.appendChild(makeMetric(tr('Runs'), progress.historyCount));
     }
 
-    metrics.appendChild(makeMetric('Last', formatDate(progress.lastPlayed)));
+    metrics.appendChild(makeMetric(tr('Last'), formatDate(progress.lastPlayed)));
     strip.appendChild(metrics);
 
     const body = card.querySelector('.body');

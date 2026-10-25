@@ -8,18 +8,9 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  function resize() {
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  window.MathArcadeShell.createCanvasStage(canvas, ctx, {
+    onResize: ({ width, height }) => { W = width; H = height; }
+  });
 
   const COLS = 8, ROWS = 8;
   const HINT_MOVE_COST = 1;
@@ -65,7 +56,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('mathmatch3_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathmatch3')) || 0,
     level: 1,
     moves: 20,
     levelTarget: 500,
@@ -647,7 +638,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathmatch3_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathmatch3', state.best);
     }
     state.shake = Math.min(0.6, state.shake + 0.4);
     showFloaterCenter(reason, '#ff5c7c');

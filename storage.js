@@ -63,11 +63,83 @@
     }
   }
 
+  function readInt(key) {
+    if (!key) return 0;
+    try {
+      const value = parseInt(localStorage.getItem(key) || '0', 10);
+      return Number.isFinite(value) ? value : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function writeInt(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function getBest(gameId) {
+    return readInt(gameId + '_best');
+  }
+
+  function setBest(gameId, score) {
+    return writeInt(gameId + '_best', score);
+  }
+
+  function getSolved(gameId) {
+    return readInt(gameId + '_solved');
+  }
+
+  function setSolved(gameId, count) {
+    return writeInt(gameId + '_solved', count);
+  }
+
+  function getHistory(gameId) {
+    return readJSON('dyslexiaScreening.' + gameId, null);
+  }
+
+  function recordSession(gameId, summary) {
+    try {
+      const key = 'dyslexiaScreening.' + gameId;
+      const store = readJSON(key, { history: [] }) || { history: [] };
+      store.lastSession = summary;
+      store.history = (store.history || []).concat([summary]).slice(-50);
+      return writeJSON(key, store);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function readHistoryCount(gameId) {
+    const data = getHistory(gameId);
+    return Array.isArray(data && data.history) ? data.history.length : 0;
+  }
+
+  function readHistoryRows(gameId, limit) {
+    const data = getHistory(gameId);
+    const rows = Array.isArray(data && data.history) ? data.history : [];
+    return limit ? rows.slice(-limit).reverse() : rows;
+  }
+
   window.MathArcadeStorage = {
     getSettings,
     hydrateSettings,
     setSettings,
     markPlayed,
-    keyFor
+    keyFor,
+    readInt,
+    writeInt,
+    getBest,
+    setBest,
+    getSolved,
+    setSolved,
+    getHistory,
+    recordSession,
+    readHistoryCount,
+    readHistoryRows
   };
 })();

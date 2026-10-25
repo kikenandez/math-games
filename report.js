@@ -1,62 +1,68 @@
 (function () {
+  const tr = (window.MathArcadeI18n && window.MathArcadeI18n.t) || ((s) => s);
+
   const REPORTS = [
     {
       title: 'Letter Whack',
       key: 'dyslexiaScreening.letterwhack',
       fields: [
-        ['Sessions', (rows) => rows.length],
-        ['Latest score', (rows) => latest(rows).score || 0],
-        ['Reversal errors', (rows) => sum(rows, 'reversalErrors')],
-        ['Median RT', (rows) => formatMs(latest(rows).medianRtMs)]
+        [tr('Sessions'), (rows) => rows.length],
+        [tr('Latest score'), (rows) => latest(rows).score || 0],
+        [tr('Reversal errors'), (rows) => sum(rows, 'reversalErrors')],
+        [tr('Median RT'), (rows) => formatMs(latest(rows).medianRtMs)]
       ],
       columns: [
-        ['Date', (row) => formatDate(row.date)],
-        ['Score', (row) => row.score || 0],
-        ['Trials', (row) => row.trials || 0],
-        ['Reversals', (row) => row.reversalErrors || 0],
-        ['Median RT', (row) => formatMs(row.medianRtMs)]
+        [tr('Date'), (row) => formatDate(row.date)],
+        [tr('Score'), (row) => row.score || 0],
+        [tr('Trials'), (row) => row.trials || 0],
+        [tr('Reversals'), (row) => row.reversalErrors || 0],
+        [tr('Median RT'), (row) => formatMs(row.medianRtMs)]
       ],
-      empty: 'Play Letter Whack to collect target-letter accuracy, reversal errors, and reaction-time samples.'
+      empty: tr('Play Letter Whack to collect target-letter accuracy, reversal errors, and reaction-time samples.')
     },
     {
       title: 'Recall Crates',
       key: 'dyslexiaScreening.recallcrates',
       fields: [
-        ['Sessions', (rows) => rows.length],
-        ['Latest score', (rows) => latest(rows).score || 0],
-        ['Best span', (rows) => max(rows, 'maxSpan')],
-        ['Order errors', (rows) => sum(rows, 'orderErrors')]
+        [tr('Sessions'), (rows) => rows.length],
+        [tr('Latest score'), (rows) => latest(rows).score || 0],
+        [tr('Best span'), (rows) => max(rows, 'maxSpan')],
+        [tr('Order errors'), (rows) => sum(rows, 'orderErrors')]
       ],
       columns: [
-        ['Date', (row) => formatDate(row.date)],
-        ['Score', (row) => row.score || 0],
-        ['Rounds', (row) => row.rounds || 0],
-        ['Max span', (row) => row.maxSpan || 0],
-        ['Order errors', (row) => row.orderErrors || 0]
+        [tr('Date'), (row) => formatDate(row.date)],
+        [tr('Score'), (row) => row.score || 0],
+        [tr('Rounds'), (row) => row.rounds || 0],
+        [tr('Max span'), (row) => row.maxSpan || 0],
+        [tr('Order errors'), (row) => row.orderErrors || 0]
       ],
-      empty: 'Play Recall Crates to collect sequence span, order errors, and wrong-letter attempts.'
+      empty: tr('Play Recall Crates to collect sequence span, order errors, and wrong-letter attempts.')
     },
     {
       title: 'Bee Buzz Says',
       key: 'dyslexiaScreening.beebuzzsays',
       fields: [
-        ['Sessions', (rows) => rows.length],
-        ['Latest score', (rows) => latest(rows).score || 0],
-        ['Best span', (rows) => max(rows, 'maxSpan')],
-        ['Mirror confusions', (rows) => sum(rows, 'mirrorConfusions')]
+        [tr('Sessions'), (rows) => rows.length],
+        [tr('Latest score'), (rows) => latest(rows).score || 0],
+        [tr('Best span'), (rows) => max(rows, 'maxSpan')],
+        [tr('Mirror confusions'), (rows) => sum(rows, 'mirrorConfusions')]
       ],
       columns: [
-        ['Date', (row) => formatDate(row.date)],
-        ['Score', (row) => row.score || 0],
-        ['Rounds', (row) => row.rounds || 0],
-        ['Max span', (row) => row.maxSpan || 0],
-        ['Mirror taps', (row) => row.mirrorConfusions || 0]
+        [tr('Date'), (row) => formatDate(row.date)],
+        [tr('Score'), (row) => row.score || 0],
+        [tr('Rounds'), (row) => row.rounds || 0],
+        [tr('Max span'), (row) => row.maxSpan || 0],
+        [tr('Mirror taps'), (row) => row.mirrorConfusions || 0]
       ],
-      empty: 'Play Bee Buzz Says in solo mode to collect memory span and b/d/p/q mirror-confusion patterns.'
+      empty: tr('Play Bee Buzz Says in solo mode to collect memory span and b/d/p/q mirror-confusion patterns.')
     }
   ];
 
   function readRows(key) {
+    const prefix = 'dyslexiaScreening.';
+    if (window.MathArcadeStorage && key && key.indexOf(prefix) === 0) {
+      return window.MathArcadeStorage.readHistoryRows(key.slice(prefix.length), 8);
+    }
     try {
       const store = JSON.parse(localStorage.getItem(key) || 'null');
       return Array.isArray(store && store.history) ? store.history.slice(-8).reverse() : [];
