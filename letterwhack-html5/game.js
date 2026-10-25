@@ -114,7 +114,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('letterwhack_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('letterwhack')) || 0,
     level: 1,
     misses: 0,
     maxMisses: 3,
@@ -159,20 +159,13 @@
       medianRtMs: median(metrics.rtSamples),
       reversalErrorRate: metrics.trials ? +(metrics.reversalErrors / metrics.trials).toFixed(3) : 0,
     };
-    try {
-      const key = 'dyslexiaScreening.letterwhack';
-      const store = JSON.parse(localStorage.getItem(key) || '{"history":[]}');
-      store.lastSession = summary;
-      store.history = (store.history || []).concat([summary]).slice(-50);
-      localStorage.setItem(key, JSON.stringify(store));
-    } catch (e) { /* storage unavailable — game still playable */ }
+    if (window.MathArcadeStorage) window.MathArcadeStorage.recordSession('letterwhack', summary);
     return summary;
   }
   // Future "Reading Check-Up" screener reads aggregated metrics from here.
   window.DyslexiaScreening = window.DyslexiaScreening || {};
   window.DyslexiaScreening.letterwhack = () => {
-    try { return JSON.parse(localStorage.getItem('dyslexiaScreening.letterwhack') || 'null'); }
-    catch (e) { return null; }
+    return (window.MathArcadeStorage && window.MathArcadeStorage.getHistory('letterwhack')) || null;
   };
 
   // ===== Speech (sound-symbol reinforcement; optional, guarded, offline) =====
@@ -396,7 +389,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('letterwhack_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('letterwhack', state.best);
     }
     const summary = saveMetrics();
     state.shake = Math.min(0.6, state.shake + 0.4);

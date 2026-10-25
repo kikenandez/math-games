@@ -238,7 +238,6 @@
   const DIVERSITY_BONUS = [0, 0, 3, 7, 12];
   const RATINGS = [[45, 'rate0'], [35, 'rate1'], [25, 'rate2'], [15, 'rate3'], [-999, 'rate4']];
 
-  const BEST_KEY = 'bidchallenge_best';
   const PREFS_KEY = 'bidchallenge_prefs';
 
   const BG = '#f3e3b6', PANEL = '#fffcf0', PANEL_HI = '#eadcb8', TEXT = '#2b2418', INK = '#2b2418';
@@ -884,7 +883,7 @@
   let revealFrame = 0, revealCounted = 0, revealDone = false, result = null;
   let confetti = [];
   let finalCanvas = null, newRecord = false;
-  let best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
+  let best = (window.MathArcadeStorage && window.MathArcadeStorage.getBest('bidchallenge')) || 0;
 
   function loadPrefs() {
     const d = { seats: ['human', 'human', 'off', 'off'], mode: MODE_SEQ, events: true, silent: true };
@@ -1024,7 +1023,7 @@
     const bestHuman = Math.max(0, ...model.players.filter((p) => p.human).map((p) => p.score().total));
     if (bestHuman > best) {
       best = bestHuman; newRecord = true;
-      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) { /* ignore */ }
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('bidchallenge', best);
     }
     finalCanvas = renderFinal();
     showDetails = false;

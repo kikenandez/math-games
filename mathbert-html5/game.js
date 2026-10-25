@@ -64,7 +64,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('mathbert_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathbert')) || 0,
     lives: 3,
     level: 1,
     tiles: [],       // map { "r,c": { r, c, isPuzzle, value, flashT } }
@@ -1006,7 +1006,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathbert_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathbert', state.best);
     }
     const overlay = document.getElementById('overlay');
     overlay.querySelector('.card').remove();

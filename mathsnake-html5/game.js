@@ -68,7 +68,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('mathsnake_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathsnake')) || 0,
     level: 1,
     rule: RULES[0],
     nextExpected: null,       // for sequence rules: next number that should be eaten
@@ -327,7 +327,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathsnake_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathsnake', state.best);
     }
     state.shake = Math.min(0.8, state.shake + 0.5);
     showFloaterCenter(reason, '#ff5c7c');

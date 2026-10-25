@@ -251,7 +251,7 @@
     phase: 'title',
     levelIdx: 0,
     runtimeLevel: null,
-    solvedCount: parseInt(localStorage.getItem('balancescale_solved') || '0', 10) || 0,
+    solvedCount: (window.MathArcadeStorage && window.MathArcadeStorage.getSolved('balancescale')) || 0,
     guesses: {},
     activeSymbol: null,
     inputBuffer: '',
@@ -525,7 +525,7 @@
     }
     if (isLevelSolved()) {
       state.solvedCount = Math.max(state.solvedCount, Math.min(state.levelIdx + 1, LEVELS.length));
-      localStorage.setItem('balancescale_solved', String(state.solvedCount));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setSolved('balancescale', state.solvedCount);
       updateHUD();
       showMsg(`Level ${state.levelIdx + 1} solved! 🎉`, 'success');
       // Confetti

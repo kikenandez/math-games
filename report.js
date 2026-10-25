@@ -59,6 +59,10 @@
   ];
 
   function readRows(key) {
+    const prefix = 'dyslexiaScreening.';
+    if (window.MathArcadeStorage && key && key.indexOf(prefix) === 0) {
+      return window.MathArcadeStorage.readHistoryRows(key.slice(prefix.length), 8);
+    }
     try {
       const store = JSON.parse(localStorage.getItem(key) || 'null');
       return Array.isArray(store && store.history) ? store.history.slice(-8).reverse() : [];

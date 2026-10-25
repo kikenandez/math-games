@@ -91,7 +91,7 @@
   const state = {
     phase: 'title', // title | playing | wave_clear | paused | game_over
     score: 0,
-    best: parseInt(localStorage.getItem('mathinvaders_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathinvaders')) || 0,
     wave: 1,
     invaders: [],
     mothership: null,
@@ -716,7 +716,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathinvaders_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathinvaders', state.best);
     }
     showGameOverCard();
   }

@@ -53,7 +53,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('mathwhack_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathwhack')) || 0,
     level: 1,
     misses: 0,
     maxMisses: 3,
@@ -288,7 +288,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathwhack_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathwhack', state.best);
     }
     state.shake = Math.min(0.6, state.shake + 0.4);
     showFloaterCenter(reason, '#ff5c7c');

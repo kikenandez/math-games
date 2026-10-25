@@ -129,7 +129,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('mathtd_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathtd')) || 0,
     level: 1,
     wave: 1,
     wavesPerLevel: 5,
@@ -296,7 +296,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathtd_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathtd', state.best);
     }
     showFloaterCenter(reason, '#ff5c7c');
     state.shake = Math.min(0.6, state.shake + 0.4);

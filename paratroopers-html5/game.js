@@ -24,7 +24,7 @@
   const state = {
     phase: 'title', // 'title', 'briefing', 'playing', 'level_clear', 'game_over'
     score: 0,
-    best: parseInt(localStorage.getItem('paratroopers_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('paratroopers')) || 0,
     level: 1,
     lives: 3,
     maxLives: 3,
@@ -353,7 +353,7 @@
     // Save high score
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('paratroopers_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('paratroopers', state.best);
     }
     
     window.MathArcadeAudio?.event('GAME OVER');

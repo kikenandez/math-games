@@ -5,9 +5,11 @@
   // Shared translator from i18n.js (window.MathArcadeI18n.t). Falls back to the
   // raw English string when i18n is unavailable or the key is unknown.
   const tr = (window.MathArcadeI18n && window.MathArcadeI18n.t) || ((s) => s);
+  const storage = window.MathArcadeStorage || null;
 
   function readNumber(key) {
     if (!key) return 0;
+    if (storage && typeof storage.readInt === 'function') return storage.readInt(key);
     const raw = localStorage.getItem(key);
     const value = parseInt(raw || '0', 10);
     return Number.isFinite(value) ? value : 0;
@@ -15,6 +17,9 @@
 
   function readHistoryCount(key) {
     if (!key) return 0;
+    if (storage && key.indexOf('dyslexiaScreening.') === 0) {
+      return storage.readHistoryCount(key.slice('dyslexiaScreening.'.length));
+    }
     try {
       const data = JSON.parse(localStorage.getItem(key) || 'null');
       return Array.isArray(data && data.history) ? data.history.length : 0;

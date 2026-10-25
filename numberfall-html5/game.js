@@ -108,7 +108,7 @@
   const state = {
     phase: 'title', // title | playing | paused | gameover
     score: 0,
-    best: parseInt(localStorage.getItem('numberfall_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('numberfall')) || 0,
     level: 1,
     lives: 3,
     boxes: [],
@@ -762,7 +762,7 @@
     state.phase = 'gameover';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('numberfall_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('numberfall', state.best);
     }
     showGameOverCard();
   }

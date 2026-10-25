@@ -116,7 +116,7 @@
 
   const state = {
     phase: 'title',
-    best: parseInt(localStorage.getItem('beebuzzsays_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('beebuzzsays')) || 0,
     maxStrikes: 3,
     seq: [], typed: [], cells: [], keypad: [], activeLetters: [],
     radius: 2, hexSize: 40,
@@ -550,7 +550,7 @@
     if (session.mode === 'coop') {
       const team = session.players.reduce((a, x) => a + x.score, 0);
       const span = Math.max(...session.players.map((x) => x.metrics.maxSpan), state.seq.length);
-      if (team > state.best) { state.best = team; localStorage.setItem('beebuzzsays_best', String(state.best)); }
+      if (team > state.best) { state.best = team; if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('beebuzzsays', state.best); }
       showResultCard(`
         <h1><span class="acc">${T.gameAcc}</span>${T.gameRest}</h1>
         <div class="sub">${reason}</div>
@@ -569,7 +569,7 @@
       const [a, b] = session.players;
       const winner = versusWinner(a, b);
       const best = Math.max(a.score, b.score);
-      if (best > state.best) { state.best = best; localStorage.setItem('beebuzzsays_best', String(state.best)); }
+      if (best > state.best) { state.best = best; if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('beebuzzsays', state.best); }
       const headline = winner === 0 ? T.draw : `${T.player} ${winner} ${T.wins}`;
       showResultCard(`
         <h1><span class="acc">${headline}</span></h1>
@@ -580,7 +580,7 @@
       return;
     }
     const p = activePlayer();
-    if (p.score > state.best) { state.best = p.score; localStorage.setItem('beebuzzsays_best', String(state.best)); }
+    if (p.score > state.best) { state.best = p.score; if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('beebuzzsays', state.best); }
     const summary = saveMetrics();
     const revPct = summary.wrongTaps ? Math.round((summary.mirrorConfusions / summary.wrongTaps) * 100) : 0;
     const insight = summary.wrongTaps
@@ -611,19 +611,13 @@
       reversalRate: m.wrongTaps ? +(m.mirrorConfusions / m.wrongTaps).toFixed(3) : 0,
     };
     if (session.mode === 'solo') {
-      try {
-        const key = 'dyslexiaScreening.beebuzzsays';
-        const store = JSON.parse(localStorage.getItem(key) || '{"history":[]}');
-        store.lastSession = summary;
-        store.history = (store.history || []).concat([summary]).slice(-50);
-        localStorage.setItem(key, JSON.stringify(store));
-      } catch (e) {}
+      if (window.MathArcadeStorage) window.MathArcadeStorage.recordSession('beebuzzsays', summary);
     }
     return summary;
   }
   window.DyslexiaScreening = window.DyslexiaScreening || {};
   window.DyslexiaScreening.beebuzzsays = () => {
-    try { return JSON.parse(localStorage.getItem('dyslexiaScreening.beebuzzsays') || 'null'); } catch (e) { return null; }
+    return (window.MathArcadeStorage && window.MathArcadeStorage.getHistory('beebuzzsays')) || null;
   };
 
   function showFloater(text, color, dy) { state.floaters.push({ x: W / 2, y: H * 0.5 + (dy || 0), text, color, t: 0, dur: 1.2 }); }

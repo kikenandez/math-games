@@ -96,7 +96,7 @@
   const state = {
     phase: 'title',                       // title | watch | recall | resolve | level_clear | game_over
     score: 0,
-    best: parseInt(localStorage.getItem('recallcrates_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('recallcrates')) || 0,
     level: 1,
     span: 2,
     misses: 0,
@@ -143,19 +143,12 @@
       maxSpan: metrics.maxSpan,
       transpositionRate: metrics.rounds ? +(metrics.orderErrors / metrics.rounds).toFixed(3) : 0,
     };
-    try {
-      const key = 'dyslexiaScreening.recallcrates';
-      const store = JSON.parse(localStorage.getItem(key) || '{"history":[]}');
-      store.lastSession = summary;
-      store.history = (store.history || []).concat([summary]).slice(-50);
-      localStorage.setItem(key, JSON.stringify(store));
-    } catch (e) { /* storage unavailable — game still playable */ }
+    if (window.MathArcadeStorage) window.MathArcadeStorage.recordSession('recallcrates', summary);
     return summary;
   }
   window.DyslexiaScreening = window.DyslexiaScreening || {};
   window.DyslexiaScreening.recallcrates = () => {
-    try { return JSON.parse(localStorage.getItem('dyslexiaScreening.recallcrates') || 'null'); }
-    catch (e) { return null; }
+    return (window.MathArcadeStorage && window.MathArcadeStorage.getHistory('recallcrates')) || null;
   };
   // Lightweight read-only state probe (used by automated checks; harmless in play).
   window.__rc = () => ({ phase: state.phase, seq: state.seq.slice(), typed: state.typed.slice(), span: state.span, misses: state.misses });
@@ -354,7 +347,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('recallcrates_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('recallcrates', state.best);
     }
     const summary = saveMetrics();
     state.shake = Math.min(0.6, state.shake + 0.4);

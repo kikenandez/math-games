@@ -69,7 +69,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('missilecommand_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('missilecommand')) || 0,
     wave: 1,
     cities: [],
     silos: [],
@@ -720,7 +720,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('missilecommand_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('missilecommand', state.best);
     }
     showGameOverCard();
   }

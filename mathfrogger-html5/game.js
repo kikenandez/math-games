@@ -139,7 +139,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('mathfrogger_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathfrogger')) || 0,
     lives: 3,
     round: 1,
     frog: { col: 4, row: 12, x: 0, y: 0, tx: 0, ty: 0, hopT: 0, facing: 0 },
@@ -853,7 +853,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathfrogger_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathfrogger', state.best);
     }
     const overlay = document.getElementById('overlay');
     overlay.querySelector('.card').remove();

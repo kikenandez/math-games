@@ -26,7 +26,7 @@
   const state = {
     phase: 'title',
     score: 0,
-    best: parseInt(localStorage.getItem('mathasteroids_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathasteroids')) || 0,
     lives: 3,
     shield: 3,
     level: 1,
@@ -728,7 +728,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathasteroids_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathasteroids', state.best);
     }
     const overlay = document.getElementById('overlay');
     overlay.querySelector('.card').remove();

@@ -105,7 +105,7 @@
   const state = {
     phase: 'title', // title | playing | paused | game_over
     score: STARTING_SCORE,
-    best: parseInt(localStorage.getItem('mathris_best') || '0', 10) || 0,
+    best: (window.MathArcadeStorage && window.MathArcadeStorage.getBest('mathris')) || 0,
     boxes: [],
     particles: [],
     floaters: [],
@@ -871,7 +871,7 @@
     state.phase = 'game_over';
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('mathris_best', String(state.best));
+      if (window.MathArcadeStorage) window.MathArcadeStorage.setBest('mathris', state.best);
     }
     showGameOverCard();
   }
